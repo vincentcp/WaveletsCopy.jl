@@ -20,6 +20,7 @@ include("discretewavelets.jl")
 include("threshold.jl")
 include("plot.jl")
 
+include("evaluate.jl")
 @reexport using .Util, .WT, .Transforms, .Threshold, .Plot, .Sampling, .Filters, .DWT, .Sequences
 #@reexport using .Util, .WT, .Transforms, .Threshold, .Plot
 

@@ -4,7 +4,7 @@ using ..Filters
 using ..Sampling
 using ..Sequences
 using ..Filterbanks
-
+export dwtstep
 
 
 """

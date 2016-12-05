@@ -42,8 +42,6 @@ firstindex(s::CompactSequence) = imapindex(s, 1)
 
 lastindex(s::CompactSequence) = imapindex(s, sublength(s))
 
-shift(s::CompactSequence, k::Int) = CompactSequence(s.a, s.offset+k)
-
 hascompactsupport{T}(::Type{CompactSequence{T}}) = True
 
 """
