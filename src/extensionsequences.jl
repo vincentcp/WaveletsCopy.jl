@@ -50,14 +50,14 @@ setindex!(s::ExtensionSequence, val, k) = setindex!(s.a, val, mapindex(s, k))
 first_subindex(s::ExtensionSequence) = imapindex(s, 1)
 
 "The last index of the subvector."
-last_subindex(s::ExtensionSequence) = imapindex(s, sublength(s)-1)
+last_subindex(s::ExtensionSequence) = imapindex(s, sublength(s)) # DONE Removed -1
 
 "Iterator over each of the embedded elements of the sequence."
 each_subindex(s::ExtensionSequence) = first_subindex(s):last_subindex(s)
 
 # Invoke a constructor of an ExtensionSequence with default values.
 # Default extension: ZeroPadding.
-extend{EXT <: ExtensionSequence}(a, ::Type{EXT} = ZeroPadding{A}) = EXT(a)
+extend{EXT <: ExtensionSequence}(a, ::Type{EXT} = ZeroPadding) = EXT(a)
 
 
 
@@ -77,7 +77,7 @@ extension, and the corresponding entry of 'a' will be modified.
 immutable PeriodicExtension{A} <: ExtensionSequence{A}
     a :: A
     n :: Int
-    
+
     PeriodicExtension(a) = new(a, length(a))
 end
 
@@ -101,7 +101,7 @@ sequence, and the corresponding entry of `a` will be modified.
 immutable ZeroPadding{A} <: ExtensionSequence{A}
     a :: A
     n :: Int
-    
+
     ZeroPadding(a) = new(a, length(a))
 end
 
@@ -129,7 +129,7 @@ immutable ConstantPadding{T,A} <: ExtensionSequence{A}
     a           ::  A
     constant    ::  T
     n           ::  Int
-    
+
     ConstantPadding(a, constant) = new(a, constant, length(a))
 end
 
@@ -196,7 +196,7 @@ Parameters:
 immutable SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: ExtensionSequence{A}
     a :: A
     n :: Int
-    
+
     SymmetricExtension(a) = new(a, length(a))
 end
 
@@ -288,5 +288,3 @@ getindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:wp,PT_RIGHT,:odd}, k) = -geti
 # Left half point symmetry
 getindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:hp,PT_RIGHT,:even}, k) = getindex(s, -k-1)
 getindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:hp,PT_RIGHT,:odd}, k) = -getindex(s, -k-1)
-
-

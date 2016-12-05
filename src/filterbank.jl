@@ -56,7 +56,8 @@ transpose(m::FilterMatrix) = FilterMatrix(m.a11, m.a21, m.a12, m.a22)
 
 ctranspose(m::FilterMatrix) = FilterMatrix(m.a11', m.a21', m.a12', m.a22')
 
-call(m::FilterMatrix, z) = [ztransform(m.a11, z) ztransform(m.a12, z); ztransform(m.a21, z) ztransform(m.a22, z)]
+# Done removed: call(m::FilterMatrix, z) = [ztransform(m.a11, z) ztransform(m.a12, z); ztransform(m.a21, z) ztransform(m.a22, z)]
+(m::FilterMatrix)(z) = [ztransform(m.a11, z) ztransform(m.a12, z); ztransform(m.a21, z) ztransform(m.a22, z)]
 
 polyphasematrix(fp::FilterPair) = FilterMatrix(evenpart(fp[1]), evenpart(fp[2]), oddpart(fp[1]), oddpart(fp[2]))
 
@@ -105,7 +106,8 @@ dual_highpassfilter(fb::Filterbank) = highpassfilter(fb.dual_pair)
 #     return a
 # end
 
-
+# Split the (finite) signal x embedded in (infinite) embedding into a low pass signal y1
+# and a high pass signal y2. The filters are given by the polyphasematrix f.
 function polyphase_analysis!(y1, y2, x, f::PolyphaseMatrix, embedding)
     Heven = f.a11
     Hodd = f.a12

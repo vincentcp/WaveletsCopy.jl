@@ -1,5 +1,6 @@
 # sampling.jl
-
+using Base.Test
+using Wavelets
 # ============= down- and upsampling ================
 println("sampling: downsampling, upsampling and filters ...")
 

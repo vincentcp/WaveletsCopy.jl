@@ -13,7 +13,7 @@ immutable CompactSequence{T} <: Sequence
     a       ::  Vector{T}
     offset  ::  Int
     n       ::  Int
-    
+
     CompactSequence(a, offset) = new(a, offset, length(a))
 end
 
@@ -86,7 +86,7 @@ previouseven(n) = isodd(n) ? n-1 : n
 nextodd(n) = isodd(n) ? n : n+1
 
 "Return the even part of a sequence `s`, defined by `s_e[k] = s[2k]`."
-evenpart(s::CompactSequence) = 
+evenpart(s::CompactSequence) =
     CompactSequence(eltype(s)[s[j] for j in nexteven(firstindex(s)):2:lastindex(s)], div(nexteven(firstindex(s)),2))
 
 "Return the odd part of a sequence `s`, defined by `s_o[k] = s[2k+1]`."
@@ -146,8 +146,3 @@ hascompactsupport{L,OFS,T}(::Type{FixedSequence{L,OFS,T}}) = True
 for op in (:ctranspose, :evenpart, :oddpart, :alternating_flip, :reverse, :conj, :alternating)
     @eval $op{L,OFS,T}(s::FixedSequence{L,OFS,T}) = FixedSequence($op(CompactSequence{T}(s)))
 end
-
-
-
-
-

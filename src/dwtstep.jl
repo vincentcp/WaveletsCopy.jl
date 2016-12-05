@@ -83,7 +83,7 @@ end
 function idwtstep!(x, sc, dc, fb::Filterbank, bnd::SymmetricBoundary)
     if iseven(length(x))
         if isodd(sublength(primal_lowpassfilter(fb)))
-            polyphase_synthesis!(x, sc, dc, fb.pm_synthesis, SymmetricEmbedding{:hp,:hp,:even,:even})
+            polyphase_synthesis!(x, sc, dc, fb.pm_synthesis, SymmetricEmbedding{:hp,:hp,:even,:even}())
         end
     end
 end

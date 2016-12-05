@@ -162,4 +162,3 @@ shift(s::ShiftedSequence, shift::Int) = ShiftedSequence(sequence(s), shift+s.shi
 firstindex(s::ShiftedSequence) = firstindex(sequence(s)) + s.shift
 
 lastindex(s::ShiftedSequence) = lastindex(sequence(s)) + s.shift
-

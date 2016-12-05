@@ -12,6 +12,8 @@ import Base: -, ctranspose
 
 import Wavelets.Sequences: firstindex, lastindex
 
+import Base: filter!
+
 typealias FixedFilter FixedSequence
 
 export filter!

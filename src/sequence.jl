@@ -10,6 +10,9 @@ import Base: &, |, *, transpose, ctranspose, conj
 
 import Base: convert
 
+import Base: reverse
+
+import ..Util: upsample, downsample
 
 # Main abstract types
 export Sequence, ExtensionSequence, DerivedSequence
