@@ -110,10 +110,11 @@ for (TYPE, NAMEBASE, RANGE) in (
         end
     end
 end
-
+# TODO implement cdf for filtering
 # Parameterized BiOrtho classes
 for (TYPE, NAMEBASE, RANGE1, RANGE2) in (
-        (:CDF, "cdf", [9], [7]),
+#        (:CDF, "cdf", [9], [7]),
+        (:CDF, "cdf", [1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6], [1,3,5,2,4,6,1,3,5,2,4,6,1,3,5,2,4,6]),
         )
     @eval begin
         immutable $TYPE{N1, N2} <: BiOrthoWaveletClass end
@@ -121,7 +122,7 @@ for (TYPE, NAMEBASE, RANGE1, RANGE2) in (
         name{N1, N2}(::$TYPE{N1, N2}) = string($NAMEBASE,N1,"/",N2)
         vanishingmoments{N1, N2}(::$TYPE{N1, N2}) = (N1, N2)
     end
-    for i in length(RANGE1)
+    for i in 1:length(RANGE1)
         CONSTNAME = Symbol(string(NAMEBASE,RANGE1[i],RANGE2[i]))
         @eval begin
             const $CONSTNAME = $TYPE{$RANGE1[$i],$RANGE2[$i]}()        # type shortcut
