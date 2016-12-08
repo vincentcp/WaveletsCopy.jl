@@ -98,7 +98,6 @@ primal_highpassfilter(fb::Filterbank) = highpassfilter(fb.primal_pair)
 dual_lowpassfilter(fb::Filterbank) = lowpassfilter(fb.dual_pair)
 dual_highpassfilter(fb::Filterbank) = highpassfilter(fb.dual_pair)
 
-
 # "Return a temporary array with elements of the given type and of length L. Memory is allocated only
 # on the first call of this function and reused afterwards."
 # @generated temparray{T,L}(::Type{T}, ::Type{Val{L}}) = quote
@@ -115,13 +114,15 @@ function polyphase_analysis!(y1, y2, x, f::PolyphaseMatrix, embedding)
     Godd = f.a22
 
     T = eltype(y1)
-
-    lower_range_j = min(-2*lastindex(Heven), -2*lastindex(Geven), -2*lastindex(Hodd)+1, -2*lastindex(Godd)+1)
-    upper_range_j = max(-2*firstindex(Heven), -2*firstindex(Geven), -2*firstindex(Hodd)+1, -2*firstindex(Godd)+1)
-
-    lower_i = -lower_range_j
-    upper_i = length(y1)-1-upper_range_j
-
+    # Determine for which range the convolution of the filters with x results
+    # in evaluations of x that not occur outside of the embedding.
+    # Remark (TODO?): this could be even more efficient.
+    L = length(x)
+    lower_i = min(length(y1)-1, maximum(map(lastindex,(Heven,Geven,Godd,Hodd))))
+    L%2 == 0?
+      upper_i = L>>1 - 1 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd))) :
+      upper_i = L>>1 - L%2 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd)))
+    upper_i = max(0, upper_i)
     # Lower boundary region
     for i in 0:lower_i
         y1i = zero(T)
@@ -144,6 +145,10 @@ function polyphase_analysis!(y1, y2, x, f::PolyphaseMatrix, embedding)
 
     # Middle region
     @inbounds for i in lower_i+1:upper_i-1
+      # for l in minimum(map(firstindex,(Heven,Geven,Hodd,Godd))):maximum(map(lastindex,(Heven,Geven,Hodd,Godd)))
+      #   @assert (0<=2(i-l)<L) && (0<=2(i-l)+1<L)
+      # end
+      # @assert 0<=i<min(length(y1),length(y2))
         y1i = zero(T)
         y2i = zero(T)
         for l = firstindex(Heven):lastindex(Heven)

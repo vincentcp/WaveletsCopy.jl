@@ -8,11 +8,15 @@ typealias False Val{false}
 typealias True Val{true}
 
 import ..Filterbanks: Filterbank
+import Base: eltype
+import Wavelets: name
 
 export filter
 
 # Traits
 export is_symmetric, is_orthogonal, is_biorthogonal
+
+export name, class
 
 # BOUNDARY TYPES
 
@@ -35,6 +39,9 @@ immutable CPBoundary{T} <: WaveletBoundary
     constant    ::  T
 end
 
+perbound = DWT.PeriodicBoundary()
+symbound = DWT.SymmetricBoundary()
+zerobound = DWT.ZeropaddingBoundary()
 
 # TRANSFORM TYPES
 
@@ -58,6 +65,9 @@ is_orthogonal{W <: DiscreteWavelet}(::Type{W}) = False
 is_biorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
 # Not sure yet whether this one makes sense:
 #is_semiorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
+eltype{T}(::Type{DiscreteWavelet{T}}) = T
+eltype{W <: DiscreteWavelet}(::Type{W}) = eltype(supertype(W))
+eltype(w::DiscreteWavelet) = eltype(typeof(w))
 
 for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal)
     @eval $op(w::DiscreteWavelet) = $op(typeof(w))()
@@ -95,6 +105,9 @@ end
 
 include("dwtstep.jl")
 
+# Convenience function
+name{T}(::T) = name(T)
+name{T}(::Type{T}) = "Not defined"
 include("wvlt_daubechies.jl")
 include("wvlt_cdf.jl")
 

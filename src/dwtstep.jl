@@ -4,8 +4,8 @@ using ..Filters
 using ..Sampling
 using ..Sequences
 using ..Filterbanks
-export dwtstep
 
+export dwtstep, idwtstep
 
 """
 Perform one step of the wavelet transform using the given wavelet.

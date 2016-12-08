@@ -10,30 +10,21 @@ is_biorthogonal{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = True
 
 T0 = Float64
 
-cdf11 = CDFWavelet{1,1,T0}()
-cdf13 = CDFWavelet{1,3,T0}()
-cdf15 = CDFWavelet{1,5,T0}()
-
-cdf22 = CDFWavelet{2,2,T0}()
-cdf24 = CDFWavelet{2,4,T0}()
-cdf26 = CDFWavelet{2,6,T0}()
-
-cdf31 = CDFWavelet{3,1,T0}()
-cdf33 = CDFWavelet{3,3,T0}()
-cdf35 = CDFWavelet{3,5,T0}()
-
-cdf42 = CDFWavelet{4,2,T0}()
-cdf44 = CDFWavelet{4,4,T0}()
-cdf46 = CDFWavelet{4,6,T0}()
-
-cdf51 = CDFWavelet{5,1,T0}()
-cdf53 = CDFWavelet{5,3,T0}()
-cdf55 = CDFWavelet{5,5,T0}()
-
-cdf62 = CDFWavelet{6,2,T0}()
-cdf64 = CDFWavelet{6,4,T0}()
-cdf66 = CDFWavelet{6,6,T0}()
-
+IMPLEMENTED_CDF_WAVELETS = []
+for N1 in 1:6
+  iseven(N1) ? (N2I = 2:2:6) : (N2I = 1:2:6)
+  for N2 in N2I
+    fname = string("cdf",N1,N2)
+    cdf = Symbol(fname)
+    T = CDFWavelet{N1,N2,T0}
+    @eval begin
+      $cdf = $T()
+      name(::Type{$T}) = $fname
+      class(::$T) = string($T)
+      push!(IMPLEMENTED_CDF_WAVELETS,$cdf)
+    end
+  end
+end
 
 # Explicit listing of some coefficient follows.
 # The format is a tuple: (n,h). The filter coefficients are sqrt(2)/n * h.
@@ -59,7 +50,7 @@ cdf46_htilde = (8192, [35, -140, -55, 920, -557, -2932, 2625, 8400, 2625, -2932,
 
 
 cdf51_htilde = (16, [3, -15, 20, 20, -15, 3])
-cdf53_htilde = (128, [-5, 25, -26, 70, 140, 140, -70, -26, 25, -5])
+cdf53_htilde = (128, [-5, 25, -26, -70, 140, 140, -70, -26, 25, -5])
 cdf55_htilde = (4096, [35, -175, 120, 800, -1357, -1575, 4200, 4200, -1575, -1357, 800, 120, -175, 35])
 
 
@@ -68,7 +59,7 @@ cdf64_htilde = (2048, [35, -210, 330, 470, -1827, 252, 3948, 252, -1827, 470, 33
 cdf66_htilde = (16384, [-63, 378, -476, -1554, 4404, 1114, -13860, 4158, 28182, 4158, -13860, 1114, 4404, -1554, -476, 378, -63])
 
 
-# Determine the offset of the filter such that the filter is even symmetric w.r.t 
+# Determine the offset of the filter such that the filter is even symmetric w.r.t
 # 0 (for filters of odd length) or 1/2 (for filters of even length).
 symmetric_offset(n) = iseven(n) ? -n>>1+1 : -(n-1)>>1
 
@@ -86,7 +77,3 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
                       (6, 2, :cdf62_htilde), (6, 4, :cdf64_htilde), (6, 6, :cdf66_htilde)  )
     @eval dual_scalingfilter{T}(w::CDFWavelet{$p,$q,T}) = CompactSequence(sqrt(T(2))/$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
 end
-
-
-
-

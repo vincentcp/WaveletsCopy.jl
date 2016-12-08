@@ -3,6 +3,9 @@
 
 module Wavelets
 
+function name
+end
+
 using Reexport
 include("util.jl")
 
@@ -21,7 +24,10 @@ include("threshold.jl")
 include("plot.jl")
 
 include("evaluate.jl")
-@reexport using .Util, .WT, .Transforms, .Threshold, .Plot, .Sampling, .Filters, .DWT, .Sequences
+
+
+
+@reexport using .Util, .WT, .Transforms, .Threshold, .Plot, .Sampling, .Filters, .DWT, .Sequences, .Filterbanks
 #@reexport using .Util, .WT, .Transforms, .Threshold, .Plot
 
 end

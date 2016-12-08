@@ -12,6 +12,8 @@ using ..Util
 using Compat
 import Compat: ASCIIString
 
+import Base: eltype
+
 # TYPE HIERARCHY
 
 abstract DiscreteWavelet{T}
@@ -69,6 +71,11 @@ A class can also be explicitly constructed as e.g. `Daubechies{4}()`.
 **See also:** `WT.class`, `WT.name`, `WT.vanishingmoments`
 """
 abstract WaveletClass
+
+# TODO Is this correct?
+eltype{W <: WaveletClass}(w::W) = eltype(typeof(w))
+eltype(::Type{WaveletClass}) = Float64
+
 abstract OrthoWaveletClass <: WaveletClass
 abstract BiOrthoWaveletClass <: WaveletClass
 
