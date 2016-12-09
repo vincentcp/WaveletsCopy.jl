@@ -36,7 +36,7 @@ function elementarypropsofsplinetest()
     tol = 1e-8
     S = 20
     for N in 1:10
-      f = x->WTS.evaluate_cardinalBSpline(N, x, Float64)
+      f = x->WTS.evaluate_Bspline(N-1, x, Float64)
       # Integral should be 1
       I,e = quadgk(f, 0, N, reltol = tol)
       @test I≈1 && abs(e) < tol
@@ -63,11 +63,10 @@ end
 function cascadetest()
   @testset "cascade_algorithm" begin
     T = Float64
-    L = 10
     tol = sqrt(eps(T))
     for L in 1:5
       for N in 1:8
-        f = x->WTS.evaluate_cardinalBSpline(N, x, Float64)
+        f = x->WTS.evaluate_Bspline(N-1, x, Float64)
         h = DWT.cdf_coef(N,T)
         x = Wavelets.dyadicpointsofcascade(h,L)
         g = Wavelets.cascade_algorithm(h,L)
@@ -83,9 +82,15 @@ linearbsplintest()
 elementarypropsofsplinetest()
 cascadetest()
 
-using Plots
-gr()
-h = DWT.primal_scalingfilter(DWT.db2).a
-x = Wavelets.dyadicpointsofcascade(h)
-g = Wavelets.cascade_algorithm(h)
-plot(x,g)
+# using Plots
+# gr()
+# plot()
+# for i in 1:5
+#   f = Symbol(string("db",i))
+#   @eval h = DWT.primal_scalingfilter(DWT.$f).a
+#   x = Wavelets.dyadicpointsofcascade(h)
+#   g = Wavelets.cascade_algorithm(h)
+#   plot!(x,g)
+# end
+# plot!()
+#

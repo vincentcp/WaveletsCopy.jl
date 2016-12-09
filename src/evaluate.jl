@@ -18,7 +18,7 @@ function evaluate_primal_scalingfunction end
 
   ϕ_jk = 2^(k/2) ϕ(2^k-j)
 """
-evaluate_primal_scalingfunction{W<:WLT}(wlt::W, k::Int, j::Int, x::Number) =
+evaluate_transformed_primal_scalingfunction{W<:WLT}(wlt::W, x::Number, k::Int=0, j::Int=0) =
     2.0^(k/2)*evaluate_primal_scalingfunction(wlt, 2.0^k-j)
 
 function evaluate_primal_scalingfunction{W<:WLT}(wlt::W, x::Number)
@@ -26,44 +26,49 @@ function evaluate_primal_scalingfunction{W<:WLT}(wlt::W, x::Number)
 end
 
 for W in (:(WT.Daubechies{1}), :(WT.Haar))
-  @eval evaluate_primal_scalingfunction(::$W, x::Number) = _evaluate_constant_Bspline(x, eltype(x, $W))
+  @eval evaluate_primal_scalingfunction(::$W, x::Number) = evaluate_Bspline(Degree{0}, x, eltype(x, $W))
 end
 
 evaluate_primal_scalingfunction{T}(w::DWT.HaarWavelet{T}, x::Number) =
-    _evaluate_constant_Bspline(x, eltype(x, w))
-
-evaluate_primal_scalingfunction{T}(w::DWT.CDFWavelet{1,1,T}, x::Number) =
-    _evaluate_constant_Bspline(x, eltype(x, w))
+      evaluate_Bspline(Degree{0}, x, eltype(x, w))
 
 evaluate_primal_scalingfunction{N1,N2}(w::WT.CDF{N1,N2}, x::Number) =
-      evaluate_cardinalBSpline(N1, x, eltype(w, x))
+      evaluate_Bspline(Degree{N1-1}, x, eltype(w, x))
 
 evaluate_primal_scalingfunction{N1,N2,T}(w::DWT.CDFWavelet{N1,N2,T}, x::Number) =
-      evaluate_cardinalBSpline(N1, x, eltype(w, x))
+      evaluate_Bspline(Degree{N1-1}, x, eltype(w, x))
 
 # Implementation of cardinal B splines of order m
-function evaluate_cardinalBSpline(m::Int, x::Number, T::Type)
-  if m <= 0
-    error("Order of cardinal B spline should be stricly positive")
-  elseif m == 1
-    _evaluate_constant_Bspline(x, T)
-  elseif m == 2
-    _evaluate_linear_Bspline(x, T)
-  elseif m == 3
-    _evaluate_quadratic_Bspline(x, T)
-  elseif m == 4
-    _evaluate_cubic_Bspline(x, T)
-  elseif m == 5
-    _evaluate_biquadratic_Bspline(x, T)
-  else
-    T(x)/T(m-1)*evaluate_cardinalBSpline(m-1, x, T) +
-        (T(m)-T(x))/T(m-1)*evaluate_cardinalBSpline(m-1, x-1, T)
-  end
+# function evaluate_cardinalBSpline(m::Int, x::Number, T::Type)
+#   if m <= 0
+#     error("Order of cardinal B spline should be stricly positive")
+#   elseif m == 1
+#     _evaluate_constant_Bspline(x, T)
+#   elseif m == 2
+#     _evaluate_linear_Bspline(x, T)
+#   elseif m == 3
+#     _evaluate_quadratic_Bspline(x, T)
+#   elseif m == 4
+#     _evaluate_cubic_Bspline(x, T)
+#   elseif m == 5
+#     _evaluate_biquadratic_Bspline(x, T)
+#   else
+#     T(x)/T(m-1)*evaluate_cardinalBSpline(m-1, x, T) +
+#         (T(m)-T(x))/T(m-1)*evaluate_cardinalBSpline(m-1, x-1, T)
+#   end
+# end
+
+typealias Degree{K} Val{K}
+
+evaluate_Bspline(N::Int, x, T::Type) = evaluate_Bspline(Degree{N}, x, T)
+function evaluate_Bspline{N}(::Type{Degree{N}}, x, T::Type)
+  T(x)/T(N)*evaluate_Bspline(Degree{N-1}, x, T) +
+      (T(N+1)-T(x))/T(N)*evaluate_Bspline(Degree{N-1}, x-1, T)
 end
 
-_evaluate_constant_Bspline(x, T::Type) = (0 <= x < 1) ? T(1) : T(0)
+evaluate_Bspline(::Type{Degree{0}}, x, T::Type) = (0 <= x < 1) ? T(1) : T(0)
 
-function _evaluate_linear_Bspline(x, T::Type)
+function evaluate_Bspline(::Type{Degree{1}}, x, T::Type)
   if (0 <= x < 1)
     s = T[0, 1]
   elseif (1 <= x < 2)
@@ -73,8 +78,7 @@ function _evaluate_linear_Bspline(x, T::Type)
   end
   @eval @evalpoly $x $(s...)
 end
-
-function _evaluate_quadratic_Bspline(x, T::Type)
+function evaluate_Bspline(::Type{Degree{2}}, x, T::Type)
   if (0 <= x < 1)
     s = T[0, 0, 1/2]
   elseif (1 <= x < 2)
@@ -87,7 +91,7 @@ function _evaluate_quadratic_Bspline(x, T::Type)
   @eval @evalpoly $x $(s...)
 end
 
-function _evaluate_cubic_Bspline(x, T::Type)
+function evaluate_Bspline(::Type{Degree{3}}, x, T::Type)
   if (0 <= x < 1)
     s = T[0, 0, 0, 1/6]
   elseif (1 <= x < 2)
@@ -102,7 +106,7 @@ function _evaluate_cubic_Bspline(x, T::Type)
   @eval @evalpoly $x $(s...)
 end
 
-function _evaluate_biquadratic_Bspline(x, T::Type)
+function evaluate_Bspline(::Type{Degree{4}}, x, T::Type)
   if (0 <= x < 1)
     s = T[0, 0, 0, 0, 1/24]
   elseif (1 <= x < 2)

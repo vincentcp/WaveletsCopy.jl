@@ -104,7 +104,7 @@ end
 
 
 include("dwtstep.jl")
-
+include("dwttransform.jl")
 # Convenience function
 name{T}(::T) = name(T)
 name{T}(::Type{T}) = "Not defined"

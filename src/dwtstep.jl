@@ -30,9 +30,14 @@ end
 
 
 function dwtstep_size(n::Int, fb::Filterbank, bnd::WaveletBoundary)
+    # TODO implement this
     # For odd length, we include one more scaling coefficient than we have wavelet coefficients
-    dc_len = n >> 1  # = ceil(Int, (N-1)/2)
-    sc_len = n - dc_len
+    # dc_len = n >> 1  # = ceil(Int, (N-1)/2)
+    # sc_len = n - dc_len
+
+    # For odd length, the number of scaling and wavelet coefficients is equal
+    sc_len = (n + 1) >> 1
+    dc_len = sc_len
     (sc_len, dc_len)
 end
 
