@@ -38,27 +38,8 @@ evaluate_primal_scalingfunction{N1,N2}(w::WT.CDF{N1,N2}, x::Number) =
 evaluate_primal_scalingfunction{N1,N2,T}(w::DWT.CDFWavelet{N1,N2,T}, x::Number) =
       evaluate_Bspline(Degree{N1-1}, x, eltype(w, x))
 
-# Implementation of cardinal B splines of order m
-# function evaluate_cardinalBSpline(m::Int, x::Number, T::Type)
-#   if m <= 0
-#     error("Order of cardinal B spline should be stricly positive")
-#   elseif m == 1
-#     _evaluate_constant_Bspline(x, T)
-#   elseif m == 2
-#     _evaluate_linear_Bspline(x, T)
-#   elseif m == 3
-#     _evaluate_quadratic_Bspline(x, T)
-#   elseif m == 4
-#     _evaluate_cubic_Bspline(x, T)
-#   elseif m == 5
-#     _evaluate_biquadratic_Bspline(x, T)
-#   else
-#     T(x)/T(m-1)*evaluate_cardinalBSpline(m-1, x, T) +
-#         (T(m)-T(x))/T(m-1)*evaluate_cardinalBSpline(m-1, x-1, T)
-#   end
-# end
-
-typealias Degree{K} Val{K}
+# Implementation of cardinal B splines of degree N
+typealias Degree{N} Val{N}
 
 evaluate_Bspline(N::Int, x, T::Type) = evaluate_Bspline(Degree{N}, x, T)
 function evaluate_Bspline{N}(::Type{Degree{N}}, x, T::Type)

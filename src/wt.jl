@@ -120,8 +120,7 @@ end
 # TODO implement cdf for filtering
 # Parameterized BiOrtho classes
 for (TYPE, NAMEBASE, RANGE1, RANGE2) in (
-#        (:CDF, "cdf", [9], [7]),
-        (:CDF, "cdf", [1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6], [1,3,5,2,4,6,1,3,5,2,4,6,1,3,5,2,4,6]),
+        (:CDF, "cdf", [9], [7]),
         )
     @eval begin
         immutable $TYPE{N1, N2} <: BiOrthoWaveletClass end
