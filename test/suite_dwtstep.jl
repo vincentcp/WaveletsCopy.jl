@@ -39,8 +39,8 @@ end
         fb = Filterbank(filter)
         for bound in (DWT.perbound, DWT.symbound)
           for L in 1:n
-            y = DWT.dwt(x, L, fb, DWT.perbound)
-            xx = DWT.idwt(y, L, fb, DWT.perbound)
+            y = DWT.dwt(x, fb, DWT.perbound, L)
+            xx = DWT.idwt(y, fb, DWT.perbound, L)
             @test (norm(xx-x)) < 1e-10
           end
         end

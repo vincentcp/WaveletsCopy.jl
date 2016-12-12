@@ -1,5 +1,5 @@
 # dwttransform.jl
-using ..Util: isdyadic
+using ..Util: isdyadic, maxtransformlevels
 
 import ..Transforms: dwt, idwt
 export dwt, idwt
@@ -11,7 +11,7 @@ end
 function idwt!
 end
 
-function dwt!(y, x, L::Int, fb::Filterbank, bnd::WaveletBoundary)
+function dwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x))
   lx = length(x)
   @assert 2^L <= lx
   copy!(y,x)
@@ -22,19 +22,19 @@ function dwt!(y, x, L::Int, fb::Filterbank, bnd::WaveletBoundary)
   end
 end
 
-function dwt(x, L::Int, fb::Filterbank, bnd::WaveletBoundary)
+function dwt(x, fb::Filterbank, bnd::WaveletBoundary,  L::Int=maxtransformlevels(x))
   @assert isdyadic(x)
   T = promote_type(eltype(x), eltype(fb))
   y = zeros(T, length(x))
-  dwt!(y, x, L, fb, bnd)
+  dwt!(y, x, fb, bnd, L)
   y
 end
 
-function idwt!(y, x, L::Int, fb::Filterbank, bnd::WaveletBoundary)
+function idwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x))
   lx = length(x)
   @assert 2^L <= lx
   copy!(y,x)
-  lx = dyadicdivide(lx, L)
+  lx = lx >> L
   for l in L:-1:1
     lx2 = lx << 1
     t = DWT.idwtstep(y[1:lx], y[lx+1:lx2], fb, bnd)
@@ -43,17 +43,10 @@ function idwt!(y, x, L::Int, fb::Filterbank, bnd::WaveletBoundary)
   end
 end
 
-function idwt(x, L::Int, fb::Filterbank, bnd::WaveletBoundary)
+function idwt(x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x))
   @assert isdyadic(x)
   T = promote_type(eltype(x), eltype(fb))
   y = zeros(T, length(x))
-  idwt!(y, x, L, fb, bnd)
+  idwt!(y, x, fb, bnd, L)
   y
-end
-
-@inline function dyadicdivide(lx::Int, L::Int)
-  for l in 1:L
-    lx = lx >> 1
-  end
-  lx
 end

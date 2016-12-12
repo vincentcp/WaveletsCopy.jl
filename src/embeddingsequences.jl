@@ -16,6 +16,12 @@ getindex(s::PeriodicEmbedding, x, k) = 0 <= k < length(x) ? x[k+1] : x[mod(k, le
 immutable SymmetricEmbedding{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: EmbeddingSequence
 end
 
+immutable FunctionEmbedding <: EmbeddingSequence
+  f :: Function
+end
+
+getindex(s::FunctionEmbedding, x, k) = s.f(k)
+
 
 SymmetricEmbedding_wholepoint_even() = SymmetricEmbedding{:wp,:wp,:even,:even}()
 
@@ -56,5 +62,3 @@ immutable CompactEmbedding <: EmbeddingSequence
 end
 
 getindex(s::CompactEmbedding, x, i) = x[s.offset+i+1]
-
-

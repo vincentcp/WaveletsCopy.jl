@@ -36,7 +36,19 @@ imapindex(s::CompactSequence, l) = l + s.offset - 1
 # TODO: test whether there is overhead in calling length(s.a), rather than having the s.n field.
 getindex(s::CompactSequence, k::Int) =
     (k < s.offset) || (k >= s.offset+s.n) ? zero(eltype(s)) : getindex(s.a, k-s.offset+1)
+function getindex(s::CompactSequence, c::Range)
+  e = Array(eltype(s), length(c))
+end
 
+function Base.getindex(s::CompactSequence, c::UnitRange)
+  e = zeros(eltype(s), length(c))
+  i1 = max(s.offset, c[1])
+  i2 = min(s.offset + s.n-1, c[end])
+  e1 = max(1, 1-c[1]+s.offset)
+  e2 = min(length(e),i2-i1+1-c[1]+s.offset)
+  e[e1:e2] = s.a[i1-s.offset+1:i2-s.offset+1]
+  e
+end
 
 firstindex(s::CompactSequence) = imapindex(s, 1)
 

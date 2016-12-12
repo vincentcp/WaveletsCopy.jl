@@ -3,33 +3,6 @@ using Base.Test
 using Wavelets
 
 WTS = Wavelets
-function constantbsplinetest()
-  @testset "constant B spline" begin
-    for x in linspace(-1.3,1.3)
-      for w in (:(WT.db1), :(WT.haar), :(WT.cdf11), :(DWT.db1), :(DWT.cdf11))
-        @eval begin
-          s = Wavelets.evaluate_primal_scalingfunction($w,$x)
-          @test 0.0 <= $x < 1. ? s==1. : s==0.
-        end
-      end
-    end
-  end
-end
-
-function linearbsplintest()
-  @testset "linear B spline" begin
-    for x in linspace(-1.3,2.3)
-      s = Wavelets.evaluate_primal_scalingfunction(WT.cdf22,x)
-      if 0.0 <= x < 1.
-        @test x≈s
-      elseif 1. <= x < 2.
-        @test -x+2≈s
-      else
-        @test 0.0≈s
-      end
-    end
-  end
-end
 
 function elementarypropsofsplinetest()
   @testset "Elementary properties" begin
@@ -69,7 +42,7 @@ function cascadetest()
         f = x->WTS.evaluate_Bspline(N-1, x, Float64)
         h = DWT.cdf_coef(N,T)
         x = Wavelets.dyadicpointsofcascade(h,L)
-        g = Wavelets.cascade_algorithm(h,L)
+        g = Wavelets.cascade_algorithm(h,L=L)
         F = map(f,x)
         @test (norm(g-F))<tol
       end
@@ -77,20 +50,78 @@ function cascadetest()
   end
 end
 
-constantbsplinetest()
-linearbsplintest()
-elementarypropsofsplinetest()
-cascadetest()
+function primalfunctiontest()
+  @testset "primal function of cdf" begin
+    T = Float64
+    tol = sqrt(eps(T))
+    for L in 1:5
+      for N in 1:6
+        w = DWT.CDFWavelet{N,N,T}()
+        f = x->WTS.evaluate_primal_scalingfunction(w, x)
+        x = Wavelets.dyadicpointsofcascade(w,L)
+        g = Wavelets.cascade_algorithm(w,dual=false,L=L)
+        F = map(f,x)
+        @test (norm(g-F))<tol
+      end
+    end
+  end
+end
 
+function scalingtest()
+  @testset "scaling_coefficients of constant function" begin
+    T = Float64
+    tol = sqrt(eps(T))
+    for w in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
+      for L in 4:10
+        c = Wavelets.scaling_coefficients(x->one(T), w, PeriodicEmbedding(), L=L)
+        for i in 1:length(c)
+          @test (abs(c[i]-2.0^(-L/2)) < tol)
+        end
+      end
+    end
+  end
+  @testset "scaling_coefficients of triangle function with cdf(2,x)" begin
+    T = Float64
+    tol = sqrt(eps(T))
+    for w in (DWT.cdf22, DWT.cdf24, DWT.cdf26)
+      for L in 4:10
+        c = Wavelets.scaling_coefficients(x->T(x), DWT.cdf22, nothing, L=L)
+        c_control = 2.0^(-3L/2)*[0:(1<<L-1)...]
+        for i in 0:length(c)-1
+          @test abs(c[i+1]-2.0^(-3L/2)*i) < tol
+        end
+      end
+    end
+  end
+end
+
+# elementarypropsofsplinetest()
+# cascadetest()
+# primalfunctiontest()
+scalingtest()
+
+
+# Plot Daubechies wavelets
 # using Plots
 # gr()
 # plot()
-# for i in 1:5
+# for i in 2:2:6
 #   f = Symbol(string("db",i))
 #   @eval h = DWT.primal_scalingfilter(DWT.$f).a
-#   x = Wavelets.dyadicpointsofcascade(h)
-#   g = Wavelets.cascade_algorithm(h)
+#   println(h)
+#   x = Wavelets.dyadicpointsofcascade(h,10)
+#   g = Wavelets.cascade_algorithm(h,L=10)
 #   plot!(x,g)
 # end
 # plot!()
-#
+
+# Plot spline wavelets
+# using Plots; gr(); plot()
+# x = linspace(-5,5,1000)
+# for i in 1:6
+#   c = Symbol(string("cdf",i,i))
+#   @eval f = x->Wavelets.evaluate_primal_scalingfunction(DWT.$c, x)
+#   ff = map(f, x)
+#   plot!(x, ff)
+# end
+# plot!()

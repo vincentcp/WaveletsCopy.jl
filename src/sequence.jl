@@ -42,7 +42,7 @@ export CompactSequence, FixedSequence
 export UpsampledSequence, DownsampledSequence, ReversedSequence, ShiftedSequence
 
 # Embedding sequences
-export EmbeddingSequence, PeriodicEmbedding, SymmetricEmbedding
+export EmbeddingSequence, PeriodicEmbedding, SymmetricEmbedding, FunctionEmbedding
 
 export shift, reverse, upsample, downsample
 
