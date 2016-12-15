@@ -23,6 +23,8 @@ CompactSequence{T}(a::AbstractVector{T}, offset = 0) = CompactSequence{T}(collec
 
 eltype{T}(::Type{CompactSequence{T}}) = T
 
+promote_eltype{T1,T2}(s::CompactSequence{T1}, ::Type{T2}) = CompactSequence(convert(Vector{promote_type(T1,T2)}, s.a), s.offset)
+
 shift(s::CompactSequence, k::Int) = CompactSequence(s.a, s.offset+k)
 
 sublength(s::CompactSequence) = s.n

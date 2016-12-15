@@ -118,7 +118,7 @@ cascade_algorithm(w::DWT.DiscreteWavelet; dual=true, options...) = dual?
     cascade_algorithm(DWT.dual_scalingfilter(w); options...) :
     cascade_algorithm(DWT.primal_scalingfilter(w); options...)
 cascade_algorithm(s::CompactSequence; options...) = cascade_algorithm(s.a; options...)
-function cascade_algorithm(h; L = 0, tol = 1e-8, options...)
+function cascade_algorithm(h; L = 0, tol = sqrt(eps(eltype(h))), options...)
   T = eltype(h)
   @assert sum(h)≈sqrt(T(2))
   N = length(h)
@@ -127,7 +127,7 @@ function cascade_algorithm(h; L = 0, tol = 1e-8, options...)
   # see http://cnx.org/contents/0nnvPGYf@7/Computing-the-Scaling-Function for more mathematics
 
   # Create matrix from filter coefficients
-  H = _get_H(h, N, T)
+  H = _get_H(h)
   # Find eigenvector eigv
   E = eigfact(H)
   index = find(abs(E[:values]-1/sqrt(T(2))).<tol)
@@ -164,7 +164,9 @@ dyadicpointsofcascade(h, L::Int=10, offset::Int=0) = dyadicpointsofcascade(eltyp
 dyadicpointsofcascade(T::Type, H::Int, L::Int, offset::Int=0) = L==0 ?
       T(offset)+linspace(T(0),T(H-1),H) : T(offset)+linspace(T(0),T(H-1),2^L*(H-1)+1)
 
-function _get_H(h, N, T)
+function _get_H(h)
+  N = length(h)
+  T = eltype(h)
   M = zeros(T,N,N)
   for l in 1:2:N
     hh = h[l]
@@ -182,41 +184,38 @@ function _get_H(h, N, T)
 end
 
 # On the interval 0 1
+function scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, fembedding, a=0, b=1; options...)
+  T = promote_type(eltype(w), eltype(a), eltype(b))
+  a = T(a); b = T(b)
+  (b-a)*scaling_coefficients(x->f((b-a)*x+a), DWT.dual_scalingfilter(w), fembedding; options...)
+end
 
-scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, fembedding; options...) =
-      scaling_coefficients(f, DWT.dual_scalingfilter(w), fembedding; options...)
-function scaling_coefficients(f::Function, s::CompactSequence, fembedding; L=4, options...)
-  filter = _scalingcoefficient_filter(s)
-  x = linspace(0, 1, 1<<L + 1)
-  x = x[1:end-1]; f2 = k -> f(k*2.0^(-L))
-  # iseven(filter.n) ? (x = midpoints(x); f2 = k-> f((k+.5)*2.0^(-L)) ) :
-  #   (x = x[1:end-1]; f2 = k -> f(k*2.0^(-L)))
-
-
-
+function scaling_coefficients{T}(f::Function, s::CompactSequence{T}, fembedding; L=4, options...)
+  x = convert(LinSpace{T}, linspace(0, 1, 1<<L + 1)[1:end-1])
   fcoefs = map(f, x)
-  T = promote_type(eltype(fcoefs), eltype(s))
   fcoefs = convert(Array{T}, fcoefs)
-  fembedding == nothing && (fembedding = FunctionEmbedding(f2))
-  scaling_coefficients(fcoefs, filter, fembedding)
+  filter = _scalingcoefficient_filter(s)
+  fembedding == nothing && (fembedding = FunctionEmbedding(k -> f(k*T(2)^(-T(L)))))
+  scaling_coefficients(fcoefs, filter, fembedding; options...)
 end
 
-function scaling_coefficients{T}(f, filter::CompactSequence{T}, fembedding)
+function scaling_coefficients{T}(f, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
   @assert eltype(f)==T
-  c = similar(f)
-  scaling_coefficients!(c, f, filter, fembedding)
+  c = Array(T,n)
+  scaling_coefficients!(c, f, filter, fembedding; options...)
 end
-function scaling_coefficients!{T}(c, f, filter::CompactSequence{T}, fembedding)
+
+function scaling_coefficients!{T}(c, f, filter::CompactSequence{T}, fembedding; offset::Int=0, options...)
   # TODO write a convolution function
   # convolution between low pass filter and function values gives approximation of scaling coefficients
-  for j in 0:length(c)-1
+  for j in offset:offset+length(c)-1
     ci = zero(T)
     for l in firstindex(filter):lastindex(filter)
       ci += filter[l]*fembedding[f, j-l]
     end
-    c[j+1] = ci
+    c[j+1-offset] = ci
   end
-  T(1)/T(sqrt(length(c)))*c
+  T(1)/T(sqrt(length(f)))*c
 end
 
 function _scalingcoefficient_filter(f::CompactSequence)
@@ -231,9 +230,3 @@ function _scalingcoefficient_filter(f::CompactSequence)
   # filter = CompactSequence(phi_eval, f.offset+1)
   reverse(CompactSequence(cascade_algorithm(f), f.offset))
 end
-
-_scalingcoefficient_filter(DWT.primal_scalingfilter(DWT.cdf22))
-#
-# DWT.dual_scalingfilter(DWT.db1)
-# cascade_algorithm(DWT.dual_scalingfilter(DWT.db1))
-# _scalingcoefficient_filter(DWT.db1)

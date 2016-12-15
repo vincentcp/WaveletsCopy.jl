@@ -69,10 +69,22 @@ eltype{T}(::Type{DiscreteWavelet{T}}) = T
 eltype{W <: DiscreteWavelet}(::Type{W}) = eltype(supertype(W))
 eltype(w::DiscreteWavelet) = eltype(typeof(w))
 
+# Vanishing Moments
+primal_vanishingmoments{T}(w::DiscreteWavelet{T}) = primal_vanishingmoments(typeof(w))
+dual_vanishingmoments{T}(w::DiscreteWavelet{T}) = dual_vanishingmoments(typeof(w))
+
+primal_vanishingmoments{WT<:DiscreteWavelet}(::Type{WT}) = error("primal_vanishingmoments not implemented for wavelet ", WT)
+dual_vanishingmoments{WT<:DiscreteWavelet}(W::Type{WT}) = primal_vanishingmoments(W)
+# Support
+primal_support{WT<:DiscreteWavelet}(::Type{WT}) = error("primal_support not implemented for wavelet ", WT)
+dual_support{WT<:DiscreteWavelet}(W::Type{WT}) = primal_support(W)
+
+primal_support{T}(w::DiscreteWavelet{T}) = primal_support(typeof(w))
+dual_support{T}(w::DiscreteWavelet{T}) = dual_support(typeof(w))
+
 for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal)
     @eval $op(w::DiscreteWavelet) = $op(typeof(w))()
 end
-
 
 analysis_lowpassfilter(w::DiscreteWavelet) = primal_scalingfilter(w)
 analysis_highpassfilter(w::DiscreteWavelet) = primal_waveletfilter(w)

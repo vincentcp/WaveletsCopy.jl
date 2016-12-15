@@ -9,22 +9,34 @@ is_symmetric{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = True
 is_biorthogonal{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = True
 
 T0 = Float64
-
-IMPLEMENTED_CDF_WAVELETS = []
-for N1 in 1:6
-  iseven(N1) ? (N2I = 2:2:6) : (N2I = 1:2:6)
-  for N2 in N2I
-    fname = string("cdf",N1,N2)
-    cdf = Symbol(fname)
-    T = CDFWavelet{N1,N2,T0}
-    @eval begin
-      $cdf = $T()
-      name(::Type{$T}) = $fname
-      class(::$T) = string($T)
-      push!(IMPLEMENTED_CDF_WAVELETS,$cdf)
+for ET in (Float16,      Float32,      Float64,      BigFloat)
+  implemented = Symbol(string("IMPLEMENTED_CDF_WAVELETS_",ET))
+  @eval $implemented = []
+  for N1 in 1:6
+    iseven(N1) ? (N2I = 2:2:6) : (N2I = 1:2:6)
+    for N2 in N2I
+      fname = string("cdf_",ET,"_",N1,N2)
+      cdf = Symbol(fname)
+      T = CDFWavelet{N1,N2,ET}
+      @eval begin
+        $cdf = $T()
+        $ET != $T0 && (name(::Type{$T}) = $fname)
+        class(::$T) = string($T)
+        push!($implemented,$cdf)
+      end
+      if ET == T0
+        fname = string("cdf",N1,N2)
+        cdf64 = Symbol(fname)
+        @eval begin
+          $cdf64 = $cdf
+          name(::Type{$T}) = $fname
+        end
+      end
     end
   end
 end
+IMPLEMENTED_CDF_WAVELETS = IMPLEMENTED_CDF_WAVELETS_Float64
+
 
 # Explicit listing of some coefficient follows.
 # The format is a tuple: (n,h). The filter coefficients are sqrt(2)/n * h.
@@ -76,4 +88,16 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
                       (5, 1, :cdf51_htilde), (5, 3, :cdf53_htilde), (5, 5, :cdf55_htilde),
                       (6, 2, :cdf62_htilde), (6, 4, :cdf64_htilde), (6, 6, :cdf66_htilde)  )
     @eval dual_scalingfilter{T}(w::CDFWavelet{$p,$q,T}) = CompactSequence(sqrt(T(2))/$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
+    @eval dual_support{T0}(::Type{CDFWavelet{$p,$q,T0}}) = (symmetric_offset(length($htilde[2])), symmetric_offset(length($htilde[2]))+length($htilde[2])-1)
 end
+
+primal_vanishingmoments{N1,N2,T}(::CDFWavelet{N1,N2,T}) = N1
+dual_vanishingmoments{N1,N2,T}(::CDFWavelet{N1,N2,T}) = N2
+
+primal_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N1
+dual_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N2
+
+primal_support{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
+primal_support{N1,N2,T}(w::CDFWavelet{N1,N2,T}) = primal_support(typeof(w))
+
+dual_support{N1,N2,T}(w::CDFWavelet{N1,N2,T}) = dual_support(typeof(w))

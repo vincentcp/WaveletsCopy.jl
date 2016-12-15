@@ -40,3 +40,6 @@ for N in 1:10
     push!(IMPLEMENTED_DB_WAVELETS,$db)
   end
 end
+
+primal_support{N,T}(::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+primal_vanishingmoments{N,T}(::Type{DaubechiesWavelet{N,T}}) = N

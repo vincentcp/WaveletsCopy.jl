@@ -17,6 +17,8 @@ import ..Util: upsample, downsample
 # Main abstract types
 export Sequence, ExtensionSequence, DerivedSequence
 
+# Utility function
+export promote_eltype
 # Traits
 export True, False, hascompactsupport
 
@@ -157,6 +159,6 @@ include("derivedsequences.jl")
 include("embeddingsequences.jl")
 
 
-
+promote_eltype{T}(s::CompactSequence{T}, ::Type{T}) = s
 
 end # module
