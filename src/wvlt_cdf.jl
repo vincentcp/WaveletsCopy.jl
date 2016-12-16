@@ -91,9 +91,6 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
     @eval dual_support{T0}(::Type{CDFWavelet{$p,$q,T0}}) = (symmetric_offset(length($htilde[2])), symmetric_offset(length($htilde[2]))+length($htilde[2])-1)
 end
 
-primal_vanishingmoments{N1,N2,T}(::CDFWavelet{N1,N2,T}) = N1
-dual_vanishingmoments{N1,N2,T}(::CDFWavelet{N1,N2,T}) = N2
-
 primal_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N1
 dual_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N2
 

@@ -27,15 +27,8 @@ function evaluate_primal_scalingfunction{W<:WLT}(wlt::W, x::Number)
   error("not implemented")
 end
 
-for W in (:(WT.Daubechies{1}), :(WT.Haar))
-  @eval evaluate_primal_scalingfunction(::$W, x::Number) = evaluate_Bspline(Degree{0}, x, eltype(x, $W))
-end
-
 evaluate_primal_scalingfunction{T}(w::DWT.HaarWavelet{T}, x::Number) =
       evaluate_Bspline(Degree{0}, x, eltype(x, w))
-
-evaluate_primal_scalingfunction{N1,N2}(w::WT.CDF{N1,N2}, x::Number) =
-      evaluate_Bspline(Degree{N1-1}, x-T(DWT.symmetric_offset(N1+1)), eltype(w, x))
 
 evaluate_primal_scalingfunction{N1,N2,T}(w::DWT.CDFWavelet{N1,N2,T}, x::Number) =
       evaluate_Bspline(Degree{N1-1}, x-T(DWT.symmetric_offset(N1+1)), eltype(w, x))

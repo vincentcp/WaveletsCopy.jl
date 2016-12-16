@@ -63,6 +63,12 @@ function primalfunctiontest()
         F = map(f,x)
         @test (norm(g-F))<tol
       end
+      w = DWT.HaarWavelet{T}()
+      f = x->WTS.evaluate_primal_scalingfunction(w, x)
+      x = Wavelets.dyadicpointsofcascade(w,L)
+      g = Wavelets.cascade_algorithm(w,dual=false,L=L)
+      F = map(f,x)
+      @test (norm(g-F))<tol
     end
   end
 end
@@ -163,7 +169,18 @@ function vanishing_moments_test()
     end
   end
 end
-
+@test DWT.is_biorthogonal(DWT.cdf11)==True()
+@test DWT.is_biorthogonal(DWT.db4)==True()
+@test DWT.is_orthogonal(DWT.db1)==True()
+@test DWT.is_semiorthogonal(DWT.db5)==True()
+@test DWT.is_symmetric(DWT.cdf11)==True()
+@test DWT.is_symmetric(DWT.cdf33)==True()
+@test DWT.is_symmetric(DWT.db1)==True()
+@test Wavelets.name(DWT.db1) == "db1"
+@test Wavelets.name(DWT.cdf11) == "cdf11"
+@test Wavelets.name(DWT.cdf_Float16_11) == "cdf_Float16_11"
+@test Wavelets.class(DWT.db1) == "Wavelets.DWT.DaubechiesWavelet{1,Float64}"
+@test Wavelets.class(DWT.cdf11) == "Wavelets.DWT.CDFWavelet{1,1,Float64}"
 elementarypropsofsplinetest()
 cascadetest()
 primalfunctiontest()

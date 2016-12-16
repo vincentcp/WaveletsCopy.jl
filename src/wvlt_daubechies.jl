@@ -18,10 +18,6 @@ db4_h = [0.23037781330889648, 0.7148465705529157, 0.6308807679298589, -0.0279837
 _db1_h(T::Type) = CompactSequence(T(1)/sqrt(T(2))*db1_h, 0)
 _db2_h(T::Type) = CompactSequence(1/sqrt(T(2))*[(1+sqrt(T(3)))/4, (3+sqrt(T(3)))/4, (3-sqrt(T(3)))/4, (1-sqrt(T(3)))/4], 0)
 
-primal_scalingfilter{T}(w::DaubechiesWavelet{1,T}) = _db1_h(T)
-
-primal_scalingfilter{T}(w::DaubechiesWavelet{2,T}) = _db2_h(T)
-
 T0 = Float64
 primal_scalingfilter(w::DaubechiesWavelet{1,T0}) = _db1_h(T0)
 primal_scalingfilter(w::DaubechiesWavelet{2,T0}) = _db2_h(T0)

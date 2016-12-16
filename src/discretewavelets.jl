@@ -63,6 +63,7 @@ is_symmetric{W <: DiscreteWavelet}(::Type{W}) = False
 # Orthogonality traits
 is_orthogonal{W <: DiscreteWavelet}(::Type{W}) = False
 is_biorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
+is_semiorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
 # Not sure yet whether this one makes sense:
 #is_semiorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
 eltype{T}(::Type{DiscreteWavelet{T}}) = T
@@ -82,7 +83,7 @@ dual_support{WT<:DiscreteWavelet}(W::Type{WT}) = primal_support(W)
 primal_support{T}(w::DiscreteWavelet{T}) = primal_support(typeof(w))
 dual_support{T}(w::DiscreteWavelet{T}) = dual_support(typeof(w))
 
-for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal)
+for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
     @eval $op(w::DiscreteWavelet) = $op(typeof(w))()
 end
 
