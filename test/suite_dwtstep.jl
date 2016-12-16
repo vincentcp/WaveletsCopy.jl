@@ -6,10 +6,10 @@ typealias W Wavelets
 DWT.perbound
 DWT.symbound
 DWT.zerobound
-
+rng = MersenneTwister(3000)
 jumpfunction(x) = (-0.5 < x < 0.5 ? 1.0: 0.0) + (-0.25 < x < .75 ? 1.0 : 0.0)
 characteristicfunction(x) = (0<x<1) ? 1.0 : 0.0
-randomfunction(x) = rand()
+randomfunction(x) = rand(rng)
 
 @testset "Inversibility of dwtstep" begin
   for N in 10:10:1000
