@@ -5,9 +5,7 @@ notifications:
   email: vincent.coppe@cs.kuleuven.be
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-
 script:
-
   - julia -e 'Pkg.clone(pwd())'
   - julia -e 'Pkg.build("Wavelets")'
   - julia --check-bounds=yes -e 'Pkg.test("Wavelets", coverage=true)'
