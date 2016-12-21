@@ -112,9 +112,17 @@ reverse(s::CompactSequence) = CompactSequence(flipdim(s.a, 1), -lastindex(s))
 
 conj(s::CompactSequence) = CompactSequence(conj(s.a), firstindex(s))
 
+moment(s::CompactSequence,i) = sum(s[k]*k^i for k in firstindex(s):lastindex(s))
 
+Base.sum(s::CompactSequence) = sum(s.a)
 
+widen(s::CompactSequence) = CompactSequence(widen(s.a), s.offset)
+widen{T,N}(a::Array{T,N}) = convert(Array{widen(T),N}, a)
 
+for op in (:+, :-, :/, :*)
+  @eval ($op)(x::Number, s::CompactSequence) = CompactSequence(($op)(s.a,x),s.offset)
+  @eval ($op)(s::CompactSequence, x::Number) = ($op)(x, s)
+end
 
 #########################################
 # FixedSequence

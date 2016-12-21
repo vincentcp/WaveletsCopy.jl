@@ -7,8 +7,11 @@ using ..Filterbanks
 typealias False Val{false}
 typealias True Val{true}
 
+
 import ..Filterbanks: Filterbank
 import Base: eltype
+# Convenience method
+eltype(x, y) = promote_type(eltype(x), eltype(y))
 import Wavelets: name
 
 export filter
@@ -17,6 +20,10 @@ export filter
 export is_symmetric, is_orthogonal, is_biorthogonal
 
 export name, class
+
+export primal_scalingfilter, dual_scalingfilter, primal_support, dual_support
+export primal_vanishingmoments, dual_vanishingmoments, primal_waveletfilter, dual_waveletfilter
+export primal_coefficientfilter, dual_coefficientfilter
 
 # BOUNDARY TYPES
 
@@ -70,23 +77,27 @@ eltype{T}(::Type{DiscreteWavelet{T}}) = T
 eltype{W <: DiscreteWavelet}(::Type{W}) = eltype(supertype(W))
 eltype(w::DiscreteWavelet) = eltype(typeof(w))
 
+for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
+    @eval $op(w::DiscreteWavelet) = $op(typeof(w))()
+end
+
 # Vanishing Moments
 primal_vanishingmoments{T}(w::DiscreteWavelet{T}) = primal_vanishingmoments(typeof(w))
 dual_vanishingmoments{T}(w::DiscreteWavelet{T}) = dual_vanishingmoments(typeof(w))
 
 primal_vanishingmoments{WT<:DiscreteWavelet}(::Type{WT}) = error("primal_vanishingmoments not implemented for wavelet ", WT)
-dual_vanishingmoments{WT<:DiscreteWavelet}(W::Type{WT}) = primal_vanishingmoments(W)
+dual_vanishingmoments{WT<:DiscreteWavelet}(W::Type{WT}) = _primal_vanishingmoments(W, is_orthogonal(W))
+_primal_vanishingmoments(W, is_orthogonal::Type{True}) = primal_vanishingmoments(W)
+
 # Support
 primal_support{WT<:DiscreteWavelet}(::Type{WT}) = error("primal_support not implemented for wavelet ", WT)
-dual_support{WT<:DiscreteWavelet}(W::Type{WT}) = primal_support(W)
+dual_support{WT<:DiscreteWavelet}(W::Type{WT}) = _primal_support(W, is_orthogonal(W))
+_primal_support(W, is_orthogonal::Type{True}) = primal_support(W)
 
 primal_support{T}(w::DiscreteWavelet{T}) = primal_support(typeof(w))
 dual_support{T}(w::DiscreteWavelet{T}) = dual_support(typeof(w))
 
-for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
-    @eval $op(w::DiscreteWavelet) = $op(typeof(w))()
-end
-
+# Filters
 analysis_lowpassfilter(w::DiscreteWavelet) = primal_scalingfilter(w)
 analysis_highpassfilter(w::DiscreteWavelet) = primal_waveletfilter(w)
 
@@ -100,6 +111,29 @@ primal_waveletfilter(w) = alternating_flip(dual_scalingfilter(w))
 
 dual_scalingfilter(w::DiscreteWavelet) = _dual_scalingfilter(w, is_orthogonal(w))
 _dual_scalingfilter(w, is_orthogonal::True) = primal_scalingfilter(w)
+
+dual_coefficientfilter(w::DiscreteWavelet) = _dual_coefficientfilter(w, is_orthogonal(w))
+_dual_coefficientfilter(w, is_orthogonal::True) = primal_coefficientfilter(w)
+
+
+"""
+  Evaluate the shifted and dilated scaling function of a wavelet in a point x.
+
+  ϕ_jk = 2^(k/2) ϕ(2^k-j)
+"""
+evaluate_transformed_primal_scalingfunction{W<:DiscreteWavelet}(wlt::W, x::Number, k::Int=0, j::Int=0) =
+    2.0^(k/2)*evaluate_primal_scalingfunction(wlt, 2.0^k-j)
+
+"""
+  Evaluate the primal scaling function of a wavelet in a point x.
+
+  ϕ(x)
+"""
+function evaluate_primal_scalingfunction end
+evaluate_primal_scalingfunction{W<:DiscreteWavelet}(wlt::W, x::Number) = error("No explicit formula of scaling function provided for wavelet: ", wlt)
+evaluate_dual_scalingfunction{W<:DiscreteWavelet}(wlt::W, x::Number) =
+    _evaluate_dual_scaling_function(wlt, x, is_orthogonal(wlt))
+_evaluate_dual_scaling_function{W<:DiscreteWavelet}(wlt::W, x::Number, is_orthogonal::True) = evaluate_primal_scalingfunction(wlt, x)
 
 Filterbank(w::DiscreteWavelet) =
     Filterbank( FilterPair(primal_scalingfilter(w), primal_waveletfilter(w)),
@@ -115,15 +149,21 @@ immutable DWT_Data
     transformtype   ::  TransformType
 end
 
+# Transformation of function evaluations on dyadic grid to scaling coefficients
+include("scaling_coefficients.jl")
 
+# Transformation of scaling coefficients to wavelet coefficients
 include("dwtstep.jl")
 include("dwttransform.jl")
+
 # Convenience function
 name{T}(::T) = name(T)
 name{T}(::Type{T}) = "Not defined"
+include("util/cardinal_b_splines.jl")
+include("util/cascade.jl")
+
 include("wvlt_daubechies.jl")
 include("wvlt_cdf.jl")
 
-
-
-end # module
+IMPLEMENTED_WAVELETS = (IMPLEMENTED_DB_WAVELETS..., IMPLEMENTED_CDF_WAVELETS...)
+end

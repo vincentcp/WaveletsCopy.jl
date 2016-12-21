@@ -24,6 +24,9 @@ primal_scalingfilter(w::DaubechiesWavelet{2,T0}) = _db2_h(T0)
 primal_scalingfilter(w::DaubechiesWavelet{4,T0}) = CompactSequence(db4_h, 0)
 primal_scalingfilter{N}(w::DaubechiesWavelet{N,T0}) = CompactSequence(daubechies(N), 0)
 
+primal_coefficientfilter{T}(w::DaubechiesWavelet{1,T}) = CompactSequence(db1_h)
+primal_coefficientfilter{N,T}(w::DaubechiesWavelet{N,T}) = sqrt(T(2))*primal_scalingfilter(w)
+
 IMPLEMENTED_DB_WAVELETS = []
 for N in 1:10
   fname = string("db",N)
@@ -39,3 +42,7 @@ end
 
 primal_support{N,T}(::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
 primal_vanishingmoments{N,T}(::Type{DaubechiesWavelet{N,T}}) = N
+
+using .Cardinal_b_splines
+evaluate_primal_scalingfunction{T}(w::DWT.HaarWavelet{T}, x::Number) =
+      evaluate_Bspline(0, x, eltype(x, w))

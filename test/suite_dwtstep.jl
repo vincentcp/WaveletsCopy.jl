@@ -2,7 +2,7 @@
 using Wavelets
 using Base.Test
 typealias W Wavelets
-
+P = 80
 DWT.perbound
 DWT.symbound
 DWT.zerobound
@@ -11,7 +11,7 @@ jumpfunction(x) = (-0.5 < x < 0.5 ? 1.0: 0.0) + (-0.25 < x < .75 ? 1.0 : 0.0)
 characteristicfunction(x) = (0<x<1) ? 1.0 : 0.0
 randomfunction(x) = rand(rng)
 
-@testset "Inversibility of dwtstep" begin
+@testset "$(rpad("Inversibility of dwtstep",P))"  begin
   for N in 10:10:1000
     t = linspace(-1,1,N)
     for f in (sin, characteristicfunction, randomfunction)
@@ -28,7 +28,7 @@ randomfunction(x) = rand(rng)
   end
 end
 
-@testset "Inversibility of dwt" begin
+@testset "$(rpad("Inversibility of dwt",P))"  begin
   T = Float64
   for n in 1:10
     N = 2^n

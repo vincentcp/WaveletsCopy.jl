@@ -6,9 +6,9 @@ using FixedSizeArrays
 
 import Base: eltype, getindex, setindex!, eachindex, collect
 
-import Base: &, |, *, transpose, ctranspose, conj
+import Base: &, |, *, transpose, ctranspose, conj, sum, +, -, /
 
-import Base: convert
+import Base: convert, widen
 
 import Base: reverse
 
