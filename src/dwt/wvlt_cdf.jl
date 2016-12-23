@@ -15,6 +15,9 @@ for ET in (Float16,      Float32,      Float64,      BigFloat)
   for N1 in 1:6
     iseven(N1) ? (N2I = 2:2:6) : (N2I = 1:2:6)
     for N2 in N2I
+      if N1 == 2 && N2 == 2
+        continue
+      end
       fname = string("cdf_",ET,"_",N1,N2)
       cdf = Symbol(fname)
       T = CDFWavelet{N1,N2,ET}

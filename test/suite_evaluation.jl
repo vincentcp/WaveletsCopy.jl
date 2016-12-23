@@ -41,12 +41,12 @@ function cascadetest()
   @testset "$(rpad("cascade_algorithm",P))"  begin
     T = Float64
     tol = sqrt(eps(T))
-    for L in 1:5
-      for N in 1:8
-        f = x->WTS.DWT.Cardinal_b_splines.evaluate_Bspline(N-1, x, Float64)
-        h = T(1)/sqrt(2)*DWT.cdf_coef(N)
-        x = Wavelets.DWT.dyadicpointsofcascade(h,L)
-        g = Wavelets.DWT.cascade_algorithm(h,L=L)
+    for L in 0:5
+      for N in 1:6
+        f = x->WTS.DWT.Cardinal_b_splines.evaluate_Bspline(N-1, x+(N>>1), Float64)
+        h = DWT.CDFWavelet{N,N,T}() #T(1)/sqrt(2)*DWT.cdf_coef(N)
+        x = Wavelets.DWT.dyadicpointsofcascade(h,L,dual=false)
+        g = Wavelets.DWT.cascade_algorithm(h,L,dual=false)
         F = map(f,x)
         @test (norm(g-F))<tol
       end
@@ -61,16 +61,16 @@ function primalfunctiontest()
     for L in 1:5
       for N in 1:6
         w = DWT.CDFWavelet{N,N,T}()
-        f = x->WTS.DWT.evaluate_primal_scalingfunction(w, x)
-        x = Wavelets.DWT.dyadicpointsofcascade(w,L)
-        g = Wavelets.DWT.cascade_algorithm(w,dual=false,L=L)
+        f = x->DWT.evaluate_primal_scalingfunction(w, x)
+        x = DWT.dyadicpointsofcascade(w,L, dual=false)
+        g = DWT.cascade_algorithm(w, L, dual=false)
         F = map(f,x)
         @test (norm(g-F))<tol
       end
       w = DWT.HaarWavelet{T}()
       f = x->WTS.DWT.evaluate_primal_scalingfunction(w, x)
-      x = Wavelets.DWT.dyadicpointsofcascade(w,L)
-      g = Wavelets.DWT.cascade_algorithm(w,dual=false,L=L)
+      x = DWT.dyadicpointsofcascade(w,L)
+      g = DWT.cascade_algorithm(w,L,dual=false)
       F = map(f,x)
       @test (norm(g-F))<tol
     end
@@ -83,11 +83,11 @@ function scalingtest()
     tol = sqrt(eps(T))
     for w in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
       for L in 4:10
-        c = Wavelets.DWT.scaling_coefficients(x->one(T), w, PeriodicEmbedding(), L=L)
+        c = Wavelets.DWT.scaling_coefficients(x->one(T), w, L, PeriodicEmbedding())
         for i in 1:length(c)
           @test (abs(c[i]-2.0^(-L/2)) < tol)
         end
-        c = Wavelets.DWT.scaling_coefficients(x->one(T), DWT.primal_scalingfilter(w), PeriodicEmbedding(), L=L)
+        c = Wavelets.DWT.scaling_coefficients(x->one(T), DWT.primal_scalingfilter(w), L, PeriodicEmbedding())
         for i in 1:length(c)
           @test (abs(c[i]-2.0^(-L/2)) < tol)
         end
@@ -99,11 +99,11 @@ function scalingtest()
     tol = sqrt(eps(T))
     for w in (DWT.cdf22, DWT.cdf24, DWT.cdf26)
       for L in 4:10
-        c = Wavelets.DWT.scaling_coefficients(x->T(x), DWT.cdf22, nothing, L=L)
+        c = Wavelets.DWT.scaling_coefficients(x->T(x), DWT.cdf22, L, nothing)
         for i in 0:length(c)-1
           @test abs(c[i+1]-2.0^(-3L/2)*i) < tol
         end
-        c = Wavelets.DWT.scaling_coefficients(x->T(x), DWT.primal_scalingfilter(DWT.cdf22), nothing, L=L)
+        c = Wavelets.DWT.scaling_coefficients(x->T(x), DWT.primal_scalingfilter(DWT.cdf22), L, nothing)
         for i in 0:length(c)-1
           @test abs(c[i+1]-2.0^(-3L/2)*i) < tol
         end
@@ -115,7 +115,7 @@ function scalingtest()
     tol = sqrt(eps(T))
     for w in (DWT.cdf22, DWT.cdf24, DWT.cdf26)
       for L in 4:10
-        c = Wavelets.DWT.scaling_coefficients(x->T(1/2*(x+1)), DWT.cdf22, nothing, -1, 1, L=L)
+        c = Wavelets.DWT.scaling_coefficients(x->T(1/2*(x+1)), DWT.cdf22, L, nothing, -1, 1)
         for i in 0:length(c)-1
           @test abs(c[i+1]-2*2.0^(-3L/2)*i) < tol
         end
@@ -132,7 +132,7 @@ function scalingtest()
         @eval begin
           for w in DWT.$implemented
             if DWT.primal_vanishingmoments(w) > $k
-              c = Wavelets.DWT.scaling_coefficients(x->$T(x)^$k, DWT.primal_scalingfilter(w), nothing, L=$L)
+              c = Wavelets.DWT.scaling_coefficients(x->$T(x)^$k, DWT.primal_scalingfilter(w), $L, nothing)
               s = DWT.primal_support(w)
               nodes = [s[1]:s[2]...]/2
               if iseven(DWT.primal_vanishingmoments(w)) && isodd($k)
@@ -146,6 +146,39 @@ function scalingtest()
               @test (norm(c[2]-c2_c) < $tol)
             end
           end
+        end
+      end
+    end
+  end
+end
+
+function vanishing_moments_test_dual()
+  @testset "$(rpad("Vanishing moments of dual scaling functions",P))"  begin
+    tol = sqrt(eps(Float64))
+    for w in DWT.IMPLEMENTED_WAVELETS
+      for d in 1:1
+        p = DWT.dual_vanishingmoments(w)-1
+        scaling_coefficients = DWT.scaling_coefficients(x->x^p, w, d, nothing)
+        for k in 0:(1<<d)-1
+          D = 10
+          scaling_function, x = DWT.scaling_function_in_dyadic_points(w,d,k,D,dual=true, points = true)
+          estimate = sum(scaling_function.*map(x->x^p,x))/(1<<D)
+          @test (norm(estimate-scaling_coefficients[k+1])<tol)
+        end
+      end
+    end
+  end
+  @testset "$(rpad("Vanishing moments of primal scaling functions",P))"  begin
+    tol = sqrt(eps(Float64))
+    for w in DWT.IMPLEMENTED_WAVELETS
+      for d in 1:1
+        p = DWT.primal_vanishingmoments(w)-1
+        scaling_coefficients = DWT.scaling_coefficients(x->x^p, w, d, nothing, dual=false)
+        for k in 0:(1<<d)-1
+          D = 10
+          scaling_function, x = DWT.scaling_function_in_dyadic_points(w,d,k,D,dual=false, points = true)
+          estimate = sum(scaling_function.*map(x->x^p,x))/(1<<D)
+          @test (norm(estimate-scaling_coefficients[k+1])<tol)
         end
       end
     end
@@ -200,6 +233,7 @@ end
 elementarypropsofsplinetest()
 cascadetest()
 primalfunctiontest()
+vanishing_moments_test_dual()
 scalingtest()
 supporttest()
 vanishing_moments_test()
@@ -214,7 +248,7 @@ filter_tests()
 #   f = Symbol(string("db",i))
 #   @eval begin
 #     x = Wavelets.DWT.dyadicpointsofcascade(DWT.$f,10)
-#     g = Wavelets.DWT.cascade_algorithm(DWT.$f,L=10)
+#     g = Wavelets.DWT.cascade_algorithm(DWT.$f,10)
 #   end
 #   plot!(x,g)
 # end

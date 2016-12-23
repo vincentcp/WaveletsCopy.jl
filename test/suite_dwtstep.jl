@@ -48,3 +48,23 @@ end
     end
   end
 end
+
+w = DWT.cdf66
+j = 1; k = 0; d = 10;
+f(x) = cos(2*pi*x)
+for d in j:10
+  dx = 1/(1<<d)
+  coefs = DWT.scaling_coefficients(f, w, d, DWT.perbound)
+  ff, xx = DWT.scaling_coefficients_to_dyadic_grid(coefs, w, grid=true)
+  println(norm(ff-map(f,xx))*dx)
+end
+
+w = DWT.cdf15
+j = 1; k = 0; d = 10;
+g(x) = x < .5 ? x : 1-x
+for d in j:10
+  dx = 1/(1<<d)
+  coefs = DWT.scaling_coefficients(g, w, d, DWT.perbound)
+  ff, xx = DWT.scaling_coefficients_to_dyadic_grid(coefs, w, grid=true)
+  println(norm(ff-map(g,xx))*dx)
+end

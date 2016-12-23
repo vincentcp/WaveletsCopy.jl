@@ -22,6 +22,7 @@ export is_symmetric, is_orthogonal, is_biorthogonal
 export name, class
 
 export primal_scalingfilter, dual_scalingfilter, primal_support, dual_support
+export primal_support_length, dual_support_length
 export primal_vanishingmoments, dual_vanishingmoments, primal_waveletfilter, dual_waveletfilter
 export primal_coefficientfilter, dual_coefficientfilter
 
@@ -82,9 +83,6 @@ for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
 end
 
 # Vanishing Moments
-primal_vanishingmoments{T}(w::DiscreteWavelet{T}) = primal_vanishingmoments(typeof(w))
-dual_vanishingmoments{T}(w::DiscreteWavelet{T}) = dual_vanishingmoments(typeof(w))
-
 primal_vanishingmoments{WT<:DiscreteWavelet}(::Type{WT}) = error("primal_vanishingmoments not implemented for wavelet ", WT)
 dual_vanishingmoments{WT<:DiscreteWavelet}(W::Type{WT}) = _primal_vanishingmoments(W, is_orthogonal(W))
 _primal_vanishingmoments(W, is_orthogonal::Type{True}) = primal_vanishingmoments(W)
@@ -94,8 +92,13 @@ primal_support{WT<:DiscreteWavelet}(::Type{WT}) = error("primal_support not impl
 dual_support{WT<:DiscreteWavelet}(W::Type{WT}) = _primal_support(W, is_orthogonal(W))
 _primal_support(W, is_orthogonal::Type{True}) = primal_support(W)
 
-primal_support{T}(w::DiscreteWavelet{T}) = primal_support(typeof(w))
-dual_support{T}(w::DiscreteWavelet{T}) = dual_support(typeof(w))
+primal_support_length{WT<:DiscreteWavelet}(::Type{WT}) = primal_support(WT)[2]-primal_support(WT)[1]
+dual_support_length{WT<:DiscreteWavelet}(::Type{WT}) = dual_support(WT)[2]-dual_support(WT)[1]
+
+for op in (:primal_vanishingmoments, :dual_vanishingmoments, :primal_support, :dual_support,
+    :primal_support_length, :dual_support_length)
+    @eval $op(w::DiscreteWavelet) = $op(typeof(w))
+end
 
 # Filters
 analysis_lowpassfilter(w::DiscreteWavelet) = primal_scalingfilter(w)
