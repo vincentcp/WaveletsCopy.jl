@@ -97,13 +97,13 @@ function scalingtest()
   @testset "$(rpad("scaling_coefficients of triangle function with cdf(2,x)",P))"  begin
     T = Float64
     tol = sqrt(eps(T))
-    for w in (DWT.cdf22, DWT.cdf24, DWT.cdf26)
+    for w in (DWT.cdf24, DWT.cdf26)
       for L in 4:10
-        c = Wavelets.DWT.scaling_coefficients(x->T(x), DWT.cdf22, L, nothing)
+        c = Wavelets.DWT.scaling_coefficients(x->T(x), w, L, nothing)
         for i in 0:length(c)-1
           @test abs(c[i+1]-2.0^(-3L/2)*i) < tol
         end
-        c = Wavelets.DWT.scaling_coefficients(x->T(x), DWT.primal_scalingfilter(DWT.cdf22), L, nothing)
+        c = Wavelets.DWT.scaling_coefficients(x->T(x), DWT.primal_scalingfilter(w), L, nothing)
         for i in 0:length(c)-1
           @test abs(c[i+1]-2.0^(-3L/2)*i) < tol
         end
@@ -113,9 +113,9 @@ function scalingtest()
   @testset "$(rpad("scaling coefficients of triangle function with cdf(2,x) - shifted",P))"  begin
     T = Float64
     tol = sqrt(eps(T))
-    for w in (DWT.cdf22, DWT.cdf24, DWT.cdf26)
+    for w in (DWT.cdf24, DWT.cdf26)
       for L in 4:10
-        c = Wavelets.DWT.scaling_coefficients(x->T(1/2*(x+1)), DWT.cdf22, L, nothing, -1, 1)
+        c = Wavelets.DWT.scaling_coefficients(x->T(1/2*(x+1)), w, L, nothing, -1, 1)
         for i in 0:length(c)-1
           @test abs(c[i+1]-2*2.0^(-3L/2)*i) < tol
         end
