@@ -1,19 +1,75 @@
 # cascade.jl
 export cascade_algorithm, dyadicpointsofcascade
 
-function scaling_function_in_dyadic_points(w::DiscreteWavelet, j=2, k=0, d=10; dual=false, points=false, options...)
-  @assert (d-j) >= 0
-  dual ?
-    f = scaling_function_in_dyadic_points(dual_scalingfilter(w), j, k, d; options...) :
-    f = scaling_function_in_dyadic_points(primal_scalingfilter(w), j, k, d; options...)
-  if points
-    f, dyadicpointsofcascade(w,j,k,d; dual=dual, options...)
-  else
-    f
+function _periodize{T}(n::Int, src::AbstractArray{T}, istart)
+  dest = zeros(T,n)
+  _periodize!(dest, src, istart)
+  dest
+end
+
+function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart)
+  L = length(dest)
+  j = mod(istart, L)
+  (j == 0) && (j = L)
+  for i in 1:length(dest)
+    dest[j] = sum( src[i:L:end] )
+    j += 1
+    (j > L) && (j = 1)
+  end
+
+end
+for (periodicfunction, simplefunction, support) in
+    ((:periodic_primal_waveletfunction_in_dyadic_points,  :primal_waveletfunction_in_dyadic_points,   :primal_waveletsupport),
+     (:periodic_dual_waveletfunction_in_dyadic_points,    :dual_waveletfunction_in_dyadic_points,     :dual_waveletsupport),
+     (:periodic_primal_scalingfunction_in_dyadic_points,  :primal_scalingfunction_in_dyadic_points,   :primal_scalingsupport),
+     (:periodic_dual_scalingfunction_in_dyadic_points,    :dual_scalingfunction_in_dyadic_points,     :dual_scalingsupport))
+  @eval begin
+    function $periodicfunction{T}(w::DiscreteWavelet{T}, j=0, k=0, d=10; a = T(0), b = T(1), points=false, options...)
+      s = $simplefunction(w,j,k,d)
+      L = round(Int, (1<<d)*(b-a))
+      @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
+      f = _periodize(L, s, Int((1<<d)*$support(w,j,k)[1])+1)
+      if points
+        f, linspace(a,b,L+1)[1:end-1]
+      else
+        f
+      end
+    end
+  end
+end
+for (waveletfunction, scalingfunction, waveletfilter, scalingfilter, waveletsupportlength, waveletpoints, scalingpoints) in
+    ((:primal_waveletfunction_in_dyadic_points, :primal_scalingfunction_in_dyadic_points, :primal_waveletfilter,  :primal_scalingfilter,  :primal_waveletsupport_length,  :primal_wavelet_dyadicpointsofcascade,  :primal_scaling_dyadicpointsofcascade),
+     (:dual_waveletfunction_in_dyadic_points,   :dual_scalingfunction_in_dyadic_points,   :dual_waveletfilter,    :dual_scalingfilter,    :dual_waveletsupport_length,    :dual_wavelet_dyadicpointsofcascade,    :dual_scaling_dyadicpointsofcascade))
+  @eval begin
+    function $scalingfunction{T}(w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
+      @assert (d-j) >= 0
+      f = scalingfunction_in_dyadic_points($scalingfilter(w), j, k, d; options...)
+      if points
+        f, $scalingpoints(w,j,k,d; options...)
+      else
+        f
+      end
+    end
+
+    function $waveletfunction{T}(w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
+      s = $scalingfunction(w, j+1, k, d; options...)
+      filter = DWT.$waveletfilter(w)
+      L = DWT.$waveletsupportlength(w)
+      f = zeros(T, (1<<(d-j))*L+1)
+      for (i,l) in enumerate(firstindex(filter):lastindex(filter))
+        offset = (1<<(d-1-j))*(i-1)
+        f[offset+1:offset+length(s)] += filter[l]*s
+      end
+      if points
+        f, $waveletpoints(w,j,k,d; options...)
+      else
+        f
+      end
+    end
   end
 end
 
-function scaling_function_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
+function scalingfunction_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
   T(2)^(T(j)/2)*cascade_algorithm(s, (d-j); options...)
 end
 
@@ -29,7 +85,7 @@ scaling function in the points [0,1,...,K], and L=1, the points [0,.5,1,...,K].
 cascade_algorithm(w::DiscreteWavelet, L=0; dual=true, options...) = dual?
     cascade_algorithm(dual_scalingfilter(w), L; options...) :
     cascade_algorithm(primal_scalingfilter(w), L; options...)
-
+#
 cascade_algorithm(s::CompactSequence, L; options...) = cascade_algorithm(s.a, L; options...)
 
 function cascade_algorithm{T}(h::AbstractArray{T}, L; tol = sqrt(eps(T)), options...)
@@ -70,23 +126,32 @@ function cascade_algorithm{T}(h::AbstractArray{T}, L; tol = sqrt(eps(T)), option
   end
   eigv
 end
-# dyadicpointsofcascade(s , j, k, d; options...)
-dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...) =
-  T(2)^(-j)*(k+dyadicpointsofcascade(w, d-j; options...))
 
-dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, L::Int=10; dual=true, options...) = dual ?
-    _dyadicpointsofcascade_dual(w, L; options...) :
-    _dyadicpointsofcascade_primal(w, L; options...)
+# dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...) =
+#   T(2)^(-j)*(k+dyadicpointsofcascade(w, d-j; options...))
+#
+# dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, L::Int=10; dual=true, options...) = dual ?
+#     _dyadicpointsofcascade_dual(w, L; options...) :
+#     _dyadicpointsofcascade_primal(w, L; options...)
 
+
+# create methods
+# [primal,dual]_[scaling,wavelet]_dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...)
+# [primal,dual]_[scaling,wavelet]_dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, L::Int; options...)
 for kind in (:dual, :primal)
-  f = Symbol(string("_dyadicpointsofcascade_",kind))
-  support = Symbol(string(kind,"_support"))
-  support_length = Symbol(string(kind,"_support_length"))
-  @eval begin
-    function $f{T}(w::DiscreteWavelet{T}, L::Int; options...)
-      s = $support(w)
-      H = $support_length(w)
-      linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
+  for f in (:scaling, :wavelet)
+    start = string(kind,"_",f)
+    f = Symbol(string(start,"_dyadicpointsofcascade"))
+    support = Symbol(string(start,"support"))
+    support_length = Symbol(string(start,"support_length"))
+    @eval begin
+      $f{T}(w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...) =
+          T(2)^(-j)*(k+$f(w, d-j; options...))
+      function $f{T}(w::DiscreteWavelet{T}, L::Int; options...)
+        s = $support(w)
+        H = $support_length(w)
+        linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
+      end
     end
   end
 end

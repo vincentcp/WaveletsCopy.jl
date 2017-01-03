@@ -18,28 +18,25 @@ for ET in (Float16,      Float32,      Float64,      BigFloat)
       if N1 == 2 && N2 == 2
         continue
       end
-      fname = string("cdf_",ET,"_",N1,N2)
-      cdf = Symbol(fname)
+      fname =
+      cdf = Symbol(string("cdf",N1,N2,"_",ET))
       T = CDFWavelet{N1,N2,ET}
       @eval begin
         $cdf = $T()
-        $ET != $T0 && (name(::Type{$T}) = $fname)
         class(::$T) = string($T)
         push!($implemented,$cdf)
       end
       if ET == T0
         fname = string("cdf",N1,N2)
         cdf64 = Symbol(fname)
-        @eval begin
-          $cdf64 = $cdf
-          name(::Type{$T}) = $fname
-        end
+        @eval $cdf64 = $cdf
       end
     end
   end
 end
 IMPLEMENTED_CDF_WAVELETS = IMPLEMENTED_CDF_WAVELETS_Float64
-
+name{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = string("cdf",P,Q,"_",T)
+name{P,Q}(::Type{CDFWavelet{P,Q,Float64}}) = string("cdf",P,Q)
 
 # Explicit listing of some coefficient follows.
 # The format is a tuple: (n,h). The filter coefficients are sqrt(2)/n * h.
@@ -82,8 +79,8 @@ symmetric_offset(n) = iseven(n) ? -n>>1+1 : -(n-1)>>1
 cdf_coef(n) = 1//(1<<(n-1))*[binomial(n,k) for k in 0:n]
 
 
-primal_scalingfilter{P,Q,T}(w::CDFWavelet{P,Q,T}) = CompactSequence(T(1)/sqrt(T(2))*convert(Array{T,1},cdf_coef(P)), symmetric_offset(P+1))
-primal_coefficientfilter{P,Q,T}(w::CDFWavelet{P,Q,T}) = CompactSequence(cdf_coef(P), symmetric_offset(P+1))
+primal_scalingfilter{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = CompactSequence(T(1)/sqrt(T(2))*convert(Array{T,1},cdf_coef(P)), symmetric_offset(P+1))
+primal_coefficientfilter{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = CompactSequence(cdf_coef(P), symmetric_offset(P+1))
 
 for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf15_htilde),
                       (2, 2, :cdf22_htilde), (2, 4, :cdf24_htilde), (2, 6, :cdf26_htilde),
@@ -91,18 +88,15 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
                       (4, 2, :cdf42_htilde), (4, 4, :cdf44_htilde), (4, 6, :cdf46_htilde),
                       (5, 1, :cdf51_htilde), (5, 3, :cdf53_htilde), (5, 5, :cdf55_htilde),
                       (6, 2, :cdf62_htilde), (6, 4, :cdf64_htilde), (6, 6, :cdf66_htilde)  )
-    @eval dual_coefficientfilter{T}(w::CDFWavelet{$p,$q,T}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
-    @eval dual_scalingfilter{T}(w::CDFWavelet{$p,$q,T}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
+    @eval dual_coefficientfilter{T}(::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
+    @eval dual_scalingfilter{T}(::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
     @eval dual_support{T0}(::Type{CDFWavelet{$p,$q,T0}}) = (symmetric_offset(length($htilde[2])), symmetric_offset(length($htilde[2]))+length($htilde[2])-1)
 end
 
 primal_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N1
 dual_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N2
 
-primal_support{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
-primal_support{N1,N2,T}(w::CDFWavelet{N1,N2,T}) = primal_support(typeof(w))
-
-dual_support{N1,N2,T}(w::CDFWavelet{N1,N2,T}) = dual_support(typeof(w))
+primal_scalingsupport{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
 
 using .Cardinal_b_splines
 evaluate_primal_scalingfunction{N1,N2,T}(w::DWT.CDFWavelet{N1,N2,T}, x::Number) =

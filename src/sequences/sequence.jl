@@ -22,7 +22,7 @@ export promote_eltype
 # Traits
 export True, False, hascompactsupport
 
-export moment, ztransform, fouriertransform
+export moment, ztransform, fouriertransform, support
 
 export evenpart, oddpart, alternating_flip, alternating
 

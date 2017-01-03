@@ -114,6 +114,10 @@ conj(s::CompactSequence) = CompactSequence(conj(s.a), firstindex(s))
 
 moment(s::CompactSequence,i) = sum(s[k]*k^i for k in firstindex(s):lastindex(s))
 
+support(s::CompactSequence) = (s.offset, s.offset + s.n - 1)
+
+support(s::CompactSequence, j::Int, k::Int) = (1/(1<<j)*(support(s)[1]+k), 1/(1<<j)*(support(s)[2]+k))
+
 Base.sum(s::CompactSequence) = sum(s.a)
 
 widen(s::CompactSequence) = CompactSequence(widen(s.a), s.offset)
