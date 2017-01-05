@@ -60,6 +60,7 @@ end
 
 
 abstract DiscreteWavelet{T}
+immutable TestWavelet{T} <: DWT.DiscreteWavelet{T} end
 
 # Symmetry trait
 is_symmetric{W <: DiscreteWavelet}(::Type{W}) = False
@@ -79,7 +80,7 @@ for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
 end
 
 # Vanishing Moments
-primal_vanishingmoments{WT<:DiscreteWavelet}(::Type{WT}) = error("primal_vanishingmoments not implemented for wavelet ", WT)
+primal_vanishingmoments{WT<:DiscreteWavelet}(::Type{WT}) = throw("unimplemented")
 dual_vanishingmoments{WT<:DiscreteWavelet}(W::Type{WT}) = _primal_vanishingmoments(W, is_orthogonal(W))
 _primal_vanishingmoments(W, is_orthogonal::Type{True}) = primal_vanishingmoments(W)
 
@@ -116,11 +117,6 @@ for p in (:primal, :dual)
 end
 
 # Filters
-analysis_lowpassfilter(w::DiscreteWavelet) = primal_scalingfilter(w)
-analysis_highpassfilter(w::DiscreteWavelet) = primal_waveletfilter(w)
-
-synthesis_lowpassfilter(w::DiscreteWavelet) = dual_scalingfilter(w)
-synthesis_highpassfilter(w::DiscreteWavelet) = dual_waveletfilter(w)
 
 # By default, the wavelet filters are associated with the dual scaling filters via the alternating flip relation
 dual_waveletfilter(w) = alternating_flip(primal_scalingfilter(w))
@@ -154,25 +150,6 @@ for o in (:vanishingmoments,:coefficients_filter)
   end
 end
 
-"""
-  Evaluate the shifted and dilated scaling function of a wavelet in a point x.
-
-  ϕ_jk = 2^(k/2) ϕ(2^k-j)
-"""
-evaluate_transformed_primal_scalingfunction{W<:DiscreteWavelet}(wlt::W, x::Number, k::Int=0, j::Int=0) =
-    2.0^(k/2)*evaluate_primal_scalingfunction(wlt, 2.0^k-j)
-
-"""
-  Evaluate the primal scaling function of a wavelet in a point x.
-
-  ϕ(x)
-"""
-function evaluate_primal_scalingfunction end
-evaluate_primal_scalingfunction{W<:DiscreteWavelet}(wlt::W, x::Number) = error("No explicit formula of scaling function provided for wavelet: ", wlt)
-evaluate_dual_scalingfunction{W<:DiscreteWavelet}(wlt::W, x::Number) =
-    _evaluate_dual_scaling_function(wlt, x, is_orthogonal(wlt))
-_evaluate_dual_scaling_function{W<:DiscreteWavelet}(wlt::W, x::Number, is_orthogonal::True) = evaluate_primal_scalingfunction(wlt, x)
-
 Filterbank(w::DiscreteWavelet) =
     Filterbank( FilterPair(primal_scalingfilter(w), primal_waveletfilter(w)),
                 FilterPair(  dual_scalingfilter(w),   dual_waveletfilter(w)) )
@@ -196,7 +173,7 @@ include("dwttransform.jl")
 
 # Convenience function
 name{T}(::T) = name(T)
-name{T}(::Type{T}) = "Not defined"
+
 include("util/cardinal_b_splines.jl")
 include("util/cascade.jl")
 

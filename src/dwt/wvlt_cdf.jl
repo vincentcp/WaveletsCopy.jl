@@ -90,7 +90,6 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
                       (6, 2, :cdf62_htilde), (6, 4, :cdf64_htilde), (6, 6, :cdf66_htilde)  )
     @eval dual_coefficientfilter{T}(::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
     @eval dual_scalingfilter{T}(::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
-    @eval dual_support{T0}(::Type{CDFWavelet{$p,$q,T0}}) = (symmetric_offset(length($htilde[2])), symmetric_offset(length($htilde[2]))+length($htilde[2])-1)
 end
 
 primal_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N1

@@ -37,6 +37,28 @@ function elementarypropsofsplinetest()
   end
 end
 
+function periodicbsplinetest()
+  @testset "$(rpad("periodic B splines",P))"  begin
+  T = Float64
+  for N in 0:4
+    period = real(N+1)
+    for x in linspace(0,period,10)[1:end-1]
+      @test (DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x, period, T) ≈ DWT.Cardinal_b_splines.evaluate_Bspline(N, x, T))
+      for k in -2:2
+        @test (DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x, period, T) ≈ DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x+k*period, period, T))
+      end
+    end
+    period = real(N+1)/3
+    for x in linspace(0,period,10)[1:end-1]
+      for k in -2:2
+        @test (DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x, period, T) ≈ DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x+k*period, period, T))
+      end
+    end
+  end
+
+  end
+end
+
 function cascadetest()
   @testset "$(rpad("cascade_algorithm",P))"  begin
     T = Float64
@@ -209,7 +231,7 @@ end
 
 function vanishing_moments_test()
   @testset "$(rpad("Vanishing moments",P))"  begin
-    for (w,moments) in ((DWT.cdf11,(1,1)), (DWT.cdf24,(2,4)), (DWT.cdf51,(5,1)), (DWT.db4, (4,4)))
+    for (w,moments) in ((DWT.cdf11,(1,1)), (DWT.CDFWavelet{1,1,Float16}, (1,1)), (DWT.cdf24,(2,4)), (DWT.cdf51,(5,1)), (DWT.db4, (4,4)), (DWT.DaubechiesWavelet{1,Float16}, (1,1)))
       @test DWT.primal_vanishingmoments(w) == moments[1]
       @test DWT.dual_vanishingmoments(w) == moments[2]
     end
@@ -229,6 +251,12 @@ end
 
 function implementation_test()
   @testset "$(rpad("Some simple tests",P))" begin
+    @test DWT.is_symmetric(DWT.TestWavelet{Float16}) == False
+    @test DWT.is_biorthogonal(DWT.TestWavelet{Float16}) == False
+    @test DWT.is_orthogonal(DWT.TestWavelet{Float16}) == False
+    @test DWT.is_semiorthogonal(DWT.TestWavelet{Float16}) == False
+    @test eltype(DWT.TestWavelet{Float16}) == Float16
+    @test_throws String primal_vanishingmoments(DWT.TestWavelet)
     @test DWT.is_biorthogonal(DWT.cdf11)==True()
     @test DWT.is_biorthogonal(DWT.db4)==True()
     @test DWT.is_orthogonal(DWT.db1)==True()
@@ -236,7 +264,15 @@ function implementation_test()
     @test DWT.is_symmetric(DWT.cdf11)==True()
     @test DWT.is_symmetric(DWT.cdf33)==True()
     @test DWT.is_symmetric(DWT.db1)==True()
+    @test DWT.is_biorthogonal(DWT.CDFWavelet{1,1,Float16})==True
+    @test DWT.is_biorthogonal(DWT.DaubechiesWavelet{1,Float64})==True
+    @test DWT.is_orthogonal(DWT.DaubechiesWavelet{1,Float16})==True
+    @test DWT.is_semiorthogonal(DWT.DaubechiesWavelet{1,Float64})==True
+    @test DWT.is_symmetric(DWT.CDFWavelet{1,1,Float16})==True
+    @test DWT.is_symmetric(DWT.CDFWavelet{3,3,Float16})==True
+    @test DWT.is_symmetric(DWT.DaubechiesWavelet{1,Float16})==True
     @test DWT.name(DWT.db1) == "db1"
+    @test DWT.name(DWT.DaubechiesWavelet{1,Float16}()) == "db1_Float16"
     @test DWT.name(DWT.cdf11) == "cdf11"
     @test DWT.name(DWT.cdf11_Float16) == "cdf11_Float16"
     @test DWT.class(DWT.db1) == "Wavelets.DWT.DaubechiesWavelet{1,Float64}"
@@ -309,15 +345,16 @@ function eval_wavelet_test()
 end
 
 implementation_test()
-elementarypropsofsplinetest()
-cascadetest()
-primalfunctiontest()
-vanishing_moments_test_dual()
-scalingtest()
-supporttest()
-vanishing_moments_test()
-filter_tests()
-eval_wavelet_test()
+periodicbsplinetest()
+# elementarypropsofsplinetest()
+# cascadetest()
+# primalfunctiontest()
+# vanishing_moments_test_dual()
+# scalingtest()
+# supporttest()
+# vanishing_moments_test()
+# filter_tests()
+# eval_wavelet_test()
 
 # # Plot Daubechies wavelets
 # using Plots
