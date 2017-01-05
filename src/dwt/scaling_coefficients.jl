@@ -104,3 +104,50 @@ function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::Array{T,1}
     (return function_evals, linspace(T(0), T(1), length(function_evals)+1)[1:end-1]) :
     (return function_evals)
 end
+
+function primal_support(n::Int, i::Int, l::Int, w::DiscreteWavelet)
+  kind, j, k = wavelet_index(n,i,l)
+  if      kind  ==  :scaling
+    primal_scalingsupport(w, j, k)
+  elseif  kind  ==  :wavelet
+    primal_waveletsupport(w, j, k)
+  end
+end
+
+"""
+  The index ([:scaling/:wavelet], j, k) in the (scaling+wavelet) sequence for coefficient i in a sequence of length n after l dwt synthesis_lowpassfilter
+
+  For example, the indices of a sequence with 4 elements after
+  0 dwt steps
+    (:scaling, 2, 0),    (:scaling, 2, 1),    (:scaling, 2, 2),     (:scaling, 2, 3)
+  1 dwt step
+    (:scaling, 1, 0),    (:scaling, 1, 1),    (:wavelet, 1, 0),     (:wavelet, 1, 1)
+  2 dwt steps
+    (:scaling, 0, 0),    (:wavelet, 0, 0),    (:wavelet, 1, 0),     (:wavelet, 1, 1)
+"""
+function wavelet_index(n::Int, i::Int, l::Int)
+  if i > n/(1<<l)
+    j = level(n,i)
+    k = mod(i-1,1<<j)
+    :wavelet, j, k
+  else
+    :scaling, Int(log2(n))-l, i-1
+  end
+end
+
+function coefficient_index(kind, j::Int, k::Int)::Int
+  if kind == :scaling
+    k+1
+  elseif kind == :wavelet
+    1<<j+k+1
+  end
+end
+
+function level(n::Int, i::Int)
+  (i == 1 || i == 2) && (return 0)
+  for l in 1:round(Int,log2(n))
+    if i <= (1<<(l+1))
+      return l
+    end
+  end
+end

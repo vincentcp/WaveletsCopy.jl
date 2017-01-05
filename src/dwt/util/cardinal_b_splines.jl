@@ -1,12 +1,23 @@
 # cardinal_b_splines.jl
 module Cardinal_b_splines
 
-export evaluate_Bspline
+export evaluate_Bspline, evaluate_periodic_Bspline
 
 # Implementation of cardinal B splines of degree N
 typealias Degree{N} Val{N}
 
+function evaluate_periodic_Bspline(N::Int, x, period, T::Type)
+  x -= period*fld(x, period)
+  @assert(0<= x < period)
+  res = T(0)
+  for k in 0:floor(Int, (N+1-x)/period)
+    res += evaluate_Bspline(N, x+period*k, T)
+  end
+  res
+end
+
 evaluate_Bspline(N::Int, x, T::Type) = evaluate_Bspline(Degree{N}, x, T)
+
 function evaluate_Bspline{N}(::Type{Degree{N}}, x, T::Type)
   T(x)/T(N)*evaluate_Bspline(Degree{N-1}, x, T) +
       (T(N+1)-T(x))/T(N)*evaluate_Bspline(Degree{N-1}, x-1, T)

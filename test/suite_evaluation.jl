@@ -75,6 +75,15 @@ function primalfunctiontest()
       @test (norm(g-F))<tol
     end
   end
+  @testset "$(rpad("closest dyadic point",P))"  begin
+    for c in -1:-1:-14
+      xtol = 10.0^c
+      for xtest in linspace(-1,2)
+        d,k = Wavelets.DWT.closest_dyadic_point(xtest, xtol; dmax=200)
+        @test abs(k/(1<<d)-xtest)<xtol
+      end
+    end
+  end
 end
 
 function scalingtest()
@@ -260,6 +269,45 @@ function implementation_test()
   end
 end
 
+function eval_wavelet_test()
+  @testset "$(rpad("evaluate wavelet in point",P))" begin
+    @test DWT._periodize((.25,.5),-1,1)==((.25,.5),)
+    @test DWT._periodize((-1.25,1.5),-1,1)==((-1,1),)
+    @test DWT._periodize((-1.25,.5),-1,1)==((.75,1.),(-1.,.5))
+    @test DWT._periodize((-1.5,0.),-1,1)==((0.5,1.),(-1,0))
+    for side in (:primal, :dual)
+      for kind in (:scaling, :wavelet)
+        @test DWT.in_support(1,DWT.periodic_support(side,kind, DWT.cdf11, 0,0)...)
+        @test DWT.in_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 3,0)...)
+        @test !DWT.in_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 1,1)...)
+        for j in 0:2
+          for k in -2:2
+            koffset = mod(k, 1<<j)
+            p = 1/(1<<j)
+            for x in 1/(1<<(j+1))+linspace(-4,4)
+              xlow = x-fld(x, 1)
+              f = DWT.eval_periodic_wavelet(side, kind, DWT.cdf11, j, k, x, 1e-4)
+              if kind == :scaling
+                ftest = (koffset <= (1<<j)*xlow < koffset+1) ? 2.0^(j/2) : 0
+                @test f ≈ ftest
+              else
+                if koffset <= (1<<j)*xlow < koffset+1/2
+                  ftest = 2.0^(j/2)
+                elseif koffset+1/2 <= (1<<j)*xlow < koffset+1
+                  ftest = -2.0^(j/2)
+                else
+                  ftest = 0
+                end
+                @test f ≈ ftest
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
 implementation_test()
 elementarypropsofsplinetest()
 cascadetest()
@@ -269,7 +317,7 @@ scalingtest()
 supporttest()
 vanishing_moments_test()
 filter_tests()
-
+eval_wavelet_test()
 
 # # Plot Daubechies wavelets
 # using Plots
@@ -326,3 +374,10 @@ filter_tests()
 # w = DWT.CDFWavelet{2,2,Float64}()
 # plot(w; side=:primal, j=0, k=-1, periodic=false)
 # plot!(w; side=:primal, j=0, k=-1, periodic=true)
+
+# using Plots
+# gr()
+# f = x-> DWT.evaluate_periodic_Bspline(3, x, 0.75, Float64)
+# x = linspace(-1,2,200)
+# ff = map(f, x)
+# plot(x, ff)

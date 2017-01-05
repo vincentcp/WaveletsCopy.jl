@@ -1,6 +1,95 @@
 # cascade.jl
 export cascade_algorithm, dyadicpointsofcascade
 
+function eval_periodic_wavelet{T, S<:Real}(side::Symbol, kind::Symbol, w::DiscreteWavelet{T}, j::Int, k::Int, x::S, xtol::S; options...)
+  offset = floor(x)
+  x -= offset
+  d, kpoint = closest_dyadic_point(x, xtol; options...)
+  (!in_support(kpoint/2^d, periodic_support(side, kind, w, j, k)...)) && return T(0)
+  f = periodic_function_in_dyadic_points(side, kind, w, j, k, d)
+  f[kpoint+1]
+end
+
+function in_support{T}(x, support::Tuple{T,T}...)
+  for s in support
+    (s[1] <= x <= s[2]) && (return true)
+  end
+  false
+end
+
+function periodic_support{T}(side::Symbol, kind::Symbol, w::DiscreteWavelet{T}, j, k)
+  if side == :primal
+    if kind == :scaling
+      s =  primal_scalingsupport(w, j, k)
+    elseif kind == :wavelet
+      s =  primal_waveletsupport(w, j, k)
+    end
+  elseif side == :dual
+    if kind == :scaling
+      s = dual_scalingsupport(w, j, k)
+    elseif kind == :wavelet
+      s = dual_waveletsupport(w, j, k)
+    end
+  end
+  _periodize(s)
+end
+
+function _periodize{T}(s::Tuple{T,T}, a=T(0), b=T(1))
+  a = T(a)
+  b = T(b)
+  p = b-a
+  ((s[2]-s[1]) >= p) && (return ((a,b),))
+  offset = -p*fld(s[1]-a, p)
+  s = (s[1]+offset, s[2]+offset)
+  (s[2] <= b) && (return (s,))
+  (s[2] > b) && (return (s[1], b), (a, s[2]-(b-a)))
+end
+
+function periodic_function_in_dyadic_points(side::Symbol, kind::Symbol, w::DiscreteWavelet, j::Int, k::Int, d::Int; options...)
+  if side == :primal
+    if kind == :scaling
+      return periodic_primal_scalingfunction_in_dyadic_points(w, j, k, d; options...)
+    elseif kind == :wavelet
+      return periodic_primal_waveletfunction_in_dyadic_points(w, j, k, d; options...)
+    end
+  elseif side == :dual
+    if kind == :scaling
+      return periodic_dual_scalingfunction_in_dyadic_points(w, j, k, d; options...)
+    elseif kind == :wavelet
+      return periodic_dual_waveletfunction_in_dyadic_points(w, j, k, d; options...)
+    end
+  end
+end
+
+"""
+  A dyadic point given by `k/2^d` at most xtol separated from x.
+"""
+function closest_dyadic_point(x, xtol; dmax = 20)
+  offset = floor(x)
+  x -= offset
+  up = 1.;  low = 0.
+  lowk = 0; upk = 1
+  d = 0
+  resk = 0
+  while true
+    mid   = (up+low)/2
+    lowk  = lowk  << 1
+    upk   = upk   << 1
+    d += 1
+    midk = Int((lowk+upk)/2)
+    if x > mid
+      low = mid; lowk = midk
+    else
+      up = mid ; upk  = midk
+    end
+    (abs(x-low) <= xtol)  && (resk = lowk; break)
+    (abs(x-up)  <= xtol)  && (resk  = upk; break)
+    (d == dmax) && (warn("dmax is reached in closest_dyadic_point"); resk = lowk)
+  end
+  k = (1<<d)*Int(offset) + resk
+  d, k
+end
+
 function _periodize{T}(n::Int, src::AbstractArray{T}, istart)
   dest = zeros(T,n)
   _periodize!(dest, src, istart)

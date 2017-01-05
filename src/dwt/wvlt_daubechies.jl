@@ -39,7 +39,7 @@ end
 name{N,T}(::Type{DaubechiesWavelet{N,T}}) = string("db",N,"_",T)
 name{N}(::Type{DaubechiesWavelet{N,Float64}}) = string("db",N)
 
-primal_scaling_support{N,T}(::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+primal_scalingsupport{N,T}(::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
 primal_vanishingmoments{N,T}(::Type{DaubechiesWavelet{N,T}}) = N
 
 using .Cardinal_b_splines
