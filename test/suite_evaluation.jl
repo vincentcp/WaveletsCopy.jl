@@ -346,15 +346,15 @@ end
 
 implementation_test()
 periodicbsplinetest()
-# elementarypropsofsplinetest()
-# cascadetest()
-# primalfunctiontest()
-# vanishing_moments_test_dual()
-# scalingtest()
-# supporttest()
-# vanishing_moments_test()
-# filter_tests()
-# eval_wavelet_test()
+elementarypropsofsplinetest()
+cascadetest()
+primalfunctiontest()
+vanishing_moments_test_dual()
+scalingtest()
+supporttest()
+vanishing_moments_test()
+filter_tests()
+eval_wavelet_test()
 
 # # Plot Daubechies wavelets
 # using Plots
