@@ -12,20 +12,14 @@ scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, boundary::Peri
 """
   Transformation of a function evaluation on a dyadic grid to `2^L` scaling coefficients
 """
-scaling_coefficients{T}(f::AbstractArray{T,1}, w::DiscreteWavelet{T}, boundary::PeriodicBoundary; dual=true, options...) = dual?
-      scaling_coefficients(f, _scalingcoefficient_filter(dual_scalingfilter(w)), PeriodicEmbedding(); options...) :
-      scaling_coefficients(f, _scalingcoefficient_filter(primal_scalingfilter(w)), PeriodicEmbedding(); options...)
+scaling_coefficients{T}(f::AbstractArray{T,1}, w::DiscreteWavelet{T}, boundary::PeriodicBoundary; side::Side=Dul(), options...) =
+      scaling_coefficients(f, _scalingcoefficient_filter(filter(side, Scl(), w)), PeriodicEmbedding(); options...)
 
-
-function scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, fembedding, a::Number=0, b::Number=1; dual=true, options...)
+function scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, fembedding, a::Number=0, b::Number=1; side::Side=Dul(), options...)
   T = promote_type(eltype(w), eltype(a), eltype(b))
   a = T(a); b = T(b)
-  if dual
-    filter = dual_scalingfilter
-  else
-    filter = primal_scalingfilter
-  end
-  (b-a)*scaling_coefficients(x->f((b-a)*x+a), filter(w), L::Int, fembedding; options...)
+  flt = filter(side, Scl(), w)
+  (b-a)*scaling_coefficients(x->f((b-a)*x+a), flt, L::Int, fembedding; options...)
 end
 
 # Function on the interval (0 1) to scaling coefficients
@@ -37,7 +31,6 @@ function scaling_coefficients{T}(f::Function, s::CompactSequence{T}, L::Int, fem
   fembedding == nothing && (fembedding = FunctionEmbedding(k -> f(k*T(2)^(-T(L)))))
   scaling_coefficients(fcoefs, filter, fembedding; options...)
 end
-
 
 # Function evaluations on a dyadic grid to scaling coefficients
 function scaling_coefficients{T}(f::AbstractArray{T,1}, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
@@ -67,7 +60,7 @@ function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::Array{T,1}
   @assert isdyadic(scaling_coefficients)
   j = ndyadicscales(scaling_coefficients)
 
-  s = primal_support(w)
+  s = support(Prl(), Scl(), w)
   # length of equidistand grid associated to function on [0, 1)
   f_l = 1<<d
   # length of grid (same resolution as before) associated to scaling function in [s[1],s[2]]
@@ -105,13 +98,9 @@ function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::Array{T,1}
     (return function_evals)
 end
 
-function primal_support(n::Int, i::Int, l::Int, w::DiscreteWavelet)
+function DWT.support(side::Side, n::Int, i::Int, l::Int, w::DiscreteWavelet)
   kind, j, k = wavelet_index(n,i,l)
-  if      kind  ==  :scaling
-    primal_scalingsupport(w, j, k)
-  elseif  kind  ==  :wavelet
-    primal_waveletsupport(w, j, k)
-  end
+  support(side, kind, w, j, k)
 end
 
 """
@@ -119,29 +108,24 @@ end
 
   For example, the indices of a sequence with 4 elements after
   0 dwt steps
-    (:scaling, 2, 0),    (:scaling, 2, 1),    (:scaling, 2, 2),     (:scaling, 2, 3)
+    (Scl(), 2, 0),    (Scl(), 2, 1),    (Scl(), 2, 2),     (Scl(), 2, 3)
   1 dwt step
-    (:scaling, 1, 0),    (:scaling, 1, 1),    (:wavelet, 1, 0),     (:wavelet, 1, 1)
+    (Scl(), 1, 0),    (Scl(), 1, 1),    (Wvl(), 1, 0),     (Wvl(), 1, 1)
   2 dwt steps
-    (:scaling, 0, 0),    (:wavelet, 0, 0),    (:wavelet, 1, 0),     (:wavelet, 1, 1)
+    (Scl(), 0, 0),    (Wvl(), 0, 0),    (Wvl(), 1, 0),     (Wvl(), 1, 1)
 """
 function wavelet_index(n::Int, i::Int, l::Int)
   if i > n/(1<<l)
     j = level(n,i)
     k = mod(i-1,1<<j)
-    :wavelet, j, k
+    Wvl(), j, k
   else
-    :scaling, Int(log2(n))-l, i-1
+    Scl(), Int(log2(n))-l, i-1
   end
 end
 
-function coefficient_index(kind, j::Int, k::Int)::Int
-  if kind == :scaling
-    k+1
-  elseif kind == :wavelet
-    1<<j+k+1
-  end
-end
+coefficient_index(kind::Scl, j::Int, k::Int)::Int = k+1
+coefficient_index(kind::Wvl, j::Int, k::Int)::Int = 1<<j+k+1
 
 function level(n::Int, i::Int)
   (i == 1 || i == 2) && (return 0)

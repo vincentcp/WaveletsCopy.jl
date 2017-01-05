@@ -19,12 +19,11 @@ _db1_h(T::Type) = CompactSequence(T(1)/sqrt(T(2))*db1_h, 0)
 _db2_h(T::Type) = CompactSequence(1/sqrt(T(2))*[(1+sqrt(T(3)))/4, (3+sqrt(T(3)))/4, (3-sqrt(T(3)))/4, (1-sqrt(T(3)))/4], 0)
 
 T0 = Float64
-primal_scalingfilter(::Type{DaubechiesWavelet{1,T0}}) = _db1_h(T0)
-primal_scalingfilter(::Type{DaubechiesWavelet{2,T0}}) = _db2_h(T0)
-primal_scalingfilter(::Type{DaubechiesWavelet{4,T0}}) = CompactSequence(db4_h, 0)
-primal_scalingfilter{N}(::Type{DaubechiesWavelet{N,T0}}) = CompactSequence(daubechies(N), 0)
-
-primal_coefficientfilter{T}(::Type{DaubechiesWavelet{1,T}}) = CompactSequence(db1_h)
+DWT.filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{1,T0}}) = _db1_h(T0)
+DWT.filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{2,T0}}) = _db2_h(T0)
+DWT.filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{4,T0}}) = CompactSequence(db4_h, 0)
+DWT.filter{N}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T0}}) = CompactSequence(daubechies(N), 0)
+DWT.filter{T}(::Prl, ::Cof, ::Type{DaubechiesWavelet{1,T}}) = CompactSequence(db1_h)
 
 IMPLEMENTED_DB_WAVELETS = []
 for N in 1:10
@@ -39,9 +38,9 @@ end
 name{N,T}(::Type{DaubechiesWavelet{N,T}}) = string("db",N,"_",T)
 name{N}(::Type{DaubechiesWavelet{N,Float64}}) = string("db",N)
 
-primal_scalingsupport{N,T}(::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
-primal_vanishingmoments{N,T}(::Type{DaubechiesWavelet{N,T}}) = N
+DWT.support{N,T}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+DWT.vanishingmoments{N,T}(::Prl, ::Type{DaubechiesWavelet{N,T}}) = N
 
 using .Cardinal_b_splines
-evaluate_primal_scalingfunction{T}(w::DWT.HaarWavelet{T}, x::Number) =
+evaluate_function{T}(::Prl, ::Scl, w::DWT.HaarWavelet{T}, x::Number) =
       evaluate_Bspline(0, x, eltype(x, w))

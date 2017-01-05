@@ -138,7 +138,7 @@ EE = Exception
 @test_throws EE maketree(n, 4, :foo)
 
 
-makewavelet(wavelet(WT.db2, WT.Filter))
+makewavelet(WT.wavelet(WT.db2, WT.Filter))
 for tf in ("Blocks", "HeaviSine")
     testfunction(8, tf)
 end

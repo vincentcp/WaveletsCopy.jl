@@ -22,7 +22,7 @@ y = denoise(x, nothing)
 y = denoise(randn(32,32), TI=true)
 
 # best basis
-wt = wavelet(WT.db4)
+wt = WT.wavelet(WT.db4)
 x = sin(4*linspace(0,2*pi-eps(),1024))
 tree = bestbasistree(x, wt)
 xtb = wpt(x, wt, tree)

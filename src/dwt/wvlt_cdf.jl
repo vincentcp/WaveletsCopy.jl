@@ -78,9 +78,8 @@ symmetric_offset(n) = iseven(n) ? -n>>1+1 : -(n-1)>>1
 # The coefficients of the primal scaling function are simply a binomial sequence for all n.
 cdf_coef(n) = 1//(1<<(n-1))*[binomial(n,k) for k in 0:n]
 
-
-primal_scalingfilter{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = CompactSequence(T(1)/sqrt(T(2))*convert(Array{T,1},cdf_coef(P)), symmetric_offset(P+1))
-primal_coefficientfilter{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = CompactSequence(cdf_coef(P), symmetric_offset(P+1))
+Base.filter{P,Q,T}(side::Prl, kind::Scl, ::Type{CDFWavelet{P,Q,T}}) = CompactSequence(T(1)/sqrt(T(2))*convert(Array{T,1},cdf_coef(P)), symmetric_offset(P+1))
+Base.filter{P,Q,T}(side::Prl, kind::Cof, ::Type{CDFWavelet{P,Q,T}}) = CompactSequence(cdf_coef(P), symmetric_offset(P+1))
 
 for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf15_htilde),
                       (2, 2, :cdf22_htilde), (2, 4, :cdf24_htilde), (2, 6, :cdf26_htilde),
@@ -88,15 +87,14 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
                       (4, 2, :cdf42_htilde), (4, 4, :cdf44_htilde), (4, 6, :cdf46_htilde),
                       (5, 1, :cdf51_htilde), (5, 3, :cdf53_htilde), (5, 5, :cdf55_htilde),
                       (6, 2, :cdf62_htilde), (6, 4, :cdf64_htilde), (6, 6, :cdf66_htilde)  )
-    @eval dual_coefficientfilter{T}(::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
-    @eval dual_scalingfilter{T}(::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
+    @eval Base.filter{T}(side::Dul, kind::Cof, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
+    @eval Base.filter{T}(side::Dul, kind::Scl, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
 end
 
-primal_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N1
-dual_vanishingmoments{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = N2
-
-primal_scalingsupport{N1,N2,T}(::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
+vanishingmoments{N1,N2,T}(::Prl, ::Type{CDFWavelet{N1,N2,T}}) = N1
+vanishingmoments{N1,N2,T}(::Dul, ::Type{CDFWavelet{N1,N2,T}}) = N2
+DWT.support{N1,N2,T}(::Prl, ::Scl, ::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
 
 using .Cardinal_b_splines
-evaluate_primal_scalingfunction{N1,N2,T}(w::DWT.CDFWavelet{N1,N2,T}, x::Number) =
-      evaluate_Bspline(N1-1, x-T(DWT.symmetric_offset(N1+1)), eltype(w, x))
+evaluate_function{N1,N2,T}(::Prl, ::Scl, ::Type{DWT.CDFWavelet{N1,N2,T}}, x::Number) =
+      evaluate_Bspline(N1-1, x-T(DWT.symmetric_offset(N1+1)), promote_type(T, eltype(x)))

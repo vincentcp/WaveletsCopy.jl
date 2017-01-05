@@ -1,12 +1,12 @@
 # cascade.jl
-export cascade_algorithm, dyadicpointsofcascade
+export eval_periodic, eval_periodic_in_dyadic_points, eval_in_dyadic_points, dyadicpointsofcascade
 
-function eval_periodic_wavelet{T, S<:Real}(side::Symbol, kind::Symbol, w::DiscreteWavelet{T}, j::Int, k::Int, x::S, xtol::S; options...)
+function eval_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S, xtol::S; options...)
   offset = floor(x)
   x -= offset
   d, kpoint = closest_dyadic_point(x, xtol; options...)
   (!in_support(kpoint/2^d, periodic_support(side, kind, w, j, k)...)) && return T(0)
-  f = periodic_function_in_dyadic_points(side, kind, w, j, k, d)
+  f = eval_periodic_in_dyadic_points(side, kind, w, j, k, d)
   f[kpoint+1]
 end
 
@@ -17,20 +17,8 @@ function in_support{T}(x, support::Tuple{T,T}...)
   false
 end
 
-function periodic_support{T}(side::Symbol, kind::Symbol, w::DiscreteWavelet{T}, j, k)
-  if side == :primal
-    if kind == :scaling
-      s =  primal_scalingsupport(w, j, k)
-    elseif kind == :wavelet
-      s =  primal_waveletsupport(w, j, k)
-    end
-  elseif side == :dual
-    if kind == :scaling
-      s = dual_scalingsupport(w, j, k)
-    elseif kind == :wavelet
-      s = dual_waveletsupport(w, j, k)
-    end
-  end
+function periodic_support{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j, k)
+  s = DWT.support(side, kind, w, j, k)
   _periodize(s)
 end
 
@@ -43,22 +31,6 @@ function _periodize{T}(s::Tuple{T,T}, a=T(0), b=T(1))
   s = (s[1]+offset, s[2]+offset)
   (s[2] <= b) && (return (s,))
   (s[2] > b) && (return (s[1], b), (a, s[2]-(b-a)))
-end
-
-function periodic_function_in_dyadic_points(side::Symbol, kind::Symbol, w::DiscreteWavelet, j::Int, k::Int, d::Int; options...)
-  if side == :primal
-    if kind == :scaling
-      return periodic_primal_scalingfunction_in_dyadic_points(w, j, k, d; options...)
-    elseif kind == :wavelet
-      return periodic_primal_waveletfunction_in_dyadic_points(w, j, k, d; options...)
-    end
-  elseif side == :dual
-    if kind == :scaling
-      return periodic_dual_scalingfunction_in_dyadic_points(w, j, k, d; options...)
-    elseif kind == :wavelet
-      return periodic_dual_waveletfunction_in_dyadic_points(w, j, k, d; options...)
-    end
-  end
 end
 
 """
@@ -107,62 +79,48 @@ function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart)
   end
 
 end
-for (periodicfunction, simplefunction, support) in
-    ((:periodic_primal_waveletfunction_in_dyadic_points,  :primal_waveletfunction_in_dyadic_points,   :primal_waveletsupport),
-     (:periodic_dual_waveletfunction_in_dyadic_points,    :dual_waveletfunction_in_dyadic_points,     :dual_waveletsupport),
-     (:periodic_primal_scalingfunction_in_dyadic_points,  :primal_scalingfunction_in_dyadic_points,   :primal_scalingsupport),
-     (:periodic_dual_scalingfunction_in_dyadic_points,    :dual_scalingfunction_in_dyadic_points,     :dual_scalingsupport))
-  @eval begin
-    function $periodicfunction{T}(w::DiscreteWavelet{T}, j=0, k=0, d=10; a = T(0), b = T(1), points=false, options...)
-      s = $simplefunction(w,j,k,d)
-      L = round(Int, (1<<d)*(b-a))
-      @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
-      f = _periodize(L, s, Int((1<<d)*$support(w,j,k)[1])+1)
-      if points
-        f, linspace(a,b,L+1)[1:end-1]
-      else
-        f
-      end
-    end
-  end
-end
-for (waveletfunction, scalingfunction, waveletfilter, scalingfilter, waveletsupportlength, waveletpoints, scalingpoints) in
-    ((:primal_waveletfunction_in_dyadic_points, :primal_scalingfunction_in_dyadic_points, :primal_waveletfilter,  :primal_scalingfilter,  :primal_waveletsupport_length,  :primal_wavelet_dyadicpointsofcascade,  :primal_scaling_dyadicpointsofcascade),
-     (:dual_waveletfunction_in_dyadic_points,   :dual_scalingfunction_in_dyadic_points,   :dual_waveletfilter,    :dual_scalingfilter,    :dual_waveletsupport_length,    :dual_wavelet_dyadicpointsofcascade,    :dual_scaling_dyadicpointsofcascade))
-  @eval begin
-    function $scalingfunction{T}(w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-      @assert (d-j) >= 0
-      f = scalingfunction_in_dyadic_points($scalingfilter(w), j, k, d; options...)
-      if points
-        f, $scalingpoints(w,j,k,d; options...)
-      else
-        f
-      end
-    end
-
-    function $waveletfunction{T}(w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-      s = $scalingfunction(w, j+1, k, d; options...)
-      filter = DWT.$waveletfilter(w)
-      L = DWT.$waveletsupportlength(w)
-      f = zeros(T, (1<<(d-j))*L+1)
-      for (i,l) in enumerate(firstindex(filter):lastindex(filter))
-        offset = (1<<(d-1-j))*(i-1)
-        f[offset+1:offset+length(s)] += filter[l]*s
-      end
-      if points
-        f, $waveletpoints(w,j,k,d; options...)
-      else
-        f
-      end
-    end
+function eval_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; a = T(0), b = T(1), points=false, options...)
+  s = eval_in_dyadic_points(side, kind, w,j,k,d)
+  L = round(Int, (1<<d)*(b-a))
+  @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
+  f = _periodize(L, s, Int((1<<d)*DWT.support(side, kind, w,j,k)[1])+1)
+  if points
+    f, linspace(a,b,L+1)[1:end-1]
+  else
+    f
   end
 end
 
-function scalingfunction_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
+function eval_in_dyadic_points{T}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
+  @assert (d-j) >= 0
+  f = eval_in_dyadic_points(filter(side, kind, w), j, k, d; options...)
+  if points
+    f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
+  else
+    f
+  end
+end
+
+function eval_in_dyadic_points{T}(side::Side, kind::Wvl, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
+  s = eval_in_dyadic_points(side, Scl(), w, j+1, k, d; options...)
+  filter = DWT.filter(side, Wvl(), w)
+  L = DWT.support_length(side, Wvl(), w)
+  f = zeros(T, (1<<(d-j))*L+1)
+  for (i,l) in enumerate(firstindex(filter):lastindex(filter))
+    offset = (1<<(d-1-j))*(i-1)
+    f[offset+1:offset+length(s)] += filter[l]*s
+  end
+  if points
+    f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
+  else
+    f
+  end
+end
+
+function eval_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
   T(2)^(T(j)/2)*cascade_algorithm(s, (d-j); options...)
 end
 
-# scaling_function_in_dyadic_points(DWT.db1)
 """
 The scaling function of a wavelet with filtercoeficients h evaluated in diadic points
 
@@ -171,9 +129,8 @@ The scaling function of a wavelet with filtercoeficients h evaluated in diadic p
 where K is the length of h. Thus L=0, gives the evaluation of the
 scaling function in the points [0,1,...,K], and L=1, the points [0,.5,1,...,K].
 """
-cascade_algorithm(w::DiscreteWavelet, L=0; dual=true, options...) = dual?
-    cascade_algorithm(dual_scalingfilter(w), L; options...) :
-    cascade_algorithm(primal_scalingfilter(w), L; options...)
+cascade_algorithm(side::Side, kind::Kind, w::DiscreteWavelet, L=0; options...) =
+    cascade_algorithm(filter(side, kind, w), L; options...)
 #
 cascade_algorithm(s::CompactSequence, L; options...) = cascade_algorithm(s.a, L; options...)
 
@@ -216,33 +173,12 @@ function cascade_algorithm{T}(h::AbstractArray{T}, L; tol = sqrt(eps(T)), option
   eigv
 end
 
-# dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...) =
-#   T(2)^(-j)*(k+dyadicpointsofcascade(w, d-j; options...))
-#
-# dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, L::Int=10; dual=true, options...) = dual ?
-#     _dyadicpointsofcascade_dual(w, L; options...) :
-#     _dyadicpointsofcascade_primal(w, L; options...)
-
-
-# create methods
-# [primal,dual]_[scaling,wavelet]_dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...)
-# [primal,dual]_[scaling,wavelet]_dyadicpointsofcascade{T}(w::DiscreteWavelet{T}, L::Int; options...)
-for kind in (:dual, :primal)
-  for f in (:scaling, :wavelet)
-    start = string(kind,"_",f)
-    f = Symbol(string(start,"_dyadicpointsofcascade"))
-    support = Symbol(string(start,"support"))
-    support_length = Symbol(string(start,"support_length"))
-    @eval begin
-      $f{T}(w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...) =
-          T(2)^(-j)*(k+$f(w, d-j; options...))
-      function $f{T}(w::DiscreteWavelet{T}, L::Int; options...)
-        s = $support(w)
-        H = $support_length(w)
-        linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
-      end
-    end
-  end
+dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...) =
+    T(2)^(-j)*(k+dyadicpointsofcascade(side, kind, w, d-j; options...))
+function dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, L::Int; options...)
+  s = support(side, kind, w)
+  H = support_length(side, kind, w)
+  linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
 end
 
 function _get_H(h)

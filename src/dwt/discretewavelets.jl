@@ -22,6 +22,9 @@ export primal_support_length, dual_support_length
 export primal_vanishingmoments, dual_vanishingmoments, primal_waveletfilter, dual_waveletfilter
 export primal_coefficientfilter, dual_coefficientfilter
 
+export primal, dual, scaling, wavelet, coefficient
+export support, vanishingmoments, support_length, filter
+
 # BOUNDARY TYPES
 
 abstract WaveletBoundary
@@ -78,81 +81,70 @@ eltype(w::DiscreteWavelet) = eltype(typeof(w))
 for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
     @eval $op(w::DiscreteWavelet) = $op(typeof(w))()
 end
-
+abstract Kind
+abstract Side
+type Prl <: Side end
+type Dul <: Side end
+type Scl <: Kind end
+type Wvl <: Kind end
+primal = Prl()
+dual = Dul()
+scaling = Scl()
+wavelet = Wvl()
+Base.inv(::Prl) = Dul()
+Base.inv(::Dul) = Prl()
 # Vanishing Moments
-primal_vanishingmoments{WT<:DiscreteWavelet}(::Type{WT}) = throw("unimplemented")
-dual_vanishingmoments{WT<:DiscreteWavelet}(W::Type{WT}) = _primal_vanishingmoments(W, is_orthogonal(W))
-_primal_vanishingmoments(W, is_orthogonal::Type{True}) = primal_vanishingmoments(W)
+vanishingmoments{WT<:DiscreteWavelet}(side::Side, kind::Kind, ::Type{WT}) = vanishingmoments(s, WT)
+vanishingmoments{WT<:DiscreteWavelet}(::Prl, ::Type{WT}) = throw("unimplemented")
+vanishingmoments{WT<:DiscreteWavelet}(::Dul, W::Type{WT}) = _vanishingmoments(Prl(), W, is_orthogonal(W))
+_vanishingmoments(::Prl, W, is_orthogonal::Type{True}) = vanishingmoments(Prl(), W)
 
 # Support
-primal_scalingsupport{WT<:DiscreteWavelet}(::Type{WT}, j::Int=0, k::Int=0) = (j == 0 && k == 0) ?
-    support(primal_scalingfilter(WT)) :
-    support(primal_scalingfilter(WT), j, k)
-dual_scalingsupport{WT<:DiscreteWavelet}(::Type{WT}, j::Int=0, k::Int=0) = (j == 0 && k == 0) ?
-    support(dual_scalingfilter(WT)) :
-    support(dual_scalingfilter(WT), j, k)
+DWT.support{WT<:DiscreteWavelet}(side::Side, kind::Scl, ::Type{WT}, j::Int=0, k::Int=0) = (j == 0 && k == 0) ?
+    Sequences.support(filter(side, Scl(), WT)) :
+    Sequences.support(filter(side, Scl(), WT), j, k)
 
-function primal_waveletsupport{WT<:DiscreteWavelet}(::Type{WT}, j::Int=0, k::Int=0)
-  supp1 = primal_scalingsupport(WT)
-  supp2 = dual_scalingsupport(WT)
+function DWT.support{WT<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{WT}, j::Int=0, k::Int=0)
+  supp1 = support(side, Scl(), WT)
+  supp2 = support(inv(side), Scl(), WT)
   S1 = Int(1/2*(supp1[1]-supp2[2]+1))
   S2 = Int(1/2*(supp1[2]-supp2[1]+1))
   (j == 0 && k == 0) ? (S1,S2) : (1/(1<<j)*(S1[1]+k), 1/(1<<j)*(S2+k))
 end
 
-function dual_waveletsupport{WT<:DiscreteWavelet}(::Type{WT}, j::Int=0, k::Int=0)
-  supp1 = dual_scalingsupport(WT)
-  supp2 = primal_scalingsupport(WT)
-  S1 = Int(1/2*(supp1[1]-supp2[2]+1))
-  S2 = Int(1/2*(supp1[2]-supp2[1]+1))
-  (j == 0 && k == 0) ? (S1,S2) : (1/(1<<j)*(S1[1]+k), 1/(1<<j)*(S2+k))
-end
-
-for p in (:primal, :dual)
-  for w in (:wavelet, :scaling)
-    op = Symbol(string(p,"_",w,"support_length"))
-    supp = Symbol(string(p,"_",w,"support"))
-    @eval $op{WT<:DiscreteWavelet}(::Type{WT}) = $supp(WT)[2]-$supp(WT)[1]
-  end
-end
+support_length{WT<:DiscreteWavelet}(side::Side, kind::Kind,  ::Type{WT}) = support(side, kind, WT)[2] - support(side, kind, WT)[1]
 
 # Filters
 
 # By default, the wavelet filters are associated with the dual scaling filters via the alternating flip relation
-dual_waveletfilter(w) = alternating_flip(primal_scalingfilter(w))
-primal_waveletfilter(w) = alternating_flip(dual_scalingfilter(w))
+Base.filter{W<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{W}) = alternating_flip(filter(inv(side), Scl(), W))
 
 # If orthogonal, dual and primal scaling functions are equal
-dual_scalingfilter{W<:DiscreteWavelet}(::Type{W}) = _dual_scalingfilter(W, is_orthogonal(W))
-_dual_scalingfilter(W, is_orthogonal::Type{True}) = primal_scalingfilter(W)
-# coefficient filter is just, √2 times the scaling filter, overwrite if it can have nice (rational) values
-primal_coefficientfilter{W<:DiscreteWavelet}(::Type{W}) = sqrt(eltype(W)(2))*primal_scalingfilter(W)
+Base.filter{W<:DiscreteWavelet}(side::Dul, kind::Scl, ::Type{W}) = _filter(side, kind, W, is_orthogonal(W))
+_filter{W<:DiscreteWavelet}(::Dul, ::Scl, ::Type{W}, is_orthogonal::Type{True}) = filter(Prl(), Scl(), W)
 
-dual_coefficientfilter{W<:DiscreteWavelet}(::Type{W}) = _dual_coefficientfilter(W, is_orthogonal(W))
-_dual_coefficientfilter(W, is_orthogonal::Type{True}) = primal_coefficientfilter(W)
+# coefficient filter is just, √2 times the scaling filter, overwrite if it can have nice (rational) values
+type Cof <: Kind end
+coefficient = Cof()
+
+Base.filter{W<:DiscreteWavelet}(side::Side, ::Cof, ::Type{W}) = sqrt(eltype(W)(2))*filter(side, Scl(), W)
+
+
+evaluate_function{W<:DiscreteWavelet}(::Side, ::Kind, ::Type{W}) = throw("unimplemented")
+# TODO implement default evaluate_function(side, wavelet, w) using wavelet coefficients and evaluate_function(side, scaling, w)
 
 # All previous functions where applicable on types, now make methods for instances.
-for o in (:support, :support_length, :filter)
-  for p in (:primal, :dual)
-    ws = (:wavelet, :scaling)
-    o == :filter && (ws = (ws..., :coefficient))
-    for w in ws
-      op = Symbol(string(p,"_",w,o))
-      @eval $op(w::DiscreteWavelet, args...) = $op(typeof(w), args...)
-    end
-  end
+for op in (:support, :support_length, :filter, :evaluate_function)
+  @eval DWT.$op(side::Side, kind::Kind, w::DiscreteWavelet, args...) = DWT.$op(side, kind, typeof(w), args...)
 end
 
-for o in (:vanishingmoments,:coefficients_filter)
-  for p in (:primal, :dual)
-    op = Symbol(string(p,"_",o))
-    @eval $op(w::DiscreteWavelet, args...) = $op(typeof(w), args...)
-  end
+for op in (:vanishingmoments,)
+  @eval $op(side::Side, w::DiscreteWavelet, args...) = $op(side, typeof(w), args...)
 end
 
 Filterbank(w::DiscreteWavelet) =
-    Filterbank( FilterPair(primal_scalingfilter(w), primal_waveletfilter(w)),
-                FilterPair(  dual_scalingfilter(w),   dual_waveletfilter(w)) )
+    Filterbank( FilterPair(filter(Prl(), Scl(), w), filter(Prl(), Wvl(), w)),
+                FilterPair(filter(Dul(), Scl(), w), filter(Dul(), Wvl(), w)) )
 
 "DWT groups the data that fully characterize a discrete wavelet transform."
 immutable DWT_Data
