@@ -83,14 +83,14 @@ function primalfunctiontest()
     for L in 1:5
       for N in 1:6
         w = DWT.CDFWavelet{N,N,T}()
-        f = x->DWT.evaluate_function(primal, scaling, w, x)
+        f = x->DWT.eval(primal, scaling, w, 0, 0, x)
         x = DWT.dyadicpointsofcascade(primal, scaling, w,L)
         g = DWT.cascade_algorithm(primal, scaling, w, L)
         F = map(f,x)
         @test (norm(g-F))<tol
       end
       w = DWT.HaarWavelet{T}()
-      f = x->WTS.DWT.evaluate_function(primal, scaling, w, x)
+      f = x->WTS.DWT.eval(primal, scaling, w, 0, 0, x)
       x = DWT.dyadicpointsofcascade(dual, scaling, w,L)
       g = DWT.cascade_algorithm(primal, scaling, w,L)
       F = map(f,x)
@@ -169,10 +169,10 @@ function scalingtest()
               if iseven(DWT.vanishingmoments(primal, w)) && isodd($k)
                 c1_c=0; c1_c_e = 0
               else
-                c1_c, c1_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate_function(primal, scaling, w, 2*x)*x^$k, nodes...)
+                c1_c, c1_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.eval(primal, scaling, w, 0, 0, 2*x)*x^$k, nodes...)
               end
               nodes = nodes + .5
-              c2_c, c2_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate_function(primal, scaling, w, 2*x-1)*x^$k, nodes...)
+              c2_c, c2_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.eval(primal, scaling, w, 0, 0, 2*x-1)*x^$k, nodes...)
               @test (norm(c[1]-c1_c) < $tol)
               @test (norm(c[2]-c2_c) < $tol)
             end
@@ -192,7 +192,7 @@ function vanishing_moments_test_dual()
         scaling_coefficients = DWT.scaling_coefficients(x->x^p, w, d, nothing)
         for k in 0:(1<<d)-1
           D = 10
-          scaling_function, x = DWT.eval_in_dyadic_points(dual, scaling, w,d,k,D, points = true)
+          scaling_function, x = DWT.eval_in_dyadic_points(dual, scaling, w, d, k, D, points = true)
           estimate = sum(scaling_function.*map(x->x^p,x))/(1<<D)
           @test (norm(estimate-scaling_coefficients[k+1])<tol)
         end
@@ -207,7 +207,7 @@ function vanishing_moments_test_dual()
         scaling_coefficients = DWT.scaling_coefficients(x->x^p, w, d, nothing, side=primal)
         for k in 0:(1<<d)-1
           D = 10
-          scaling_function, x = DWT.eval_in_dyadic_points(primal, scaling, w,d,k,D, points = true)
+          scaling_function, x = DWT.eval_in_dyadic_points(primal, scaling, w, d, k, D, points = true)
           estimate = sum(scaling_function.*map(x->x^p,x))/(1<<D)
           @test (norm(estimate-scaling_coefficients[k+1])<tol)
         end
@@ -302,6 +302,33 @@ function implementation_test()
         DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.db1))<1e-14
     @test norm(DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.db1)[1:end-1]-
         DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1))<1e-14
+
+    @test norm(DWT.eval_in_dyadic_points(primal, scaling, DWT.cdf11)[1:end-1]-
+        DWT.eval_periodic_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11)[1:end-1]-
+        DWT.eval_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_in_dyadic_points(dual, scaling, DWT.cdf11)[1:end-1]-
+        DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11)[1:end-1]-
+        DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
+
+    @test norm(DWT.eval_in_dyadic_points(primal, scaling, DWT.db1)-
+        DWT.eval_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.db1)-
+        DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_in_dyadic_points(dual, scaling, DWT.db1)-
+        DWT.eval_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.db1)-
+        DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
+
+    @test norm(DWT.eval_periodic_in_dyadic_points(primal, scaling, DWT.db1)-
+        DWT.eval_periodic_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.db1)-
+        DWT.eval_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.db1)-
+        DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1)-
+        DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
   end
 end
 
@@ -313,32 +340,33 @@ function eval_wavelet_test()
     @test DWT._periodize((-1.5,0.),-1,1)==((0.5,1.),(-1,0))
     for side in (primal, dual)
       for kind in (scaling, DWT.wavelet)
-        @test DWT.in_support(1,DWT.periodic_support(side,kind, DWT.cdf11, 0,0)...)
-        @test DWT.in_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 3,0)...)
-        @test !DWT.in_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 1,1)...)
-        for j in 0:2
-          for k in -2:2
-            koffset = mod(k, 1<<j)
-            p = 1/(1<<j)
-            for x in 1/(1<<(j+1))+linspace(-4,4)
-              xlow = x-fld(x, 1)
-              f = DWT.eval_periodic(side, kind, DWT.cdf11, j, k, x, 1e-4)
-              if kind == scaling
-                ftest = (koffset <= (1<<j)*xlow < koffset+1) ? 2.0^(j/2) : 0
-                @test f ≈ ftest
-              else
-                if koffset <= (1<<j)*xlow < koffset+1/2
-                  ftest = 2.0^(j/2)
-                elseif koffset+1/2 <= (1<<j)*xlow < koffset+1
-                  ftest = -2.0^(j/2)
-                else
-                  ftest = 0
-                end
-                @test f ≈ ftest
-              end
-            end
-          end
-        end
+        @test DWT.in_periodic_support(1,DWT.periodic_support(side,kind, DWT.cdf11, 0,0)...)
+        @test DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 3,0)...)
+        @test !DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 1,1)...)
+        # for j in 0:2
+        #   for k in -2:2
+        #     koffset = mod(k, 1<<j)
+        #     p = 1/(1<<j)
+        #     for x in 1/(1<<(j+2))+linspace(-4,4)
+        #       xlow = x-fld(x, 1)
+        #       println(DWT.name(side),DWT.name(kind),"j",j,"k",k,"x",x)
+        #       f = DWT.eval_periodic(side, kind, DWT.cdf11, j, k, x, xtol=1e-4)
+        #       if kind == scaling
+        #         ftest = (koffset <= (1<<j)*xlow < koffset+1) ? 2.0^(j/2) : 0
+        #         @test f ≈ ftest
+        #       else
+        #         if koffset <= (1<<j)*xlow < koffset+1/2
+        #           ftest = 2.0^(j/2)
+        #         elseif koffset+1/2 <= (1<<j)*xlow < koffset+1
+        #           ftest = -2.0^(j/2)
+        #         else
+        #           ftest = 0
+        #         end
+        #         @test f ≈ ftest
+        #       end
+        #     end
+        #   end
+        # end
       end
     end
   end
@@ -359,23 +387,30 @@ vanishing_moments_test_dual()
 # # Plot Daubechies wavelets
 # using Plots
 # gr()
-# plot()
-# for i in 2:2:6
-#   f = Symbol(string("db",i))
-#   @eval begin
-#     x = Wavelets.DWT.primal_scaling_dyadicpointsofcascade(DWT.$f,10)
-#     g = Wavelets.DWT.cascade_algorithm(DWT.$f,10)
-#   end
-#   plot!(x,g)
+# plot(layout=(2,2))
+# for i in 1:2:20
+#   plot!(primal, DWT.scaling, DWT.DaubechiesWavelet{i,Float64}(),subplot=1)
 # end
-# plot!()
+# plot!(xlims=[0,20],subplot=1)
+# for i in 1:2:20
+#   plot!(primal, DWT.wavelet, DWT.DaubechiesWavelet{i,Float64}(),subplot=2)
+# end
+# plot!(xlims=[-5,15],subplot=2)
+# for i in 1:2:20
+#   plot!(primal, DWT.scaling, DWT.DaubechiesWavelet{i,Float64}(),periodic=true,subplot=3)
+# end
+# plot!(xlims=[0,2],subplot=3)
+# for i in 1:2:20
+#   plot!(primal, DWT.wavelet, DWT.DaubechiesWavelet{i,Float64}(),periodic=true,subplot=4)
+# end
+# plot!(xlims=[0,2],subplot=4)
+
 
 # # Plot spline scaling functions
 # using Plots; gr(); plot()
 # x = linspace(-5,5,1000)
 # for i in 1:6
-#   i==2 ? c = Symbol(string("cdf",i,4)): c = Symbol(string("cdf",i,i))
-#   @eval f = x->Wavelets.DWT.evaluate_primal_scalingfunction(DWT.$c, x)
+#   f = x->Wavelets.DWT.eval(primal, scaling, DWT.CDFWavelet{i,i,Float64}(), 0,0,x)
 #   ff = map(f, x)
 #   plot!(x, ff)
 # end
@@ -388,29 +423,28 @@ vanishing_moments_test_dual()
 #   qs = 2:2:6
 #   isodd(p) && (qs = 1:2:6 )
 #   for q in qs
-#     f, x = Wavelets.DWT.primal_waveletfunction_in_dyadic_points(DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, -f, subplot=i)
-#     f, x = Wavelets.DWT.primal_scalingfunction_in_dyadic_points(DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.eval_in_dyadic_points(primal, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, f, subplot=i)
 #     i += 1
 #   end
 #   for q in qs
-#     f, x = Wavelets.DWT.dual_waveletfunction_in_dyadic_points(DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, -f, subplot=i)
-#     f, x = Wavelets.DWT.dual_scalingfunction_in_dyadic_points(DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.eval_in_dyadic_points(dual, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, f, subplot=i)
 #     i += 1
 #   end
 # end
 # plot!()
 
-# # Easy way to plot wavelets
-# using Wavelets
 # using Plots
+# using Wavelets
 # gr()
-# w = DWT.CDFWavelet{2,2,Float64}()
-# plot(w; side=:primal, j=0, k=-1, periodic=false)
-# plot!(w; side=:primal, j=0, k=-1, periodic=true)
+# w = DWT.CDFWavelet{1,3,Float64}()
+# plot(w; j=0, k=-1, periodic=false)
+# plot(w; side=dual, j=0, k=-1, periodic=true)
 
 # using Plots
 # gr()

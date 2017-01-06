@@ -1,42 +1,9 @@
 # cascade.jl
-export eval_periodic, eval_periodic_in_dyadic_points, eval_in_dyadic_points, dyadicpointsofcascade
-
-function eval_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S, xtol::S; options...)
-  offset = floor(x)
-  x -= offset
-  d, kpoint = closest_dyadic_point(x, xtol; options...)
-  (!in_support(kpoint/2^d, periodic_support(side, kind, w, j, k)...)) && return T(0)
-  f = eval_periodic_in_dyadic_points(side, kind, w, j, k, d)
-  f[kpoint+1]
-end
-
-function in_support{T}(x, support::Tuple{T,T}...)
-  for s in support
-    (s[1] <= x <= s[2]) && (return true)
-  end
-  false
-end
-
-function periodic_support{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j, k)
-  s = DWT.support(side, kind, w, j, k)
-  _periodize(s)
-end
-
-function _periodize{T}(s::Tuple{T,T}, a=T(0), b=T(1))
-  a = T(a)
-  b = T(b)
-  p = b-a
-  ((s[2]-s[1]) >= p) && (return ((a,b),))
-  offset = -p*fld(s[1]-a, p)
-  s = (s[1]+offset, s[2]+offset)
-  (s[2] <= b) && (return (s,))
-  (s[2] > b) && (return (s[1], b), (a, s[2]-(b-a)))
-end
 
 """
   A dyadic point given by `k/2^d` at most xtol separated from x.
 """
-function closest_dyadic_point(x, xtol; dmax = 20)
+function closest_dyadic_point{T}(x::T, xtol::T; dmax = 20)
   offset = floor(x)
   x -= offset
   up = 1.;  low = 0.
@@ -60,65 +27,6 @@ function closest_dyadic_point(x, xtol; dmax = 20)
   end
   k = (1<<d)*Int(offset) + resk
   d, k
-end
-
-function _periodize{T}(n::Int, src::AbstractArray{T}, istart)
-  dest = zeros(T,n)
-  _periodize!(dest, src, istart)
-  dest
-end
-
-function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart)
-  L = length(dest)
-  j = mod(istart, L)
-  (j == 0) && (j = L)
-  for i in 1:length(dest)
-    dest[j] = sum( src[i:L:end] )
-    j += 1
-    (j > L) && (j = 1)
-  end
-
-end
-function eval_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; a = T(0), b = T(1), points=false, options...)
-  s = eval_in_dyadic_points(side, kind, w,j,k,d)
-  L = round(Int, (1<<d)*(b-a))
-  @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
-  f = _periodize(L, s, Int((1<<d)*DWT.support(side, kind, w,j,k)[1])+1)
-  if points
-    f, linspace(a,b,L+1)[1:end-1]
-  else
-    f
-  end
-end
-
-function eval_in_dyadic_points{T}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  @assert (d-j) >= 0
-  f = eval_in_dyadic_points(filter(side, kind, w), j, k, d; options...)
-  if points
-    f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
-  else
-    f
-  end
-end
-
-function eval_in_dyadic_points{T}(side::Side, kind::Wvl, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  s = eval_in_dyadic_points(side, Scl(), w, j+1, k, d; options...)
-  filter = DWT.filter(side, Wvl(), w)
-  L = DWT.support_length(side, Wvl(), w)
-  f = zeros(T, (1<<(d-j))*L+1)
-  for (i,l) in enumerate(firstindex(filter):lastindex(filter))
-    offset = (1<<(d-1-j))*(i-1)
-    f[offset+1:offset+length(s)] += filter[l]*s
-  end
-  if points
-    f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
-  else
-    f
-  end
-end
-
-function eval_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
-  T(2)^(T(j)/2)*cascade_algorithm(s, (d-j); options...)
 end
 
 """
@@ -173,9 +81,9 @@ function cascade_algorithm{T}(h::AbstractArray{T}, L; tol = sqrt(eps(T)), option
   eigv
 end
 
-dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int; options...) =
-    T(2)^(-j)*(k+dyadicpointsofcascade(side, kind, w, d-j; options...))
-function dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, L::Int; options...)
+dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int) =
+    T(2)^(-j)*(k+dyadicpointsofcascade(side, kind, w, d-j))
+function dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, L::Int)
   s = support(side, kind, w)
   H = support_length(side, kind, w)
   linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
