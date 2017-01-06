@@ -78,8 +78,8 @@ symmetric_offset(n) = iseven(n) ? -n>>1+1 : -(n-1)>>1
 # The coefficients of the primal scaling function are simply a binomial sequence for all n.
 cdf_coef(n) = 1//(1<<(n-1))*[binomial(n,k) for k in 0:n]
 
-Base.filter{P,Q,T}(side::Prl, kind::Scl, ::Type{CDFWavelet{P,Q,T}}) = CompactSequence(T(1)/sqrt(T(2))*convert(Array{T,1},cdf_coef(P)), symmetric_offset(P+1))
-Base.filter{P,Q,T}(side::Prl, kind::Cof, ::Type{CDFWavelet{P,Q,T}}) = CompactSequence(cdf_coef(P), symmetric_offset(P+1))
+filter{P,Q,T}(side::Prl, kind::Scl, ::Type{CDFWavelet{P,Q,T}}) = CompactSequence(T(1)/sqrt(T(2))*convert(Array{T,1},cdf_coef(P)), symmetric_offset(P+1))
+filter{P,Q,T}(side::Prl, kind::Cof, ::Type{CDFWavelet{P,Q,T}}) = CompactSequence(cdf_coef(P), symmetric_offset(P+1))
 
 for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf15_htilde),
                       (2, 2, :cdf22_htilde), (2, 4, :cdf24_htilde), (2, 6, :cdf26_htilde),
@@ -87,34 +87,34 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
                       (4, 2, :cdf42_htilde), (4, 4, :cdf44_htilde), (4, 6, :cdf46_htilde),
                       (5, 1, :cdf51_htilde), (5, 3, :cdf53_htilde), (5, 5, :cdf55_htilde),
                       (6, 2, :cdf62_htilde), (6, 4, :cdf64_htilde), (6, 6, :cdf66_htilde)  )
-    @eval Base.filter{T}(side::Dul, kind::Cof, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
-    @eval Base.filter{T}(side::Dul, kind::Scl, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
+    @eval filter{T}(side::Dul, kind::Cof, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
+    @eval filter{T}(side::Dul, kind::Scl, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
 end
 
 vanishingmoments{N1,N2,T}(::Prl, ::Type{CDFWavelet{N1,N2,T}}) = N1
 vanishingmoments{N1,N2,T}(::Dul, ::Type{CDFWavelet{N1,N2,T}}) = N2
-DWT.support{N1,N2,T}(::Prl, ::Scl, ::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
+support{N1,N2,T}(::Prl, ::Scl, ::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
 
 using .Cardinal_b_splines
-DWT.eval{N1,N2,T,S<:Real}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S) =
+evaluate{N1,N2,T,S<:Real}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S) =
       T(2)^(j/2)*evaluate_Bspline(N1-1, T(2)^j*x-T(k)-T(DWT.symmetric_offset(N1+1)), promote_type(T, eltype(x)))
 
-DWT.eval{N1,N2,T,S<:Real}(side::Prl, kind::Wvl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S; options...) =
+evaluate{N1,N2,T,S<:Real}(side::Prl, kind::Wvl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S; options...) =
       mother_relation(Prl(), w, j, k, x; options...)
 # Periodic transformed ϕ,  ϕjk,  is the tranformed version of periodized spline with period 2^j
 # This consturction of methods is necesarry to avoid conflicts with the methods in discretewavelets.jl
-DWT.eval_periodic{N1,N2,T,S<:Real}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S) =
+evaluate_periodic{N1,N2,T,S<:Real}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S) =
       T(2)^(j/2)*evaluate_periodic_Bspline(N1-1, T(2)^j*x-T(k)-T(DWT.symmetric_offset(N1+1)), T(1<<j), T)
 
-DWT.eval_periodic{N1,N2,T,S<:Real}(side::Prl, kind::Wvl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S; options...) =
+evaluate_periodic{N1,N2,T,S<:Real}(side::Prl, kind::Wvl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S; options...) =
       mother_relation_periodic(Prl(), w, j, k, x; options...)
 
 # Seems to be quicker without
-# function DWT.eval_periodic_in_dyadic_points{N1,N2,T}(side::Prl, kind::Kind, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; points=false, options...)
+# function DWT.evaluate_periodic_in_dyadic_points{N1,N2,T}(side::Prl, kind::Kind, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; points=false, options...)
 #   a = T(0); b = T(1)
 #   L = round(Int, (1<<d)*(b-a))
 #   x = linspace(a,b,L+1)[1:end-1]
-#   f = map(x->eval_periodic(side, kind, w, j, k, x; options...), x;)
+#   f = map(x->evaluate_periodic(side, kind, w, j, k, x; options...), x;)
 #   if points
 #     return f, x
 #   else
@@ -122,14 +122,14 @@ DWT.eval_periodic{N1,N2,T,S<:Real}(side::Prl, kind::Wvl, w::CDFWavelet{N1,N2,T},
 #   end
 # end
 
-# DWT.eval_in_dyadic_points{N1,N2,T}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; options...) =
-#     eval_in_dyadic_points(kind, side, w, j, k, d; options...)
-# DWT.eval_in_dyadic_points{N1,N2,T}(side::Prl, kind::Wvl, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; options...) =
-#     eval_in_dyadic_points(kind, side, w, j, k, d; options...)
+# DWT.evaluate_in_dyadic_points{N1,N2,T}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; options...) =
+#     evaluate_in_dyadic_points(kind, side, w, j, k, d; options...)
+# DWT.evaluate_in_dyadic_points{N1,N2,T}(side::Prl, kind::Wvl, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; options...) =
+#     evaluate_in_dyadic_points(kind, side, w, j, k, d; options...)
 #
-# function DWT.eval_in_dyadic_points{N1,N2,T}(kind::Kind, side::Prl, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; points=false, options...)
+# function DWT.evaluate_in_dyadic_points{N1,N2,T}(kind::Kind, side::Prl, w::CDFWavelet{N1,N2,T}, j=0, k=0, d=10; points=false, options...)
 #   x = dyadicpointsofcascade(side, kind, w, j, k, d)
-#   f = map(x->eval(side, kind, w, j, k, x; options...), x)
+#   f = map(x->evaluate(side, kind, w, j, k, x; options...), x)
 #   if points
 #     return f, x
 #   else
@@ -141,8 +141,8 @@ function mother_relation{T,S<:Real}(side::Side, w::DiscreteWavelet{T}, j::Int, k
   flt = filter(side, Wvl(), w)
   res = T(0)
   for l in  firstindex(flt):lastindex(flt)
-    # res += flt[l]*eval(side, Scl(), w, j+1, 2k, x-l/(1<<(j+1)); options...)
-    res += flt[l]*eval(side, Scl(), w, 0, 0, T(2)*((1<<j)*x-k)-T(l); options...)
+    # res += flt[l]*evaluate(side, Scl(), w, j+1, 2k, x-l/(1<<(j+1)); options...)
+    res += flt[l]*evaluate(side, Scl(), w, 0, 0, T(2)*((1<<j)*x-k)-T(l); options...)
   end
   # res
   sqrt(T(2))*T(2)^(j/2)*res
@@ -152,8 +152,8 @@ function mother_relation_periodic{T,S<:Real}(side::Side, w::DiscreteWavelet{T}, 
   flt = filter(side, Wvl(), w)
   res = T(0)
   for l in firstindex(flt):lastindex(flt)
-    # res += flt[l]*eval_periodic(side, Scl(), w, j+1, 2k, x-l/(1<<(j+1)); options...)
-    res += flt[l]*eval_periodic(side, Scl(), w, 0, 0, T(2)*((1<<j)*x-k)-T(l); options...)
+    # res += flt[l]*evaluate_periodic(side, Scl(), w, j+1, 2k, x-l/(1<<(j+1)); options...)
+    res += flt[l]*evaluate_periodic(side, Scl(), w, 0, 0, T(2)*((1<<j)*x-k)-T(l); options...)
   end
   # res
   sqrt(T(2))*T(2)^(j/2)*res

@@ -83,14 +83,14 @@ function primalfunctiontest()
     for L in 1:5
       for N in 1:6
         w = DWT.CDFWavelet{N,N,T}()
-        f = x->DWT.eval(primal, scaling, w, 0, 0, x)
+        f = x->DWT.evaluate(primal, scaling, w, 0, 0, x)
         x = DWT.dyadicpointsofcascade(primal, scaling, w,L)
         g = DWT.cascade_algorithm(primal, scaling, w, L)
         F = map(f,x)
         @test (norm(g-F))<tol
       end
       w = DWT.HaarWavelet{T}()
-      f = x->WTS.DWT.eval(primal, scaling, w, 0, 0, x)
+      f = x->WTS.DWT.evaluate(primal, scaling, w, 0, 0, x)
       x = DWT.dyadicpointsofcascade(dual, scaling, w,L)
       g = DWT.cascade_algorithm(primal, scaling, w,L)
       F = map(f,x)
@@ -169,10 +169,10 @@ function scalingtest()
               if iseven(DWT.vanishingmoments(primal, w)) && isodd($k)
                 c1_c=0; c1_c_e = 0
               else
-                c1_c, c1_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.eval(primal, scaling, w, 0, 0, 2*x)*x^$k, nodes...)
+                c1_c, c1_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate(primal, scaling, w, 0, 0, 2*x)*x^$k, nodes...)
               end
               nodes = nodes + .5
-              c2_c, c2_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.eval(primal, scaling, w, 0, 0, 2*x-1)*x^$k, nodes...)
+              c2_c, c2_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate(primal, scaling, w, 0, 0, 2*x-1)*x^$k, nodes...)
               @test (norm(c[1]-c1_c) < $tol)
               @test (norm(c[2]-c2_c) < $tol)
             end
@@ -192,7 +192,7 @@ function vanishing_moments_test_dual()
         scaling_coefficients = DWT.scaling_coefficients(x->x^p, w, d, nothing)
         for k in 0:(1<<d)-1
           D = 10
-          scaling_function, x = DWT.eval_in_dyadic_points(dual, scaling, w, d, k, D, points = true)
+          scaling_function, x = DWT.evaluate_in_dyadic_points(dual, scaling, w, d, k, D, points = true)
           estimate = sum(scaling_function.*map(x->x^p,x))/(1<<D)
           @test (norm(estimate-scaling_coefficients[k+1])<tol)
         end
@@ -207,7 +207,7 @@ function vanishing_moments_test_dual()
         scaling_coefficients = DWT.scaling_coefficients(x->x^p, w, d, nothing, side=primal)
         for k in 0:(1<<d)-1
           D = 10
-          scaling_function, x = DWT.eval_in_dyadic_points(primal, scaling, w, d, k, D, points = true)
+          scaling_function, x = DWT.evaluate_in_dyadic_points(primal, scaling, w, d, k, D, points = true)
           estimate = sum(scaling_function.*map(x->x^p,x))/(1<<D)
           @test (norm(estimate-scaling_coefficients[k+1])<tol)
         end
@@ -281,54 +281,54 @@ function implementation_test()
     @test DWT.dyadicpointsofcascade(primal, DWT.wavelet, DWT.cdf13,1,1,3)==linspace(0,1.5,13)
     @test DWT.dyadicpointsofcascade(dual, scaling, DWT.cdf13,1,1,3)==linspace(-.5,2,21)
     @test DWT.dyadicpointsofcascade(dual, DWT.wavelet, DWT.cdf13,1,1,3)==linspace(0,1.5,13)
-    @test norm(DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.cdf24,1,3,4)-[0.0,8.3234e-6,0.000177566,-0.0014307,0.00378807,0.00350662,
+    @test norm(DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.cdf24,1,3,4)-[0.0,8.3234e-6,0.000177566,-0.0014307,0.00378807,0.00350662,
                                                                   -0.0305216,0.0262683,0.0808122,-0.0458831,0.0762876,-0.206873,
                                                                     -0.61956,0.20897,0.306045,1.09198,2.39743,0.456957,-0.351988,
                                                                       -1.5335,-3.72494,-1.5335,-0.351988,0.456957,2.39743,1.09198,
                                                                         0.306045,0.20897,-0.61956,-0.206873,0.0762876,-0.0458831,
                                                                           0.0808122,0.0262683,-0.0305216,0.00350662,0.00378807,
                                                                             -0.0014307,0.000177566,8.3234e-6,0.0]) <= 1e-5
-    @test norm(DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.cdf24,1,3,4)-[0.0,-0.0165728,-0.0331456,-0.0497184,-0.0662913,-0.0828641,
+    @test norm(DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.cdf24,1,3,4)-[0.0,-0.0165728,-0.0331456,-0.0497184,-0.0662913,-0.0828641,
                                                                     -0.0994369,-0.11601,-0.132583,-0.0110485,0.110485,0.232019,0.353553,
                                                                       0.475087,0.596621,0.718155,0.839689,0.132583,-0.574524,-1.28163,
                                                                         -1.98874,-1.28163,-0.574524,0.132583,0.839689,0.718155,0.596621,
                                                                           0.475087,0.353553,0.232019,0.110485,-0.0110485,-0.132583,-0.11601,
                                                                             -0.0994369,-0.0828641,-0.0662913,-0.0497184,-0.0331456,-0.0165728,0.0]) <= 1e-5
-    @test norm(DWT.eval_in_dyadic_points(primal, scaling, DWT.db1)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(primal, scaling, DWT.db1))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.db1)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.db1))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(dual, scaling, DWT.db1)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.db1))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.db1)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(primal, scaling, DWT.db1)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(primal, scaling, DWT.db1))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.db1)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.db1))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(dual, scaling, DWT.db1)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(dual, scaling, DWT.db1))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.db1)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1))<1e-14
 
-    @test norm(DWT.eval_in_dyadic_points(primal, scaling, DWT.cdf11)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(dual, scaling, DWT.cdf11)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11)[1:end-1]-
-        DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(primal, scaling, DWT.cdf11)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(dual, scaling, DWT.cdf11)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11)[1:end-1]-
+        DWT.evaluate_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
 
-    @test norm(DWT.eval_in_dyadic_points(primal, scaling, DWT.db1)-
-        DWT.eval_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.db1)-
-        DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(dual, scaling, DWT.db1)-
-        DWT.eval_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.db1)-
-        DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(primal, scaling, DWT.db1)-
+        DWT.evaluate_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.db1)-
+        DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(dual, scaling, DWT.db1)-
+        DWT.evaluate_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.db1)-
+        DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
 
-    @test norm(DWT.eval_periodic_in_dyadic_points(primal, scaling, DWT.db1)-
-        DWT.eval_periodic_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.db1)-
-        DWT.eval_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.db1)-
-        DWT.eval_periodic_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
-    @test norm(DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1)-
-        DWT.eval_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_periodic_in_dyadic_points(primal, scaling, DWT.db1)-
+        DWT.evaluate_periodic_in_dyadic_points(primal, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.db1)-
+        DWT.evaluate_periodic_in_dyadic_points(primal, DWT.wavelet, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_periodic_in_dyadic_points(dual, scaling, DWT.db1)-
+        DWT.evaluate_periodic_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
+    @test norm(DWT.evaluate_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1)-
+        DWT.evaluate_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
   end
 end
 
@@ -350,7 +350,7 @@ function eval_wavelet_test()
         #     for x in 1/(1<<(j+2))+linspace(-4,4)
         #       xlow = x-fld(x, 1)
         #       println(DWT.name(side),DWT.name(kind),"j",j,"k",k,"x",x)
-        #       f = DWT.eval_periodic(side, kind, DWT.cdf11, j, k, x, xtol=1e-4)
+        #       f = DWT.evaluate_periodic(side, kind, DWT.cdf11, j, k, x, xtol=1e-4)
         #       if kind == scaling
         #         ftest = (koffset <= (1<<j)*xlow < koffset+1) ? 2.0^(j/2) : 0
         #         @test f ≈ ftest
@@ -410,7 +410,7 @@ vanishing_moments_test_dual()
 # using Plots; gr(); plot()
 # x = linspace(-5,5,1000)
 # for i in 1:6
-#   f = x->Wavelets.DWT.eval(primal, scaling, DWT.CDFWavelet{i,i,Float64}(), 0,0,x)
+#   f = x->Wavelets.DWT.evaluate(primal, scaling, DWT.CDFWavelet{i,i,Float64}(), 0,0,x)
 #   ff = map(f, x)
 #   plot!(x, ff)
 # end
@@ -423,16 +423,16 @@ vanishing_moments_test_dual()
 #   qs = 2:2:6
 #   isodd(p) && (qs = 1:2:6 )
 #   for q in qs
-#     f, x = Wavelets.DWT.eval_in_dyadic_points(primal, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, -f, subplot=i)
-#     f, x = Wavelets.DWT.eval_in_dyadic_points(primal, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(primal, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, f, subplot=i)
 #     i += 1
 #   end
 #   for q in qs
-#     f, x = Wavelets.DWT.eval_in_dyadic_points(dual, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, -f, subplot=i)
-#     f, x = Wavelets.DWT.eval_in_dyadic_points(dual, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(dual, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
 #     plot!(x, f, subplot=i)
 #     i += 1
 #   end

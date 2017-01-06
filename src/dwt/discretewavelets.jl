@@ -9,7 +9,8 @@ typealias True Val{true}
 
 
 import ..Filterbanks: Filterbank
-import Base: eltype
+import Base: eltype, filter
+import ..Sequences: support
 # Convenience method
 eltype(x, y) = promote_type(eltype(x), eltype(y))
 export filter
@@ -19,6 +20,7 @@ export is_symmetric, is_orthogonal, is_biorthogonal
 
 export primal, dual, scaling, wavelet, coefficient
 export support, vanishingmoments, support_length, filter
+export evaluate_periodic, evaluate_periodic_in_dyadic_points, evaluate_in_dyadic_points
 
 # BOUNDARY TYPES
 
@@ -99,11 +101,11 @@ _vanishingmoments(::Prl, W, is_orthogonal::Type{True}) = vanishingmoments(Prl(),
 ###############################################################################
 # support/support_length
 ###############################################################################
-DWT.support{WT<:DiscreteWavelet}(side::Side, kind::Scl, ::Type{WT}, j::Int=0, k::Int=0) = (j == 0 && k == 0) ?
+support{WT<:DiscreteWavelet}(side::Side, kind::Scl, ::Type{WT}, j::Int=0, k::Int=0) = (j == 0 && k == 0) ?
     Sequences.support(filter(side, Scl(), WT)) :
     Sequences.support(filter(side, Scl(), WT), j, k)
 
-function DWT.support{WT<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{WT}, j::Int=0, k::Int=0)
+function support{WT<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{WT}, j::Int=0, k::Int=0)
   supp1 = support(side, Scl(), WT)
   supp2 = support(inv(side), Scl(), WT)
   S1 = Int(1/2*(supp1[1]-supp2[2]+1))
@@ -116,22 +118,22 @@ support_length{WT<:DiscreteWavelet}(side::Side, kind::Kind,  ::Type{WT}) = suppo
 # filter
 ###############################################################################
 # By default, the wavelet filters are associated with the dual scaling filters via the alternating flip relation
-Base.filter{W<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{W}) = alternating_flip(filter(inv(side), Scl(), W))
+filter{W<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{W}) = alternating_flip(filter(inv(side), Scl(), W))
 
 # If orthogonal, dual and primal scaling functions are equal
-Base.filter{W<:DiscreteWavelet}(side::Dul, kind::Scl, ::Type{W}) = _filter(side, kind, W, is_orthogonal(W))
+filter{W<:DiscreteWavelet}(side::Dul, kind::Scl, ::Type{W}) = _filter(side, kind, W, is_orthogonal(W))
 _filter{W<:DiscreteWavelet}(::Dul, ::Scl, ::Type{W}, is_orthogonal::Type{True}) = filter(Prl(), Scl(), W)
 
 # coefficient filter is just, √2 times the scaling filter, overwrite if it can have nice (rational) values
 type Cof <: Kind end
 coefficient = Cof()
 
-Base.filter{W<:DiscreteWavelet}(side::Side, ::Cof, ::Type{W}) = sqrt(eltype(W)(2))*filter(side, Scl(), W)
+filter{W<:DiscreteWavelet}(side::Side, ::Cof, ::Type{W}) = sqrt(eltype(W)(2))*filter(side, Scl(), W)
 ###############################################################################
 # All previous functions where applicable on types, now make methods for instances.
 ###############################################################################
 for op in (:support, :support_length, :filter)
-  @eval DWT.$op(side::Side, kind::Kind, w::DiscreteWavelet, args...) = DWT.$op(side, kind, typeof(w), args...)
+  @eval $op(side::Side, kind::Kind, w::DiscreteWavelet, args...) = $op(side, kind, typeof(w), args...)
 end
 
 for op in (:vanishingmoments,)
@@ -140,31 +142,29 @@ end
 ###############################################################################
 # Evaluation of scaling and wavelet function
 ###############################################################################
-export eval_periodic, eval_periodic_in_dyadic_points, eval_in_dyadic_points
 include("util/cascade.jl")
 include("util/periodize.jl")
-function eval_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
+function evaluate_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
   a = T(0); b = T(1)
   offset = floor(x)
   x -= offset
   d, kpoint = closest_dyadic_point(x, xtol; options...)
   (!in_periodic_support(kpoint/2^d, periodic_support(side, kind, w, j, k, a, b)...)) && return T(0)
-  f = eval_periodic_in_dyadic_points(side, kind, w, j, k, d)
+  f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, d)
   f[kpoint+1]
 end
 
-#TODO test this eval method
-function DWT.eval{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
+function evaluate{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
   d, kpoint = closest_dyadic_point(x, xtol; options...)
   s = support(side, kind, w, j, k)
   (!in_support(kpoint/2^d, s)) && return T(0)
-  f = eval_periodic_in_dyadic_points(side, kind, w, j, k, d)
+  f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, d)
   f[-Int(s[1]*(1<<d))+kpoint+1]
 end
 
-function eval_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
+function evaluate_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
   a = T(0); b = T(1)
-  s = eval_in_dyadic_points(side, kind, w, j ,k ,d)
+  s = evaluate_in_dyadic_points(side, kind, w, j ,k ,d)
   L = round(Int, (1<<d)*(b-a))
   @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
   f = _periodize(L, s, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
@@ -175,9 +175,9 @@ function eval_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWa
   end
 end
 
-function eval_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
+function evaluate_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
   @assert (d-j) >= 0
-  f = eval_in_dyadic_points(filter(side, kind, w), j, k, d; options...)
+  f = evaluate_in_dyadic_points(filter(side, kind, w), j, k, d; options...)
   if points
     f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
   else
@@ -185,8 +185,8 @@ function eval_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T},
   end
 end
 
-function eval_in_dyadic_points{T}(side::Side, kind::Wvl, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  s = eval_in_dyadic_points(side, Scl(), w, j+1, k, d; options...)
+function evaluate_in_dyadic_points{T}(side::Side, kind::Wvl, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
+  s = evaluate_in_dyadic_points(side, Scl(), w, j+1, k, d; options...)
   filter = DWT.filter(side, Wvl(), w)
   L = DWT.support_length(side, Wvl(), w)
   f = zeros(T, (1<<(d-j))*L+1)
@@ -201,7 +201,7 @@ function eval_in_dyadic_points{T}(side::Side, kind::Wvl, w::DiscreteWavelet{T}, 
   end
 end
 
-function eval_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
+function evaluate_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
   T(2)^(T(j)/2)*cascade_algorithm(s, (d-j); options...)
 end
 

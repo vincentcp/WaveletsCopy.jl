@@ -19,11 +19,11 @@ _db1_h(T::Type) = CompactSequence(T(1)/sqrt(T(2))*db1_h, 0)
 _db2_h(T::Type) = CompactSequence(1/sqrt(T(2))*[(1+sqrt(T(3)))/4, (3+sqrt(T(3)))/4, (3-sqrt(T(3)))/4, (1-sqrt(T(3)))/4], 0)
 
 T0 = Float64
-DWT.filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{1,T0}}) = _db1_h(T0)
-DWT.filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{2,T0}}) = _db2_h(T0)
-DWT.filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{4,T0}}) = CompactSequence(db4_h, 0)
-DWT.filter{N}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T0}}) = CompactSequence(daubechies(N), 0)
-DWT.filter{T}(::Prl, ::Cof, ::Type{DaubechiesWavelet{1,T}}) = CompactSequence(db1_h)
+filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{1,T0}}) = _db1_h(T0)
+filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{2,T0}}) = _db2_h(T0)
+filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{4,T0}}) = CompactSequence(db4_h, 0)
+filter{N}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T0}}) = CompactSequence(daubechies(N), 0)
+filter{T}(::Prl, ::Cof, ::Type{DaubechiesWavelet{1,T}}) = CompactSequence(db1_h)
 
 IMPLEMENTED_DB_WAVELETS = []
 for N in 1:10
@@ -38,9 +38,10 @@ end
 name{N,T}(::Type{DaubechiesWavelet{N,T}}) = string("db",N,"_",T)
 name{N}(::Type{DaubechiesWavelet{N,Float64}}) = string("db",N)
 
-DWT.support{N,T}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
-DWT.vanishingmoments{N,T}(::Prl, ::Type{DaubechiesWavelet{N,T}}) = N
+support{N,T}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+vanishingmoments{N,T}(::Prl, ::Type{DaubechiesWavelet{N,T}}) = N
 
 using .Cardinal_b_splines
-evaluate_function{T}(::Prl, ::Scl, w::DWT.HaarWavelet{T}, x::Number) =
-      evaluate_Bspline(0, x, eltype(x, w))
+# Commented for testing purposes
+# evaluate{T,S<:Real}(::Prl, ::Scl, w::DWT.HaarWavelet{T}, j, k, x::Number; options...) =
+#       evaluate(Prl(), Scl(), CDFWavelet{1,1,T}(), j, k, x; options...)
