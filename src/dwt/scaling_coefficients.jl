@@ -32,8 +32,14 @@ function scaling_coefficients{T}(f::Function, s::CompactSequence{T}, L::Int, fem
   scaling_coefficients(fcoefs, filter, fembedding; options...)
 end
 
+scaling_coefficients{T}(f::AbstractArray, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
+    scaling_coefficients(f, filter(Dul(), Scl(), w), PeriodicEmbedding(); options...)
+
+scaling_coefficients!{T}(c::AbstractArray, f::AbstractArray, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
+    scaling_coefficients!(c, f, filter(Dul(), Scl(), w), PeriodicEmbedding(); options...)
+
 # Function evaluations on a dyadic grid to scaling coefficients
-function scaling_coefficients{T}(f::AbstractArray{T,1}, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
+function scaling_coefficients{T}(f::AbstractArray, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
   @assert isdyadic(f)
   c = Array(T,n)
   scaling_coefficients!(c, f, filter, fembedding; options...)
@@ -55,8 +61,14 @@ end
 _scalingcoefficient_filter(f::CompactSequence) =
     reverse(CompactSequence(cascade_algorithm(f, 0), f.offset))
 
+
+function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, d=ndyadicscales(scaling_coefficients); options...)
+  function_evals = zeros(T,1<<d)
+  scaling_coefficients_to_dyadic_grid(function_evals, scaling_coefficients, w, d; options...)
+end
+
 # Scaling coefficients to function evaluations on dyadic grid (assumes periodic extension)
-function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::Array{T,1}, w::DWT.DiscreteWavelet{T}, d=ndyadicscales(scaling_coefficients); grid=false, options...)
+function scaling_coefficients_to_dyadic_grid!{T}(function_evals::AbstractArray, scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, ::PeriodicBoundary, d=ndyadicscales(scaling_coefficients); grid=false, options...)
   @assert isdyadic(scaling_coefficients)
   j = ndyadicscales(scaling_coefficients)
 
@@ -66,7 +78,6 @@ function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::Array{T,1}
   # length of grid (same resolution as before) associated to scaling function in [s[1],s[2]]
   scaling_l = 1+(s[2]-s[1])*(1<<(d-j))
 
-  function_evals = zeros(T,f_l)
   for (c_i,c) in enumerate(scaling_coefficients)
     k = c_i - 1
     istart = 1 + max(0,-(1<<(d-j))*(s[1]+k))
@@ -74,24 +85,7 @@ function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::Array{T,1}
     offset = (s[1]+k)*(1<<(d-j))
 
     # Periodic extension, so wrap scalingfunction outside of [0,1] periodically into the interval
-    f = c*DWT.scaling_function_in_dyadic_points(w, j, k, d)
-    # Part of the scaling function that lays in [0,1]
-    ids = istart:iend
-    function_evals[ids+offset] += f[ids]
-    # Part of scaling function right of [0,1]
-    ids = iend+1:f_l:scaling_l
-    for (i,index) in enumerate(ids)
-      i == length(ids) ?
-        function_evals[1:scaling_l-index+1] += f[index:scaling_l] :
-        function_evals += f[index:index+f_l-1]
-    end
-    # Part of scaling function left of [0,1]
-    ids = istart-1:-f_l:1
-    for (i,index) in enumerate(ids)
-      i == length(ids) ?
-        function_evals[end+1-index:end] += f[1:index] :
-        function_evals += f[index-f_l+1:index]
-    end
+    function_evals[:] += c*DWT.evaluate_periodic_in_dyadic_points(Prl(), Scl(), w, j, k, d)
   end
   grid ?
     (return function_evals, linspace(T(0), T(1), length(function_evals)+1)[1:end-1]) :

@@ -55,12 +55,14 @@ function cascade_algorithm{T}(h::AbstractArray{T}, L; tol = sqrt(eps(T)), option
   E = eigfact(H)
   index = find(abs(E[:values]-1/sqrt(T(2))).<tol)
   @assert length(index) > 0
-  for i in index
-    V = E[:vectors][:,i]
-    @assert norm(imag(V)) < tol
-    eigv = real(V)
-    abs(sum(eigv)) > tol*100 ? break : nothing
-  end
+  i = index[1]
+  # for i in index
+  V = E[:vectors][:,i]
+  @assert norm(imag(V)) < tol
+  eigv = real(V)
+  # abs(sum(eigv)) > tol*100 ? break : nothing
+  (abs(sum(eigv)) < tol*100) && (warn("Cascade algorithm is not convergent"))
+  # end
   eigv /= sum(eigv)
 
   # Find intermediate values ϕ(1/2), .. ,ϕ(N-1 -1/2)

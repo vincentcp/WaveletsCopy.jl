@@ -418,21 +418,23 @@ vanishing_moments_test_dual()
 
 
 # # Plot spline wavelets
-# using Plots; gr(legend=false); plot(layout=(6,6)); i=1;
+# using Plots; gr(legend=false); plot(layout=(6,6)); i=1;j=0;k=0;d=6
 # for p in 1:6
 #   qs = 2:2:6
 #   isodd(p) && (qs = 1:2:6 )
 #   for q in qs
-#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     println(p,q)
+#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(primal, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(), j, k, d; points=true)
 #     plot!(x, -f, subplot=i)
-#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(primal, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(primal, scaling, DWT.CDFWavelet{p,q,Float64}(), j, k, d; points=true)
 #     plot!(x, f, subplot=i)
 #     i += 1
 #   end
 #   for q in qs
-#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(); points=true)
-#     plot!(x, -f, subplot=i)
-#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(dual, scaling, DWT.CDFWavelet{p,q,Float64}(); points=true)
+#     println(p,q,"dual")
+#     # f, x = Wavelets.DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.CDFWavelet{p,q,Float64}(), j, k, d; points=true)
+#     # plot!(x, -f, subplot=i)
+#     f, x = Wavelets.DWT.evaluate_in_dyadic_points(dual, scaling, DWT.CDFWavelet{p,q,Float64}(), j, k, d; points=true)
 #     plot!(x, f, subplot=i)
 #     i += 1
 #   end

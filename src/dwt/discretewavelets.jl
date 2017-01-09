@@ -20,7 +20,7 @@ export is_symmetric, is_orthogonal, is_biorthogonal
 
 export primal, dual, scaling, wavelet, coefficient
 export support, vanishingmoments, support_length, filter
-export evaluate_periodic, evaluate_periodic_in_dyadic_points, evaluate_in_dyadic_points
+export evaluate, evaluate_periodic, evaluate_periodic_in_dyadic_points, evaluate_in_dyadic_points
 
 # BOUNDARY TYPES
 
