@@ -1,7 +1,5 @@
 # dwtstep.jl
 
-using ..Filters
-using ..Sampling
 using ..Sequences
 using ..Filterbanks
 

@@ -12,8 +12,6 @@ import Base: convert, widen
 
 import Base: reverse
 
-import ..Util: upsample, downsample
-
 # Main abstract types
 export Sequence, ExtensionSequence, DerivedSequence
 

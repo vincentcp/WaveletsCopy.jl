@@ -3,7 +3,6 @@
 module Filterbanks
 
 using Wavelets.Sequences
-using Wavelets.Filters
 
 import Base: transpose, ctranspose, eltype, getindex
 

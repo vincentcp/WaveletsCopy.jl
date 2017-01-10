@@ -21,10 +21,10 @@ macro test_vecnorm_eq_eps(a, b, c)
 end
 
 
-include("util.jl")
-include("transforms.jl")
-include("threshold.jl")
-include("plot.jl")
+# include("util.jl")
+# include("transforms.jl")
+# include("threshold.jl")
+# include("plot.jl")
 # include("sequences.jl")
 # include("sampling.jl")
 include("suite_dwtstep.jl")
