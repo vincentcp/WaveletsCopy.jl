@@ -16,8 +16,8 @@ randomfunction(x) = rand(rng)
     t = linspace(-1,1,N)
     for f in (sin, characteristicfunction, randomfunction)
       x = map(f,t)
-      for filter in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
-        fb = Filterbank(filter)
+      for w in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
+        fb = Filterbank(w)
         for bound in (DWT.perbound, DWT.symbound)
           y = dwtstep(x, fb, DWT.perbound)
           xx = idwtstep(y..., fb, DWT.perbound)
@@ -36,11 +36,10 @@ end
     for f in (sin, characteristicfunction, randomfunction)
       x = map(f,t)
       for filter in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
-        fb = Filterbank(filter)
         for bound in (DWT.perbound, DWT.symbound)
           for L in 1:n
-            y = DWT.dwt(x, fb, DWT.perbound, L)
-            xx = DWT.idwt(y, fb, DWT.perbound, L)
+            y = DWT.dwt(x, Filterbank(filter), DWT.perbound, L)
+            xx = DWT.idwt(y, Filterbank(filter), DWT.perbound, L)
             @test (norm(xx-x)) < 1e-10
           end
         end
@@ -49,22 +48,29 @@ end
   end
 end
 
-# w = DWT.cdf66
-# j = 1; k = 0; d = 10;
-# f(x) = cos(2*pi*x)
-# for d in j:10
-#   dx = 1/(1<<d)
-#   coefs = DWT.scaling_coefficients(f, w, d, DWT.perbound)
-#   ff, xx = DWT.scaling_coefficients_to_dyadic_grid(coefs, w, grid=true)
-#   println(norm(ff-map(f,xx))*dx)
-# end
-#
-# w = DWT.cdf15
-# j = 1; k = 0; d = 10;
-# g(x) = x < .5 ? x : 1-x
-# for d in j:10
-#   dx = 1/(1<<d)
-#   coefs = DWT.scaling_coefficients(g, w, d, DWT.perbound)
-#   ff, xx = DWT.scaling_coefficients_to_dyadic_grid(coefs, w, grid=true)
-#   println(norm(ff-map(g,xx))*dx)
-# end
+@testset "$(rpad("Inversibility of full_dwt using constant function (periodic)",P))"  begin
+  for l in 0:10
+    x0 = ones(1<<l)
+    for w in DWT.IMPLEMENTED_WAVELETS
+      x1 = full_dwt(x0, w, DWT.perbound)
+      y  = full_idwt(x1, w, DWT.perbound)
+      @test (norm(x0-y)< 1e-10)
+    end
+  end
+end
+
+@testset "$(rpad("Inversibility of full_dwt (periodic)",P))"  begin
+  for l in 0:7
+    for p in 0:9
+      x0 = x0 = [Float64(i^p)/(1<<l) for i in 1:1<<l]; x0/=sum(x0)
+      for i in p:9
+        w = DWT.DaubechiesWavelet{i+1,Float64}()
+        offset = (max([support_length(side, kind, w) for side in (primal, dual) for kind in (scaling, DWT.wavelet)]...))
+        x1 = full_dwt(x0, w, DWT.perbound)
+        y  = full_idwt(x1, w, DWT.perbound)
+        d = abs(y-x0)
+        @test (sum(d[offset+1:end-offset])<1e-10)
+      end
+    end
+  end
+end

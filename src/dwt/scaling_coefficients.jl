@@ -15,7 +15,7 @@ scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, boundary::Peri
 scaling_coefficients{T}(f::AbstractArray{T,1}, w::DiscreteWavelet{T}, boundary::PeriodicBoundary; side::Side=Dul(), options...) =
       scaling_coefficients(f, _scalingcoefficient_filter(filter(side, Scl(), w)), PeriodicEmbedding(); options...)
 
-function scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, fembedding, a::Number=0, b::Number=1; side::Side=Dul(), options...)
+function scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, fembedding, a::Real=0, b::Real=1; side::Side=Dul(), options...)
   T = promote_type(eltype(w), eltype(a), eltype(b))
   a = T(a); b = T(b)
   flt = filter(side, Scl(), w)
@@ -33,16 +33,17 @@ function scaling_coefficients{T}(f::Function, s::CompactSequence{T}, L::Int, fem
 end
 
 scaling_coefficients{T}(f::AbstractArray, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
-    scaling_coefficients(f, filter(Dul(), Scl(), w), PeriodicEmbedding(); options...)
+    scaling_coefficients(f, _scalingcoefficient_filter(filter(Dul(), Scl(), w)), PeriodicEmbedding(); options...)
 
 scaling_coefficients!{T}(c::AbstractArray, f::AbstractArray, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
-    scaling_coefficients!(c, f, filter(Dul(), Scl(), w), PeriodicEmbedding(); options...)
+    scaling_coefficients!(c, f, _scalingcoefficient_filter(filter(Dul(), Scl(), w)), PeriodicEmbedding(); options...)
 
 # Function evaluations on a dyadic grid to scaling coefficients
 function scaling_coefficients{T}(f::AbstractArray, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
   @assert isdyadic(f)
   c = Array(T,n)
   scaling_coefficients!(c, f, filter, fembedding; options...)
+  c
 end
 
 function scaling_coefficients!{T}(c, f, filter::CompactSequence{T}, fembedding; offset::Int=0, options...)
@@ -53,18 +54,17 @@ function scaling_coefficients!{T}(c, f, filter::CompactSequence{T}, fembedding; 
     for l in firstindex(filter):lastindex(filter)
       ci += filter[l]*fembedding[f, j-l]
     end
-    c[j+1-offset] = ci
+    c[j+1-offset] = T(1)/T(sqrt(length(f)))*ci
   end
-  T(1)/T(sqrt(length(f)))*c
 end
 
 _scalingcoefficient_filter(f::CompactSequence) =
     reverse(CompactSequence(cascade_algorithm(f, 0), f.offset))
 
 
-function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, d=ndyadicscales(scaling_coefficients); options...)
+function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); options...)
   function_evals = zeros(T,1<<d)
-  scaling_coefficients_to_dyadic_grid(function_evals, scaling_coefficients, w, d; options...)
+  scaling_coefficients_to_dyadic_grid!(function_evals, scaling_coefficients, w, bnd, d; options...)
 end
 
 # Scaling coefficients to function evaluations on dyadic grid (assumes periodic extension)

@@ -343,30 +343,6 @@ function eval_wavelet_test()
         @test DWT.in_periodic_support(1,DWT.periodic_support(side,kind, DWT.cdf11, 0,0)...)
         @test DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 3,0)...)
         @test !DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 1,1)...)
-        # for j in 0:2
-        #   for k in -2:2
-        #     koffset = mod(k, 1<<j)
-        #     p = 1/(1<<j)
-        #     for x in 1/(1<<(j+2))+linspace(-4,4)
-        #       xlow = x-fld(x, 1)
-        #       println(DWT.name(side),DWT.name(kind),"j",j,"k",k,"x",x)
-        #       f = DWT.evaluate_periodic(side, kind, DWT.cdf11, j, k, x, xtol=1e-4)
-        #       if kind == scaling
-        #         ftest = (koffset <= (1<<j)*xlow < koffset+1) ? 2.0^(j/2) : 0
-        #         @test f ≈ ftest
-        #       else
-        #         if koffset <= (1<<j)*xlow < koffset+1/2
-        #           ftest = 2.0^(j/2)
-        #         elseif koffset+1/2 <= (1<<j)*xlow < koffset+1
-        #           ftest = -2.0^(j/2)
-        #         else
-        #           ftest = 0
-        #         end
-        #         @test f ≈ ftest
-        #       end
-        #     end
-        #   end
-        # end
       end
     end
   end
