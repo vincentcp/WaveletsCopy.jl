@@ -281,6 +281,7 @@ function implementation_test()
     @test DWT.name(DWT.cdf11_Float16) == "cdf11_Float16"
     @test DWT.class(DWT.db1) == "Wavelets.DWT.DaubechiesWavelet{1,Float64}"
     @test DWT.class(DWT.cdf11) == "Wavelets.DWT.CDFWavelet{1,1,Float64}"
+    @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf11,1,0,0)==[0.]
     @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf13,1,1,3)==linspace(.5,1,5)
     @test DWT.dyadicpointsofcascade(primal, DWT.wavelet, DWT.cdf13,1,1,3)==linspace(0,1.5,13)
     @test DWT.dyadicpointsofcascade(dual, scaling, DWT.cdf13,1,1,3)==linspace(-.5,2,21)
