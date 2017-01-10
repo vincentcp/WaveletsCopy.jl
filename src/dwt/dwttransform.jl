@@ -11,7 +11,6 @@ end
 function idwt!
 end
 
-dwt_size(x, w::DiscreteWavelet, bnd::WaveletBoundary) = dwt_size(x, w, bnd)
 dwt_size(x, w::DiscreteWavelet, bnd::WaveletBoundary) = dwt_size(x, Filterbank(w), bnd)
 dwt_size(x, fb::Filterbank, bnd::WaveletBoundary) = length(x)
 

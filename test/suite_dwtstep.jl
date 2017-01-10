@@ -35,11 +35,11 @@ end
     t = linspace(-1,1,N)
     for f in (sin, characteristicfunction, randomfunction)
       x = map(f,t)
-      for filter in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
+      for w in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
         for bound in (DWT.perbound, DWT.symbound)
           for L in 1:n
-            y = DWT.dwt(x, Filterbank(filter), DWT.perbound, L)
-            xx = DWT.idwt(y, Filterbank(filter), DWT.perbound, L)
+            y = DWT.dwt(x, w, DWT.perbound, L)
+            xx = DWT.idwt(y, w, DWT.perbound, L)
             @test (norm(xx-x)) < 1e-10
           end
         end

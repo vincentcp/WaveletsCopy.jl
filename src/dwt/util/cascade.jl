@@ -88,7 +88,11 @@ dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, 
 function dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, L::Int)
   s = support(side, kind, w)
   H = support_length(side, kind, w)
-  linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
+  if L >= 0
+    linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
+  else
+    [T(s[1])]
+  end  
 end
 
 function _get_H(h)

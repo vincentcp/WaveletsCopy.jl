@@ -251,6 +251,10 @@ end
 
 function implementation_test()
   @testset "$(rpad("Some simple tests",P))" begin
+    @test DWT.name(DWT.scaling) == "scaling"
+    @test DWT.name(DWT.wavelet) == "wavelet"
+    @test DWT.name(DWT.primal) == "primal"
+    @test DWT.name(DWT.dual) == "dual"
     @test DWT.is_symmetric(DWT.TestWavelet{Float16}) == False
     @test DWT.is_biorthogonal(DWT.TestWavelet{Float16}) == False
     @test DWT.is_orthogonal(DWT.TestWavelet{Float16}) == False

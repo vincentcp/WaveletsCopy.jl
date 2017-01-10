@@ -163,11 +163,16 @@ function evaluate{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::I
 end
 
 function evaluate_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  a = T(0); b = T(1)
-  s = evaluate_in_dyadic_points(side, kind, w, j ,k ,d)
-  L = round(Int, (1<<d)*(b-a))
-  @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
-  f = _periodize(L, s, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+  if (d-j) >= 0
+    a = T(0); b = T(1)
+    s = evaluate_in_dyadic_points(side, kind, w, j ,k ,d)
+    L = round(Int, (1<<d)*(b-a))
+    @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
+    f = _periodize(L, s, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+  else
+    f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, j; points=false, options...)
+    f = f[1:1<<(j-d):end]
+  end
   if points
     f, linspace(a,b,L+1)[1:end-1]
   else
@@ -176,8 +181,12 @@ function evaluate_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::Discre
 end
 
 function evaluate_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  @assert (d-j) >= 0
-  f = evaluate_in_dyadic_points(filter(side, kind, w), j, k, d; options...)
+  if (d-j) >= 0
+    f = evaluate_in_dyadic_points(filter(side, kind, w), j, k, d; points=false, options...)
+  else
+     f = evaluate_in_dyadic_points(filter(side, kind, w), j, k, j; options...)
+     f = f[1:1<<(j-d):end]
+  end
   if points
     f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
   else
@@ -186,13 +195,18 @@ function evaluate_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet
 end
 
 function evaluate_in_dyadic_points{T}(side::Side, kind::Wvl, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  s = evaluate_in_dyadic_points(side, Scl(), w, j+1, k, d; options...)
-  filter = DWT.filter(side, Wvl(), w)
-  L = DWT.support_length(side, Wvl(), w)
-  f = zeros(T, (1<<(d-j))*L+1)
-  for (i,l) in enumerate(firstindex(filter):lastindex(filter))
-    offset = (1<<(d-1-j))*(i-1)
-    f[offset+1:offset+length(s)] += filter[l]*s
+  if (d-j) >= 0
+    s = evaluate_in_dyadic_points(side, Scl(), w, j+1, k, d; options...)
+    filter = DWT.filter(side, Wvl(), w)
+    L = DWT.support_length(side, Wvl(), w)
+    f = zeros(T, (1<<(d-j))*L+1)
+    for (i,l) in enumerate(firstindex(filter):lastindex(filter))
+      offset = (1<<(d-1-j))*(i-1)
+      f[offset+1:offset+length(s)] += filter[l]*s
+    end
+  else
+    f = evaluate_in_dyadic_points(side, kind, w, j, k, j; options...)
+    f = f[1:1<<(j-d):end]
   end
   if points
     f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
