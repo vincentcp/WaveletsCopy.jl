@@ -42,9 +42,14 @@ end
 function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart)
   L = length(dest)
   j = mod(istart, L)
+  srclength = length(src)
   (j == 0) && (j = L)
   for i in 1:length(dest)
-    dest[j] = sum( src[i:L:end] )
+    t = T(0)
+    for m in i:L:srclength
+      t += src[m]
+    end
+    dest[j] = t
     j += 1
     (j > L) && (j = 1)
   end

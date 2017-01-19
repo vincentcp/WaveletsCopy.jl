@@ -37,51 +37,66 @@ The scaling function of a wavelet with filtercoeficients h evaluated in diadic p
 where K is the length of h. Thus L=0, gives the evaluation of the
 scaling function in the points [0,1,...,K], and L=1, the points [0,.5,1,...,K].
 """
-cascade_algorithm(side::Side, kind::Kind, w::DiscreteWavelet, L=0; options...) =
-    cascade_algorithm(filter(side, kind, w), L; options...)
-#
-cascade_algorithm(s::CompactSequence, L; options...) = cascade_algorithm(s.a, L; options...)
+function cascade_algorithm{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, L=0; options...)
+  f = zeros(T, cascade_length(side, kind, w, L))
+  cascade_algorithm!(f, side, kind, w, L; options...)
+  f
+end
 
-function cascade_algorithm{T}(h::AbstractArray{T}, L; tol = sqrt(eps(T)), options...)
+function cascade_algorithm{T}(s::CompactSequence{T}, L; options...)
+  f = zeros(T, cascade_length(s, L))
+  cascade_algorithm!(f, s, L; options...)
+  f
+end
+
+cascade_algorithm!{T}(f::AbstractArray{T,1}, side::Side, kind::Kind, w::DiscreteWavelet{T}, L=0; options...) =
+    cascade_algorithm!(f::AbstractArray, filter(side, kind, w), L; options...)
+
+cascade_algorithm!{T}(f::AbstractArray{T,1}, s::CompactSequence{T}, L; options...) = cascade_algorithm!(f::AbstractArray, s.a, L; options...)
+
+function cascade_algorithm!{T}(f::AbstractArray{T,1}, h::AbstractArray{T,1}, L; tol = sqrt(eps(T)), options...)
+  @assert L >= 0
   @assert sum(h)≈sqrt(T(2))
   N = length(h)
   # find ϕ(0), .. , ϕ(N-1) by solving a eigenvalue problem
   # The eigenvector with eigenvalue equal to 1/√2 is the vector containting ϕ(0), .. , ϕ(N-1)
-  # see http://cnx.org/contents/0nnvPGYf@7/Computing-the-Scaling-Function for more mathematics
+  # see http://archive.cnx.org/contents/d279ef3c-661f-4e14-bba8-70a4eb5c0bcf@7/computing-the-scaling-function-the-cascade-algorithm for more mathematics
 
   # Create matrix from filter coefficients
-  H = _get_H(h)
+  H = DWT._get_H(h)
   # Find eigenvector eigv
   E = eigfact(H)
   index = find(abs(E[:values]-1/sqrt(T(2))).<tol)
   @assert length(index) > 0
   i = index[1]
-  # for i in index
   V = E[:vectors][:,i]
   @assert norm(imag(V)) < tol
   eigv = real(V)
-  # abs(sum(eigv)) > tol*100 ? break : nothing
   (abs(sum(eigv)) < tol*100) && (warn("Cascade algorithm is not convergent"))
-  # end
-  eigv /= sum(eigv)
 
-  # Find intermediate values ϕ(1/2), .. ,ϕ(N-1 -1/2)
+  eigv /= sum(eigv)
+  eigv_length = N
+  f[1:1<<L:end] = eigv
+  # # Find intermediate values ϕ(1/2), .. ,ϕ(N-1 -1/2)
   K = 2
   for m in 1:L
-    eigv = vcat(eigv, zeros(T,length(eigv)-1))
-    eigv_length = length(eigv)
-    for n in eigv_length:-2:3
-      eigv[n] = eigv[ceil(Int,n/2)]
+    for n in 1+1<<(L-m):1<<(L-m+1):length(f)
+      t = T(0)
+      for i in max(1,ceil(Int, (2n-1-length(f))/(1<<L)+1)):min(N, 1+(n-1)>>(L-1))
+        t += h[i].*f[2*n-1-(1<<L)*(i-1)]
+      end
+      f[n] = sqrt(T(2))*t
     end
-    eigv[2:2:end] = 0
-    for n in 2:2:eigv_length
-      I = max(1,ceil(Int,(2n-1-eigv_length)/K+1)):min(N,floor(Int, (2n-1)/K+1))
-      eigv[n] = sqrt(T(2))*sum(h[i].*eigv[2*n-1-K*(i-1)] for i in I)
-    end
-    K = K << 1
   end
-  eigv
+  nothing
 end
+
+cascade_length{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int) =
+    cascade_length(side, kind, w, d-j)
+cascade_length{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, L::Int) =
+    cascade_length(support_length(side, kind, w),L)
+cascade_length(f::CompactSequence, L::Int) = cascade_length(sublength(f)-1, L)
+cascade_length(H::Int, L::Int) = (L >= 0) ? (1<<L)*H+1 : 1
 
 dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int) =
     T(2)^(-j)*(k+dyadicpointsofcascade(side, kind, w, d-j))
@@ -92,7 +107,7 @@ function dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T},
     linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
   else
     [T(s[1])]
-  end  
+  end
 end
 
 function _get_H(h)

@@ -1,5 +1,5 @@
 # dwttransform.jl
-using ..Util: isdyadic, maxtransformlevels
+using ..Util: isdyadic, maxtransformlevels, ndyadicscales
 
 export dwt, idwt, full_dwt, full_idwt
 "Perform l steps of the wavelet transform"
@@ -64,9 +64,9 @@ function full_dwt!(y, x, w::DiscreteWavelet, bnd::WaveletBoundary, scratch = sim
   dwt!(y, scratch, Filterbank(w), bnd)
 end
 
-function full_idwt!(y, x, w::DiscreteWavelet, bnd::WaveletBoundary, scratch = similar(y))
-  idwt!(scratch, x, Filterbank(w), bnd)
-  scaling_coefficients_to_dyadic_grid!(y, scratch, w, bnd)
+function full_idwt!(y, x, w::DiscreteWavelet, bnd::WaveletBoundary, scalingcoefs=nothing, scratch=nothing, scratch2=nothing)
+  idwt!(scalingcoefs, x, Filterbank(w), bnd)
+  scaling_coefficients_to_dyadic_grid!(y, scalingcoefs, w, bnd, scratch, scratch2)
 end
 
 function full_dwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
@@ -80,7 +80,10 @@ end
 function full_idwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
   ELT = eltype(T, eltype(x))
   y = zeros(ELT, dwt_size(x, w, bnd))
-  scratch = zeros(ELT, dwt_size(x, w, bnd))
-  full_idwt!(y, x, w, bnd, scratch)
+  scalingcoefs = zeros(ELT, dwt_size(x, w, bnd))
+  d = ndyadicscales(scalingcoefs)
+  scratch = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch_length(w,d))
+  scratch2 = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch2_length(w,d))
+  full_idwt!(y, x, w, bnd, scalingcoefs, scratch, scratch2)
   y
 end

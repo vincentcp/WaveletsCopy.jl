@@ -26,14 +26,6 @@ function isdyadic(x::AbstractArray)
 end
 isdyadic(n::Integer) = (n == 2^(ndyadicscales(n)))
 
-# # To perform a level L transform, the size of the signal in each dimension
-# must have 2^L as a factor.
-function sufficientpoweroftwo(x::AbstractArray, L::Integer)
-    for i = 1:ndims(x)
-        sufficientpoweroftwo(size(x,i), L) || return false
-    end
-    return true
-end
 sufficientpoweroftwo(n::Integer, L::Integer) = (n%(2^L) == 0)
 
 end # module
