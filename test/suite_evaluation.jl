@@ -1,5 +1,8 @@
 # test_evaluation.jl
 using Base.Test
+using Plots
+plot(DWT.cdf11)
+plot(DWT.db1)
 using Wavelets
 
 WTS = Wavelets
