@@ -412,6 +412,10 @@ vanishing_moments_test_dual()
 coefficient_util_test()
 
 # # Plot Daubechies wavelets
+using Plots
+plot(DWT.cdf11)
+plot(DWT.db1)
+
 # using Plots
 # gr()
 # plot(layout=(2,2))
