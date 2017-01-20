@@ -59,31 +59,35 @@ function idwt(x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels
   y
 end
 
-function full_dwt!(y, x, w::DiscreteWavelet, bnd::WaveletBoundary, scratch = similar(y))
-  scaling_coefficients!(scratch, x, w, bnd)
-  dwt!(y, scratch, Filterbank(w), bnd)
-end
+# function full_dwt!(y, x, w::DiscreteWavelet, bnd::WaveletBoundary, scratch = similar(y))
+#   scaling_coefficients!(scratch, x, w, bnd)
+#   dwt!(y, scratch, Filterbank(w), bnd)
+# end
 
-function full_idwt!(y, x, w::DiscreteWavelet, bnd::WaveletBoundary, scalingcoefs=nothing, scratch=nothing, scratch2=nothing)
-  idwt!(scalingcoefs, x, Filterbank(w), bnd)
-  scaling_coefficients_to_dyadic_grid!(y, scalingcoefs, w, bnd, scratch, scratch2)
-end
+# function full_idwt!(y, x, w::DiscreteWavelet, bnd::WaveletBoundary, scalingcoefs=nothing, scratch=nothing, scratch2=nothing)
+#   idwt!(scalingcoefs, x, Filterbank(w), bnd)
+#   scaling_coefficients_to_dyadic_grid!(y, scalingcoefs, w, bnd, scratch, scratch2)
+# end
 
 function full_dwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
-  ELT = eltype(T, eltype(x))
-  y = zeros(ELT, dwt_size(x, w, bnd))
-  scratch = zeros(ELT, dwt_size(x, w, bnd))
-  full_dwt!(y, x, w, bnd, scratch)
-  y
+  coefs = scaling_coefficients(x, w, bnd)
+  dwt(coefs, Filterbank(w), bnd)
+  # ELT = eltype(T, eltype(x))
+  # y = zeros(ELT, dwt_size(x, w, bnd))
+  # scratch = zeros(ELT, dwt_size(x, w, bnd))
+  # full_dwt!(y, x, w, bnd, scratch)
+  # y
 end
 
 function full_idwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
-  ELT = eltype(T, eltype(x))
-  y = zeros(ELT, dwt_size(x, w, bnd))
-  scalingcoefs = zeros(ELT, dwt_size(x, w, bnd))
-  d = ndyadicscales(scalingcoefs)
-  scratch = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch_length(w,d))
-  scratch2 = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch2_length(w,d))
-  full_idwt!(y, x, w, bnd, scalingcoefs, scratch, scratch2)
-  y
+  scalingcoefs = idwt(x, Filterbank(w), bnd)
+  scaling_coefficients_to_dyadic_grid(scalingcoefs, w, bnd)
+  # ELT = eltype(T, eltype(x))
+  # y = zeros(ELT, dwt_size(x, w, bnd))
+  # scalingcoefs = zeros(ELT, dwt_size(x, w, bnd))
+  # d = ndyadicscales(scalingcoefs)
+  # scratch = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch_length(w,d))
+  # scratch2 = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch2_length(w,d))
+  # full_idwt!(y, x, w, bnd, scalingcoefs, scratch, scratch2)
+  # y
 end

@@ -249,6 +249,34 @@ function filter_tests()
   end
 end
 
+function coefficient_util_test()
+  @testset "$(rpad("coefficient util tests",P))" begin
+    levels = [0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3]
+    for i in 1:16
+      @test DWT.level(16,i) == levels[i]
+    end
+    @test DWT.wavelet_index(4,1,0) == (scaling, 2, 0)
+    @test DWT.wavelet_index(4,2,0) == (scaling, 2, 1)
+    @test DWT.wavelet_index(4,3,0) == (scaling, 2, 2)
+    @test DWT.wavelet_index(4,4,0) == (scaling, 2, 3)
+    @test DWT.wavelet_index(4,1,1) == (scaling, 1, 0)
+    @test DWT.wavelet_index(4,2,1) == (scaling, 1, 1)
+    @test DWT.wavelet_index(4,3,1) == (wavelet, 1, 0)
+    @test DWT.wavelet_index(4,4,1) == (wavelet, 1, 1)
+    @test DWT.wavelet_index(4,1,2) == (scaling, 0, 0)
+    @test DWT.wavelet_index(4,2,2) == (wavelet, 0, 0)
+    @test DWT.wavelet_index(4,3,2) == (wavelet, 1, 0)
+    @test DWT.wavelet_index(4,4,2) == (wavelet, 1, 1)
+    @test DWT.support(primal, 8, 1, 3, DWT.db1) == (0,1)
+    @test DWT.support(primal, 8, 2, 3, DWT.db1) == (0,1)
+    @test DWT.support(primal, 8, 3, 3, DWT.db1) == (.0,.5)
+    @test DWT.support(primal, 8, 4, 3, DWT.db1) == (.5,1.)
+    @test DWT.support(primal, 8, 5, 3, DWT.db1) == (0.,.25)
+    @test DWT.support(primal, 8, 6, 3, DWT.db1) == (.25,.5)
+    @test DWT.support(primal, 8, 7, 3, DWT.db1) == (.5,.75)
+    @test DWT.support(primal, 8, 8, 3, DWT.db1) == (.75,1.)
+  end
+end
 function implementation_test()
   @testset "$(rpad("Some simple tests",P))" begin
     @test DWT.name(DWT.scaling) == "scaling"
@@ -370,7 +398,6 @@ function eval_wavelet_test()
     end
   end
 end
-
 implementation_test()
 periodicbsplinetest()
 elementarypropsofsplinetest()
@@ -382,6 +409,7 @@ vanishing_moments_test()
 filter_tests()
 eval_wavelet_test()
 vanishing_moments_test_dual()
+coefficient_util_test()
 
 # # Plot Daubechies wavelets
 # using Plots

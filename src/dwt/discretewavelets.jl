@@ -264,12 +264,12 @@ function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::
   if (d-j) >= 0
     evaluate_in_dyadic_points!(f, filter(side, kind, w), j, k, d; points=false, options...)
   else
-    if scratch == nothing
-      data = @timed scratch = zeros(T,evaluate_in_dyadic_points_scratch_length(side, kind, w ,j, k, d))
-      if verbose
-        warn("evaluate_in_dyadic_points allocated $(data[3]) bytes scratch")
-      end
-    end
+    # if scratch == nothing
+    #   data = @timed scratch = zeros(T,evaluate_in_dyadic_points_scratch_length(side, kind, w ,j, k, d))
+    #   if verbose
+    #     warn("evaluate_in_dyadic_points allocated $(data[3]) bytes scratch")
+    #   end
+    # end
     @assert length(scratch) == DWT.cascade_length(filter(side, kind, w), 0)
     evaluate_in_dyadic_points!(scratch, filter(side, kind, w), j, k, j; options...)
     copy!(f, scratch[1:1<<(j-d):end])

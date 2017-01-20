@@ -1,20 +1,6 @@
 # scaling_coefficients.jl
 import ..Util: ndyadicscales, isdyadic
 
-# Function on the interval (a, b) to scaling coefficients
-"""
-  Transformation of a function on the interval [a, b] to `2^L` scaling coefficients.
-
-  The function is assumed to be periodically extended.
-"""
-scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, boundary::PeriodicBoundary, a::Number=0, b::Number=1; options...) =
-    scaling_coefficients(f, w, L, PeriodicEmbedding(), a, b; options...)
-"""
-  Transformation of a function evaluation on a dyadic grid to `2^L` scaling coefficients
-"""
-scaling_coefficients{T}(f::AbstractArray{T,1}, w::DiscreteWavelet{T}, boundary::PeriodicBoundary; side::Side=Dul(), options...) =
-      scaling_coefficients(f, _scalingcoefficient_filter(filter(side, Scl(), w)), PeriodicEmbedding(); options...)
-
 function scaling_coefficients(f::Function, w::DWT.DiscreteWavelet, L::Int, fembedding, a::Real=0, b::Real=1; side::Side=Dul(), options...)
   T = promote_type(eltype(w), eltype(a), eltype(b))
   a = T(a); b = T(b)
