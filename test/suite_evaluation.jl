@@ -252,6 +252,7 @@ end
 function implementation_test()
   @testset "$(rpad("Some simple tests",P))" begin
     @test DWT.name(DWT.scaling) == "scaling"
+    DWT.name(DWT.scaling) == "scaling"
     @test DWT.name(DWT.wavelet) == "wavelet"
     @test DWT.name(DWT.primal) == "primal"
     @test DWT.name(DWT.dual) == "dual"
@@ -281,7 +282,7 @@ function implementation_test()
     @test DWT.name(DWT.cdf11_Float16) == "cdf11_Float16"
     @test DWT.class(DWT.db1) == "Wavelets.DWT.DaubechiesWavelet{1,Float64}"
     @test DWT.class(DWT.cdf11) == "Wavelets.DWT.CDFWavelet{1,1,Float64}"
-    @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf11,1,0,0)==[0.]
+    @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf11,1,0,0)==linspace(0,0,1)
     @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf13,1,1,3)==linspace(.5,1,5)
     @test DWT.dyadicpointsofcascade(primal, DWT.wavelet, DWT.cdf13,1,1,3)==linspace(0,1.5,13)
     @test DWT.dyadicpointsofcascade(dual, scaling, DWT.cdf13,1,1,3)==linspace(-.5,2,21)
@@ -334,6 +335,23 @@ function implementation_test()
         DWT.evaluate_periodic_in_dyadic_points(dual, scaling, DWT.cdf11))<1e-14
     @test norm(DWT.evaluate_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1)-
         DWT.evaluate_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.cdf11))<1e-14
+
+
+    @test evaluate_periodic_in_dyadic_points(dual, scaling, DWT.db1, 0,0,2,points=true)[2] == linspace(0,1,5)[1:end-1]
+    @test evaluate_periodic_in_dyadic_points(dual, DWT.wavelet, DWT.db1, 0,0,2,points=true)[2] == linspace(0,1,5)[1:end-1]
+    @test evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.db1, 0,0,2,points=true)[2]==linspace(0,1,5)
+    @test evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.cdf24, 0,0,2,points=true)[2]==linspace(-2,3,21)
+    f, points = evaluate_in_dyadic_points(primal, scaling, DWT.db1, 2,0,1, points=true)
+    @test f == [2.]
+    @test points == linspace(0,0,1)
+    f3, points3 = evaluate_in_dyadic_points(primal, wavelet, DWT.db3, 2,0,3, points=true)
+    f2, points2 = evaluate_in_dyadic_points(primal, wavelet, DWT.db3, 2,0,2, points=true)
+    f1, points1 = evaluate_in_dyadic_points(primal, wavelet, DWT.db3, 2,0,1, points=true)
+
+    @test f2 == f3[1:2:end]
+    @test f1 == f2[1:2:end]
+    @test points2 == points3[1:2:end]
+    @test points1 == points2[1:2:end]
   end
 end
 

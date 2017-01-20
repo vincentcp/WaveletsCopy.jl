@@ -33,12 +33,6 @@ end
 #          src1
 #        + ________________
 #  =>      res1, res2, res3
-function _periodize{T}(n::Int, src::AbstractArray{T}, istart)
-  dest = zeros(T,n)
-  _periodize!(dest, src, istart)
-  dest
-end
-
 function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart)
   L = length(dest)
   j = mod(istart, L)

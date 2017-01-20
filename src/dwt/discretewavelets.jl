@@ -163,49 +163,29 @@ function evaluate{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::I
 end
 
 function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
-  f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(d))
+  f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(side, kind, w, j, k, d))
   scratch = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
   scratch2 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
   DWT.evaluate_periodic_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2; options...)
   if points
-    f, linspace(a,b,L+1)[1:end-1]
+    f, linspace(T(0),T(1),(1<<d)+1)[1:end-1]
   else
     f
   end
 end
 
 function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
-  f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(d))
+  f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(side, kind, w, j, k, d))
   scratch = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
   scratch2 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
   scratch3 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch3_length(side, kind, w, j, k, d))
   DWT.evaluate_periodic_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2, scratch3; options...)
   if points
-    f, linspace(a,b,L+1)[1:end-1]
+    f, linspace(T(0),T(1),(1<<d)+1)[1:end-1]
   else
     f
   end
 end
-
-# function evaluate_periodic_in_dyadic_points{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-#   if (d-j) >= 0
-#     a = T(0); b = T(1)
-#     s = evaluate_in_dyadic_points(side, kind, w, j ,k ,d)
-#     L = round(Int, (1<<d)*(b-a))
-#     @assert abs(L-(1<<d)*(b-a)) < eps(real(T))
-#     f = _periodize(L, s, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
-#   else
-#     f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, j; points=false, options...)
-#     f = f[1:1<<(j-d):end]
-#   end
-  # if points
-  #   f, linspace(a,b,L+1)[1:end-1]
-  # else
-  #   f
-  # end
-# end
-
-
 
 function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Kind, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
   f = zeros(T, DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d))
@@ -230,12 +210,6 @@ function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.Disc
   end
 end
 
-function evaluate_in_dyadic_points{T}(s::CompactSequence{T}, j=0, k=0, d=0; options...)
-  f = zeros(T, DWT.cascade_length(s, (d-j)))
-  DWT.evaluate_in_dyadic_points!(f, s, j, k, d; options...)
-  f
-end
-
 # In place methods
 function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing, scratch2=nothing, scratch3=nothing; options...)
   DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2, scratch3; options...)
@@ -249,51 +223,41 @@ end
 
 function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch = nothing, scratch2 = nothing; options...)
   @assert length(f) == DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
-  if (d-j) >= 0
-    @assert length(scratch2) == DWT.evaluate_in_dyadic_points_scratch_length(side, scaling, w, j+1, k, d)
+  if (d-j) >= 1
     DWT.evaluate_in_dyadic_points!(scratch, side, DWT.Scl(), w, j+1, k, d, scratch2; options...)
     scratchlength = length(scratch)
     filter = DWT.filter(side, DWT.Wvl(), w)
     L = DWT.support_length(side, DWT.Wvl(), w)
+    m = 1<<(d-1-j)
     # TODO this allocates memory (writing in a loop even more) how to do inplace?
     for (i,l) in enumerate(firstindex(filter):lastindex(filter))
-      offset = (1<<(d-1-j))*(i-1)
+      offset = m*(i-1)
       f[offset+1:offset+scratchlength] += filter[l]*scratch
       #  This allocates even more memory
       # for n in 1:scratchlength
       #   f[offset+n] += filter[l]*scratch[n]
       # end
     end
+    # This allocates even more memory
+    # sf = DWT.support(side, kind, w, j, k)
+    # ss = DWT.support(side, scaling, w, j+1, k)
+    # filter = DWT.filter(side, DWT.Wvl(), w)
+    # L = DWT.support_length(side, DWT.Wvl(), w)
+    # for n in 1:length(f)
+    #   t = T(0)
+    #   for il in firstindex(filter):lastindex(filter)
+    #     ns = n+((1<<(d-j-1))*(-il))+round(Int,(1<<(d))*(sf[1]-ss[1])) - (1<<(d-j-1))*k
+    #     if 1 <= ns <= length(scratch)
+    #       t += filter[il]*scratch[ns]
+    #     end
+    #   end
+    #   f[n] = t
   else
-    DWT.evaluate_in_dyadic_points!(scratch2, side, kind, w, j, k, j, scratch, nothing; options...)
-    copy!(f, scratch2[1:1<<(j-d):end])
+    DWT.evaluate_in_dyadic_points!(scratch2, side, kind, w, j, k, j+1, scratch, nothing; options...)
+    copy!(f, scratch2[1:1<<(j+1-d):end])
+    nothing
   end
 end
-# function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch = nothing, scratch2 = nothing; options...)
-#   @assert length(f) == DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
-#   if (d-j) >= 0
-#     @assert length(scratch2) == DWT.evaluate_in_dyadic_points_scratch_length(side, scaling, w, j+1, k, d)
-#     DWT.evaluate_in_dyadic_points!(scratch, side, DWT.Scl(), w, j+1, k, d, scratch2; options...)
-#     scratchlength = length(scratch)
-#     sf = DWT.support(side, kind, w, j, k)
-#     ss = DWT.support(side, scaling, w, j+1, k)
-#     filter = DWT.filter(side, DWT.Wvl(), w)
-#     L = DWT.support_length(side, DWT.Wvl(), w)
-#     for n in 1:length(f)
-#       t = T(0)
-#       for il in firstindex(filter):lastindex(filter)
-#         ns = n+((1<<(d-j-1))*(-il))+round(Int,(1<<(d))*(sf[1]-ss[1])) - (1<<(d-j-1))*k
-#         if 1 <= ns <= length(scratch)
-#           t += filter[il]*scratch[ns]
-#         end
-#       end
-#       f[n] = t
-#     end
-#   else
-#     DWT.evaluate_in_dyadic_points!(scratch2, side, kind, w, j, k, j, scratch, nothing; options...)
-#     copy!(f, scratch2[1:1<<(j-d):end])
-#   end
-# end
 
 function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing; verbose=true, options...)
   @assert length(f) == evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
@@ -337,14 +301,14 @@ evaluate_in_dyadic_points_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) = (
 evaluate_in_dyadic_points_scratch_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) = (d-j) >= 0 ?
     0 :
     DWT.support_length(side, kind, w)+1
-evaluate_in_dyadic_points_scratch_length(side::DWT.Side, kind::DWT.Wvl, w, j, k, d) = (d-j) >= 0 ?
+evaluate_in_dyadic_points_scratch_length(side::DWT.Side, kind::DWT.Wvl, w, j, k, d) = (d-j) >= 1 ?
     evaluate_in_dyadic_points_length(side, DWT.Scl(), w, j+1, k, d):
-    evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, j)
+    evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, j+1)
 
-evaluate_in_dyadic_points_scratch2_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) = 0
-evaluate_in_dyadic_points_scratch2_length(side::DWT.Side, kind::DWT.Wvl, w, j, k, d) = (d-j) >= 0 ?
+evaluate_in_dyadic_points_scratch2_length(side::DWT.Side, kind::DWT.Wvl, w, j, k, d) = (d-j) >= 1 ?
     evaluate_in_dyadic_points_scratch_length(side, DWT.Scl(), w, j+1, k, d) :
-    evaluate_in_dyadic_points_length(side, kind, w, j, k, j)
+    evaluate_in_dyadic_points_length(side, kind, w, j, k, j+1)
+
 ###############################################################################
 
 Filterbank(w::DiscreteWavelet) =

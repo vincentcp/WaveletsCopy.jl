@@ -91,8 +91,6 @@ function cascade_algorithm!{T}(f::AbstractArray{T,1}, h::AbstractArray{T,1}, L; 
   nothing
 end
 
-cascade_length{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int) =
-    cascade_length(side, kind, w, d-j)
 cascade_length{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, L::Int) =
     cascade_length(support_length(side, kind, w),L)
 cascade_length(f::CompactSequence, L::Int) = cascade_length(sublength(f)-1, L)
@@ -106,7 +104,7 @@ function dyadicpointsofcascade{T}(side::Side, kind::Kind, w::DiscreteWavelet{T},
   if L >= 0
     linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
   else
-    [T(s[1])]
+    linspace(T(s[1]), T(s[2]), H+1)[1:1<<-L:end]
   end
 end
 
