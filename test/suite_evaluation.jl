@@ -1,9 +1,8 @@
 # test_evaluation.jl
 using Base.Test
-using Plots
-plot(DWT.cdf11)
-plot(DWT.db1)
+
 using Wavelets
+
 
 WTS = Wavelets
 function pad(s,i=80)
@@ -416,6 +415,7 @@ coefficient_util_test()
 
 # # Plot Daubechies wavelets
 using Plots
+gr()
 plot(DWT.cdf11)
 plot(DWT.db1)
 

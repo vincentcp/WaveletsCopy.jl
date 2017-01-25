@@ -27,57 +27,54 @@ evaluate_Bspline(::Type{Degree{0}}, x, T::Type) = (0 <= x < 1) ? T(1) : T(0)
 
 function evaluate_Bspline(::Type{Degree{1}}, x, T::Type)
   if (0 <= x < 1)
-    s = T[0, 1]
+    return T(x)
   elseif (1 <= x < 2)
-    s = T[2, -1]
+    return T(2) - T(x)
   else
-    s = T[0, 0]
+    return T(0)
   end
-  @eval @evalpoly $x $(s...)
-end
-function evaluate_Bspline(::Type{Degree{2}}, x, T::Type)
-  if (0 <= x < 1)
-    s = T[0, 0, 1/2]
-  elseif (1 <= x < 2)
-    s = T[-3/2, 3, -1]
-  elseif (2 <= x < 3)
-    s = T[9/2, -3, 1/2]
-  else
-    s = T[0, 0]
-  end
-  @eval @evalpoly $x $(s...)
 end
 
-function evaluate_Bspline(::Type{Degree{3}}, x, T::Type)
+@eval function evaluate_Bspline(::Type{Degree{2}}, x, T::Type)
   if (0 <= x < 1)
-    s = T[0, 0, 0, 1/6]
+    return @evalpoly(T(x),T(0), T(0), T(1/2))
   elseif (1 <= x < 2)
-    s = T[2/3, -2, 2, -1/2]
+    return @evalpoly(T(x),T(-3/2), T(3), T(-1))
   elseif (2 <= x < 3)
-    s = T[-22/3, 10, -4, 1/2]
-  elseif (3 <= x < 4)
-    s = T[32/3, -8, 2, -1/6]
+    return @evalpoly(T(x),T(9//2), T(-3), T(1//2))
   else
-    s = T[0, 0]
+    return T(0)
   end
-  @eval @evalpoly $x $(s...)
 end
 
-function evaluate_Bspline(::Type{Degree{4}}, x, T::Type)
+@eval function evaluate_Bspline(::Type{Degree{3}}, x, T::Type)
   if (0 <= x < 1)
-    s = T[0, 0, 0, 0, 1/24]
+    return @evalpoly(T(x), T(0), T(0), T(0), T(1//6))
   elseif (1 <= x < 2)
-    s = T[-5/24, 5/6, -5/4, 5/6, -1/6]
+    return @evalpoly(T(x), T(2//3), T(-2), T(2), T(-1//2))
   elseif (2 <= x < 3)
-    s = T[155/24, -25/2, 35/4, -5/2, 1/4]
+    return @evalpoly(T(x), T(-22//3), T(10), T(-4), T(1//2))
   elseif (3 <= x < 4)
-    s = T[-655/24, 65/2, -55/4, 5/2, -1/6]
+    return @evalpoly(T(x), T(32//3), T(-8), T(2), T(-1//6))
+  else
+    return T(0)
+  end
+end
+
+@eval function evaluate_Bspline(::Type{Degree{4}}, x, T::Type)
+  if (0 <= x < 1)
+    return @evalpoly(T(x), T(0), T(0), T(0), T(0), T(1//24))
+  elseif (1 <= x < 2)
+    return @evalpoly(T(x), T(-5//24), T(5//6), T(-5/4), T(5//6), T(-1//6))
+  elseif (2 <= x < 3)
+    return @evalpoly(T(x), T(155//24), T(-25//2), T(35//4), T(-5//2), T(1//4))
+  elseif (3 <= x < 4)
+    return @evalpoly(T(x), T(-655//24), T(65//2), T(-55//4), T(5//2), T(-1//6))
   elseif (4 <= x < 5)
-    s = T[625/24, -125/6, 25/4, -5/6, 1/24]
+    return @evalpoly(T(x), T(625//24), -T(125//6), T(25//4), T(-5//6), T(1//24))
   else
-    s = T[0, 0]
+    return T(0)
   end
-  @eval @evalpoly $x $(s...)
 end
 
 end # module Cardinal_b_splines
