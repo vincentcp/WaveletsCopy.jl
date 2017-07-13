@@ -1,7 +1,8 @@
-julia 0.5
+julia 0.6
 Plots
 JSON
 GR
+QuadGK
 FixedSizeArrays
 Polynomials
 Reexport
