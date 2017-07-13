@@ -1,7 +1,7 @@
 # wvlt_cdf.jl
 
 "The Cohen-Daubechies-Feauveau family of compactly supported biorthogonal wavelets."
-immutable CDFWavelet{P,Q,T} <: DiscreteWavelet{T}
+struct CDFWavelet{P,Q,T} <: DiscreteWavelet{T}
 end
 
 is_symmetric{P,Q,T}(::Type{CDFWavelet{P,Q,T}}) = True

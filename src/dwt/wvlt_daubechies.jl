@@ -1,8 +1,8 @@
 # daubechies.jl
-immutable DaubechiesWavelet{N,T} <: DiscreteWavelet{T}
+struct DaubechiesWavelet{N,T} <: DiscreteWavelet{T}
 end
 
-typealias HaarWavelet{T} DaubechiesWavelet{1,T}
+HaarWavelet{T} = DaubechiesWavelet{1,T}
 
 is_symmetric{T}(::Type{DaubechiesWavelet{1,T}}) = True
 
@@ -51,7 +51,7 @@ using .Cardinal_b_splines
 function daubechies(N::Int)
     @assert N > 0
     # Create polynomial
-    C = Array(Int, N)
+    C = Array{Int}(N)
     @inbounds for n = 0:N-1
         C[N-n] = binomial(N-1+n, n)
     end
@@ -81,7 +81,7 @@ function daubechies(N::Int)
 
     # Find coefficients of the polynomial
     # (1 + z)^N * \prod_i (z - z_i)
-    R = Array(Complex128, N+nr)
+    R = Array{Complex128}(N+nr)
     @inbounds for i = 1:N
         R[i] = -1
     end

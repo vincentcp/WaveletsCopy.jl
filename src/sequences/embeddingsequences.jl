@@ -4,19 +4,19 @@
 An EmbeddingSequence is like an ExtensionSequence, except that it does not store a vector.
 Instead, one passes a vector along with each `getindex` call.
 """
-abstract EmbeddingSequence <: Sequence
+abstract type EmbeddingSequence <: Sequence end
 
 
-immutable PeriodicEmbedding <: EmbeddingSequence
+struct PeriodicEmbedding <: EmbeddingSequence
 end
 
 getindex(s::PeriodicEmbedding, x, k) = 0 <= k < length(x) ? x[k+1] : x[mod(k, length(x)) + 1]
 
 
-immutable SymmetricEmbedding{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: EmbeddingSequence
+struct SymmetricEmbedding{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: EmbeddingSequence
 end
 
-immutable FunctionEmbedding <: EmbeddingSequence
+struct FunctionEmbedding <: EmbeddingSequence
   f :: Function
 end
 
@@ -57,7 +57,7 @@ getindex_left{PT_RIGHT}(s::SymmetricEmbedding{:hp,PT_RIGHT,:even}, x, k) = getin
 getindex_left{PT_RIGHT}(s::SymmetricEmbedding{:hp,PT_RIGHT,:odd}, x, k) = -getindex(s, x, -k-1)
 
 
-immutable CompactEmbedding <: EmbeddingSequence
+struct CompactEmbedding <: EmbeddingSequence
     offset  ::  Int
 end
 

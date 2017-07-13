@@ -14,7 +14,7 @@ export polyphasematrix, modulationmatrix, polyphase_analysis!, polyphase_synthes
 
 
 "A pair of two filters."
-immutable FilterPair{F1 <: Sequence,F2 <: Sequence}
+struct FilterPair{F1 <: Sequence,F2 <: Sequence}
     f1  ::  F1
     f2  ::  F2
 end
@@ -40,14 +40,14 @@ ctranspose(fb::FilterPair) = FilterPair(fb.f1', fb.f2')
 
 
 "A 2x2 matrix of filters."
-immutable FilterMatrix{F11,F12,F21,F22}
+struct FilterMatrix{F11,F12,F21,F22}
     a11 ::  F11
     a12 ::  F12
     a21 ::  F21
     a22 ::  F22
 end
 
-typealias PolyphaseMatrix FilterMatrix
+PolyphaseMatrix = FilterMatrix
 
 eltype{F11,F12,F21,F22}(::Type{FilterMatrix{F11,F12,F21,F22}}) = eltype(F11)
 
@@ -65,7 +65,7 @@ modulationmatrix(fp::FilterPair) = FilterMatrix(fp[1], alternating(fp[1]), fp[2]
 
 
 "A Filterbank groups several objects related to a two-phase filterbank."
-immutable Filterbank{P1 <: FilterMatrix, P2 <: FilterMatrix, FP1 <: FilterPair, FP2 <: FilterPair}
+struct Filterbank{P1 <: FilterMatrix, P2 <: FilterMatrix, FP1 <: FilterPair, FP2 <: FilterPair}
     "The primal filter pair, to be used on the synthesis side."
     primal_pair     ::  FP1
     "The dual filter pair, to be used on the analysis side."

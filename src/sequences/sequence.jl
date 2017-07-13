@@ -47,8 +47,8 @@ export EmbeddingSequence, PeriodicEmbedding, SymmetricEmbedding, FunctionEmbeddi
 export shift, reverse, upsample, downsample
 
 
-typealias True Val{true}
-typealias False Val{false}
+True = Val{true}
+False = Val{false}
 
 (&){T1,T2}(::Type{Val{T1}}, ::Type{Val{T2}}) = Val{T1 & T2}
 (|){T1,T2}(::Type{Val{T1}}, ::Type{Val{T2}}) = Val{T1 | T2}
@@ -63,7 +63,7 @@ Any subtype of Sequence is a bi-infinite list of values, with one value for each
 
 Each Sequence has an element type, given by `eltype`.
 """
-abstract Sequence
+abstract type Sequence end
 
 
 "For a compactly supported sequence, `firstindex` returns the index of the first non-zero element."
@@ -122,14 +122,14 @@ fouriertransform(s::Sequence, ω) = ztransform(s, exp(im*ω))
 
 
 "ZTransform is a wrapper type for the `ztransform` function."
-immutable ZTransform{S}
+struct ZTransform{S}
     seq     ::  S
 end
 
 (f::ZTransform)(z) = ztransform(z.seq, z)
 
 "FourierTransform is a wrapper type for the `fouriertransform` function."
-immutable FourierTransform{S}
+struct FourierTransform{S} 
     seq     ::  S
 end
 
@@ -137,7 +137,7 @@ end
 
 
 
-immutable Convolution{S1,S2} <: Sequence
+struct Convolution{S1,S2} <: Sequence
     s1  ::  S1
     s2  ::  S2
 end

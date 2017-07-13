@@ -9,12 +9,12 @@
 A CompactSequence is a compactly supported sequence of a certain length starting at a
 given offset index.
 """
-immutable CompactSequence{T} <: Sequence
+struct CompactSequence{T} <: Sequence
     a       ::  Vector{T}
     offset  ::  Int
     n       ::  Int
 
-    CompactSequence(a, offset) = new(a, offset, length(a))
+    CompactSequence{T}(a, offset) where T = new(a, offset, length(a))
 end
 
 CompactSequence{T}(a::Vector{T}, offset = 0) = CompactSequence{T}(a, offset)
@@ -137,7 +137,7 @@ end
 A FixedSequence has a fixed length `L` starting at a certain offset `OFS`.
 It contains its values in a fixed size array.
 """
-immutable FixedSequence{L,OFS,T} <: Sequence
+struct FixedSequence{L,OFS,T} <: Sequence
     a       ::  Vec{L,T}
 end
 

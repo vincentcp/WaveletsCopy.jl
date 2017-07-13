@@ -4,10 +4,6 @@ module DWT
 using ..Sequences
 using ..Filterbanks
 
-typealias False Val{false}
-typealias True Val{true}
-
-
 import ..Filterbanks: Filterbank
 import Base: eltype, filter
 import ..Sequences: support
@@ -24,22 +20,22 @@ export evaluate, evaluate_periodic, evaluate_periodic_in_dyadic_points, evaluate
 
 # BOUNDARY TYPES
 
-abstract WaveletBoundary
+abstract type WaveletBoundary end
 
 # Periodic boundary condition
-immutable PeriodicBoundary <: WaveletBoundary
+struct PeriodicBoundary <: WaveletBoundary
 end
 
 # Symmetric extension
-immutable SymmetricBoundary <: WaveletBoundary
+struct SymmetricBoundary <: WaveletBoundary
 end
 
 # zero padding
-immutable ZeropaddingBoundary <: WaveletBoundary
+struct ZeropaddingBoundary <: WaveletBoundary
 end
 
 # constant padding
-immutable CPBoundary{T} <: WaveletBoundary
+struct CPBoundary{T} <: WaveletBoundary
     constant    ::  T
 end
 
@@ -49,18 +45,18 @@ zerobound = DWT.ZeropaddingBoundary()
 
 # TRANSFORM TYPES
 
-abstract TransformType
+abstract type TransformType end
 
-immutable FilterbankTransform
+struct FilterbankTransform
 end
 
-immutable LiftingTransform
+struct LiftingTransform
 end
 
 
 
-abstract DiscreteWavelet{T}
-immutable TestWavelet{T} <: DWT.DiscreteWavelet{T} end
+abstract type DiscreteWavelet{T} end
+struct TestWavelet{T} <: DWT.DiscreteWavelet{T} end
 
 # Symmetry trait
 is_symmetric{W <: DiscreteWavelet}(::Type{W}) = False
@@ -78,12 +74,12 @@ eltype(w::DiscreteWavelet) = eltype(typeof(w))
 for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
     @eval $op(w::DiscreteWavelet) = $op(typeof(w))()
 end
-abstract Kind
-abstract Side
-immutable Prl <: Side end
-immutable Dul <: Side end
-immutable Scl <: Kind end
-immutable Wvl <: Kind end
+abstract type Kind end
+abstract type Side end
+struct Prl <: Side end
+struct Dul <: Side end
+struct Scl <: Kind end
+struct Wvl <: Kind end
 function name end
 primal = Prl(); DWT.name(::Prl) = "primal"
 dual = Dul(); DWT.name(::Dul) = "dual"
@@ -316,7 +312,7 @@ Filterbank(w::DiscreteWavelet) =
                 FilterPair(filter(Dul(), Scl(), w), filter(Dul(), Wvl(), w)) )
 
 "DWT groups the data that fully characterize a discrete wavelet transform."
-immutable DWT_Data
+struct DWT_Data
     "The wavelet to use in the discrete wavelet transform."
     wavelet ::  DiscreteWavelet
     "The treatment of boundaries."

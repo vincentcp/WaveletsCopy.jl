@@ -11,7 +11,7 @@ Examples include a DownsampledSequence and an UpsampledSequence.
 DerivedSequences are lazy. No computation is performed until the sequence is
 evaluated. This can be done for compactly supported sequences using `collect`.
 """
-abstract DerivedSequence{S} <: Sequence
+abstract type DerivedSequence{S} <: Sequence end
 
 eltype{S}(::Type{DerivedSequence{S}}) = eltype(S)
 eltype{DS <: DerivedSequence}(::Type{DS}) = eltype(super(DS))
@@ -53,11 +53,11 @@ and a `shift`. It is defined by `ds_k = s_{shift+M*k}`.
 A DownsampledSequence acts as a mutating view. One can set elements of the
 sequence, and the corresponding entry of 's' will be modified.
 """
-immutable DownsampledSequence{M,S} <: DerivedSequence{S}
+struct DownsampledSequence{M,S} <: DerivedSequence{S}
     seq     ::  S
     shift   ::  Int
 
-    DownsampledSequence(seq::Sequence, shift) = new(seq, shift)
+    DownsampledSequence{M,S}(seq::Sequence, shift) where {M,S} = new(seq, shift)
 end
 
 # Default downsampling factor is 2.
@@ -85,11 +85,11 @@ and a `shift`. It is defined by `us_k = s_l`, for `k = shift+M*l`, and `us_k = 0
 An UpsampledSequence acts as a mutating view. One can set elements of the
 sequence, and the corresponding entry of 's' will be modified.
 """
-immutable UpsampledSequence{M,S} <: DerivedSequence{S}
+struct UpsampledSequence{M,S} <: DerivedSequence{S}
     seq     ::  S
     shift   ::  Int
 
-    UpsampledSequence(seq::Sequence, shift) = new(seq, shift)
+    UpsampledSequence{M,S}(seq::Sequence, shift) where {M,S} = new(seq, shift)
 end
 
 # Default upsampling factor is 2.
@@ -118,7 +118,7 @@ A ReversedSequence is the time-reversal of a given sequence `s`, i.e. `rs_k = s_
 A ReversedSequence acts as a mutating view. One can set elements of the
 sequence, and the corresponding entry of 's' will be modified.
 """
-immutable ReversedSequence{S} <: DerivedSequence{S}
+struct ReversedSequence{S} <: DerivedSequence{S}
     seq     ::  S
 end
 
@@ -145,7 +145,7 @@ defined by `ss_k = s_{k+shift}`.
 A ShiftedSequence acts as a mutating view. One can set elements of the
 sequence, and the corresponding entry of 's' will be modified.
 """
-immutable ShiftedSequence{S} <: DerivedSequence{S}
+struct ShiftedSequence{S} <: DerivedSequence{S}
     seq     ::  S
     shift   ::  Int
 end

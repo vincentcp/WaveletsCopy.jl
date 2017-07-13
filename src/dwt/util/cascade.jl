@@ -66,7 +66,7 @@ function cascade_algorithm!{T}(f::AbstractArray{T,1}, h::AbstractArray{T,1}, L; 
   H = DWT._get_H(h)
   # Find eigenvector eigv
   E = eigfact(H)
-  index = find(abs(E[:values]-1/sqrt(T(2))).<tol)
+  index = find(abs.(E[:values]-1/sqrt(T(2))).<tol)
   @assert length(index) > 0
   i = index[1]
   V = E[:vectors][:,i]

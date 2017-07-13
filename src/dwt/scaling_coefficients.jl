@@ -27,7 +27,7 @@ scaling_coefficients!{T}(c::AbstractArray, f::AbstractArray, w::DiscreteWavelet{
 # Function evaluations on a dyadic grid to scaling coefficients
 function scaling_coefficients{T}(f::AbstractArray, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
   @assert isdyadic(f)
-  c = Array(T,n)
+  c = Array{T}(n)
   scaling_coefficients!(c, f, filter, fembedding; options...)
   c
 end

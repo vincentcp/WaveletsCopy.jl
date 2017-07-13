@@ -13,7 +13,7 @@ at 1, like it is for an actual Vector.
 The ExtensionSequence acts as a mutating view. One can set elements of the
 extension, and the corresponding entry of the subvector will be modified.
 """
-abstract ExtensionSequence{A} <: Sequence
+abstract type ExtensionSequence{A} <: Sequence end
 
 
 # We assume that the embedded vector is in the field 'a' and its length is in the field 'n'.
@@ -74,11 +74,11 @@ by periodization modulo length(a).
 The periodic extension acts as a mutating view. One can set elements of the
 extension, and the corresponding entry of 'a' will be modified.
 """
-immutable PeriodicExtension{A} <: ExtensionSequence{A}
+struct PeriodicExtension{A} <: ExtensionSequence{A}
     a :: A
     n :: Int
 
-    PeriodicExtension(a) = new(a, length(a))
+    PeriodicExtension{A}(a) where A = new(a, length(a))
 end
 
 PeriodicExtension{A}(a::A) = PeriodicExtension{A}(a)
@@ -98,11 +98,11 @@ to zero values.
 A ZeroPadding acts as a mutating view. One can set elements of the
 sequence, and the corresponding entry of `a` will be modified.
 """
-immutable ZeroPadding{A} <: ExtensionSequence{A}
+struct ZeroPadding{A} <: ExtensionSequence{A}
     a :: A
     n :: Int
 
-    ZeroPadding(a) = new(a, length(a))
+    ZeroPadding{A}(a) where A= new(a, length(a))
 end
 
 ZeroPadding{A}(a::A) = ZeroPadding{A}(a)
@@ -125,12 +125,12 @@ value.
 A ConstantPadding acts as a mutating view. One can set elements of the
 sequence, and the corresponding entry of 'a' will be modified.
 """
-immutable ConstantPadding{T,A} <: ExtensionSequence{A}
+struct ConstantPadding{T,A} <: ExtensionSequence{A}
     a           ::  A
     constant    ::  T
     n           ::  Int
 
-    ConstantPadding(a, constant) = new(a, constant, length(a))
+    ConstantPadding{T,A}(a, constant) where {T,A} = new(a, constant, length(a))
 end
 
 ConstantPadding{T,A}(a::A, constant::T) = ConstantPadding{T,A}(a, constant)
@@ -154,11 +154,11 @@ is that its indices start at 0.
 UndefinedExtension acts as a mutating view. One can set elements of the
 sequence, and the corresponding entry of 'a' will be modified.
 """
-immutable UndefinedExtension{A} <: ExtensionSequence{A}
+struct UndefinedExtension{A} <: ExtensionSequence{A}
     a   ::  A
     n   ::  Int
 
-    UndefinedExtension(a) = new(a, length(a))
+    UndefinedExtension{A}(a) where A = new(a, length(a))
 end
 
 UndefinedExtension{A}(a::A) = UndefinedExtension{A}(a)
@@ -193,11 +193,11 @@ Parameters:
 - SYM_RIGHT: also :odd or :even
 
 """
-immutable SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: ExtensionSequence{A}
+struct SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: ExtensionSequence{A}
     a :: A
     n :: Int
 
-    SymmetricExtension(a) = new(a, length(a))
+    SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(a) where {A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} = new(a, length(a))
 end
 
 SymmetricExtension{A}(a::A) = symmetric_extension_wholepoint_even(a)

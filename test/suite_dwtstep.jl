@@ -1,7 +1,7 @@
 # suit_dwtstep.jl
 using Wavelets
 using Base.Test
-typealias W Wavelets
+W = Wavelets
 P = 80
 DWT.perbound
 DWT.symbound
@@ -68,7 +68,7 @@ end
         offset = (max([support_length(side, kind, w) for side in (primal, dual) for kind in (scaling, DWT.wavelet)]...))
         x1 = full_dwt(x0, w, DWT.perbound)
         y  = full_idwt(x1, w, DWT.perbound)
-        d = abs(y-x0)
+        d = abs.(y-x0)
         @test (sum(d[offset+1:end-offset])<1e-10)
       end
     end

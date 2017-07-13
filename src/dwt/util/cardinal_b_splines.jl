@@ -4,7 +4,7 @@ module Cardinal_b_splines
 export evaluate_Bspline, evaluate_periodic_Bspline
 
 # Implementation of cardinal B splines of degree N
-typealias Degree{N} Val{N}
+Degree{N} = Val{N}
 
 function evaluate_periodic_Bspline(N::Int, x, period, T::Type)
   x -= period*fld(x, period)

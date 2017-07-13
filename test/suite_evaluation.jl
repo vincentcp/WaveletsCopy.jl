@@ -2,6 +2,7 @@
 using Base.Test
 
 using Wavelets
+using QuadGK
 
 
 WTS = Wavelets
@@ -17,7 +18,7 @@ function elementarypropsofsplinetest()
     for N in 1:10
       f = x->DWT.Cardinal_b_splines.evaluate_Bspline(N-1, x, Float64)
       # Integral should be 1
-      I,e = quadgk(f, 0, N, reltol = tol)
+      I,e = QuadGK.quadgk(f, 0, N, reltol = tol)
       @test I≈1 && abs(e) < tol
       # Infinite summation of shifted versions is 1
       xx = linspace(N-1, N, S)[1:end-1]
@@ -171,10 +172,10 @@ function scalingtest()
               if iseven(DWT.vanishingmoments(primal, w)) && isodd($k)
                 c1_c=0; c1_c_e = 0
               else
-                c1_c, c1_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate(primal, scaling, w, 0, 0, 2*x)*x^$k, nodes...)
+                c1_c, c1_c_e = QuadGK.quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate(primal, scaling, w, 0, 0, 2*x)*x^$k, nodes...)
               end
               nodes = nodes + .5
-              c2_c, c2_c_e = quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate(primal, scaling, w, 0, 0, 2*x-1)*x^$k, nodes...)
+              c2_c, c2_c_e = QuadGK.quadgk(x->sqrt($T(2))*Wavelets.DWT.evaluate(primal, scaling, w, 0, 0, 2*x-1)*x^$k, nodes...)
               @test (norm(c[1]-c1_c) < $tol)
               @test (norm(c[2]-c2_c) < $tol)
             end
@@ -312,11 +313,11 @@ function implementation_test()
     @test DWT.name(DWT.cdf11_Float16) == "cdf11_Float16"
     @test DWT.class(DWT.db1) == "Wavelets.DWT.DaubechiesWavelet{1,Float64}"
     @test DWT.class(DWT.cdf11) == "Wavelets.DWT.CDFWavelet{1,1,Float64}"
-    @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf11,1,0,0)==linspace(0,0,1)
-    @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf13,1,1,3)==linspace(.5,1,5)
-    @test DWT.dyadicpointsofcascade(primal, DWT.wavelet, DWT.cdf13,1,1,3)==linspace(0,1.5,13)
-    @test DWT.dyadicpointsofcascade(dual, scaling, DWT.cdf13,1,1,3)==linspace(-.5,2,21)
-    @test DWT.dyadicpointsofcascade(dual, DWT.wavelet, DWT.cdf13,1,1,3)==linspace(0,1.5,13)
+    @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf11,1,0,0)≈linspace(0,0,1)
+    @test DWT.dyadicpointsofcascade(primal, scaling, DWT.cdf13,1,1,3)≈linspace(.5,1,5)
+    @test DWT.dyadicpointsofcascade(primal, DWT.wavelet, DWT.cdf13,1,1,3)≈linspace(0,1.5,13)
+    @test DWT.dyadicpointsofcascade(dual, scaling, DWT.cdf13,1,1,3)≈linspace(-.5,2,21)
+    @test DWT.dyadicpointsofcascade(dual, DWT.wavelet, DWT.cdf13,1,1,3)≈linspace(0,1.5,13)
     @test norm(DWT.evaluate_in_dyadic_points(dual, DWT.wavelet, DWT.cdf24,1,3,4)-[0.0,8.3234e-6,0.000177566,-0.0014307,0.00378807,0.00350662,
                                                                   -0.0305216,0.0262683,0.0808122,-0.0458831,0.0762876,-0.206873,
                                                                     -0.61956,0.20897,0.306045,1.09198,2.39743,0.456957,-0.351988,
