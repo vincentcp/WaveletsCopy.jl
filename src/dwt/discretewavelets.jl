@@ -14,7 +14,7 @@ export filter
 # Traits
 export is_symmetric, is_orthogonal, is_biorthogonal
 
-export primal, dual, scaling, wavelet, coefficient
+export Primal, Dual, scaling, wavelet, coefficient
 export support, vanishingmoments, support_length, filter
 export evaluate, evaluate_periodic, evaluate_periodic_in_dyadic_points, evaluate_in_dyadic_points
 
@@ -81,8 +81,8 @@ struct Dul <: Side end
 struct Scl <: Kind end
 struct Wvl <: Kind end
 function name end
-primal = Prl(); DWT.name(::Prl) = "primal"
-dual = Dul(); DWT.name(::Dul) = "dual"
+Primal = Prl(); DWT.name(::Prl) = "primal"
+Dual = Dul(); DWT.name(::Dul) = "dual"
 scaling = Scl(); DWT.name(::Scl) = "scaling"
 wavelet = Wvl(); DWT.name(::Wvl) = "wavelet"
 Base.inv(::Prl) = Dul()
