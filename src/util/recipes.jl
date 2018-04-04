@@ -14,7 +14,7 @@ end
   x, f
 end
 
-@recipe f(w::DWT.DiscreteWavelet, is_orthogonal::DWT.True) = primal, w
+@recipe f(w::DWT.DiscreteWavelet, is_orthogonal::DWT.True) = Primal , w
 
 @recipe function f(side::DWT.Side, w::DWT.DiscreteWavelet)
   @series begin
@@ -33,10 +33,10 @@ end
 
 @recipe function f(::Both, w::DWT.DiscreteWavelet)
   @series begin
-    primal, w
+    Primal , w
   end
   @series begin
-    dual, w
+    Dual, w
   end
 end
 
