@@ -1,1 +1,1 @@
-Pkg.clone("https://github.com/vincentcp/CardinalBSplines.jl")
+Pkg.clone("https://github.com/vincentcp/CardinalBSplines.git")

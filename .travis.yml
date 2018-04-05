@@ -1,8 +1,6 @@
 language: julia
 julia:
   - 0.6
-notifications:
-  email: vincent.coppe@cs.kuleuven.be
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
