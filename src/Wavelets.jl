@@ -5,6 +5,8 @@
 module Wavelets
 using RecipesBase
 using Reexport
+using CardinalBSplines
+
 # Code from early Wavelet Toolbox
 include("util.jl")
 @reexport using .Util

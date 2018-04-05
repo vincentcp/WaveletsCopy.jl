@@ -3,6 +3,7 @@ using Base.Test
 
 using Wavelets
 using QuadGK
+using CardinalBSplines
 
 
 WTS = Wavelets
@@ -11,64 +12,13 @@ function pad(s,i=80)
 end
 P = 80
 
-function elementarypropsofsplinetest()
-  @testset "$(rpad("Elementary properties",P))" begin
-    tol = 1e-8
-    S = 20
-    for N in 1:10
-      f = x->DWT.Cardinal_b_splines.evaluate_Bspline(N-1, x, Float64)
-      # Integral should be 1
-      I,e = QuadGK.quadgk(f, 0, N, reltol = tol)
-      @test I≈1 && abs(e) < tol
-      # Infinite summation of shifted versions is 1
-      xx = linspace(N-1, N, S)[1:end-1]
-      g = zeros(xx)
-      for k in 0:N-1
-        g += map(x->f(x-k), xx)
-      end
-      @test (norm(g-1) < tol)
-      # Two scale relation
-      x = linspace(-1, N+1, S)
-      g = zeros(x)
-      for k in 0:N
-        g += binomial(N,k)*map(x->f(2x-k), x)
-      end
-      g *= 2.0^(-N+1)
-      G = map(f, x)
-      @test (norm(g-G)) < tol
-    end
-  end
-end
-
-function periodicbsplinetest()
-  @testset "$(rpad("periodic B splines",P))"  begin
-  T = Float64
-  for N in 0:4
-    period = real(N+1)
-    for x in linspace(0,period,10)[1:end-1]
-      @test (DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x, period, T) ≈ DWT.Cardinal_b_splines.evaluate_Bspline(N, x, T))
-      for k in -2:2
-        @test (DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x, period, T) ≈ DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x+k*period, period, T))
-      end
-    end
-    period = real(N+1)/3
-    for x in linspace(0,period,10)[1:end-1]
-      for k in -2:2
-        @test (DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x, period, T) ≈ DWT.Cardinal_b_splines.evaluate_periodic_Bspline(N, x+k*period, period, T))
-      end
-    end
-  end
-
-  end
-end
-
 function cascadetest()
   @testset "$(rpad("cascade_algorithm",P))"  begin
     T = Float64
     tol = sqrt(eps(T))
     for L in 0:5
       for N in 1:6
-        f = x->WTS.DWT.Cardinal_b_splines.evaluate_Bspline(N-1, x+(N>>1), Float64)
+        f = x->evaluate_Bspline(N-1, x+(N>>1), Float64)
         h = DWT.CDFWavelet{N,N,T}()
         x = Wavelets.DWT.dyadicpointsofcascade(Primal, scaling, h,L)
         g = Wavelets.DWT.cascade_algorithm(Primal, scaling, h,L)
@@ -402,8 +352,6 @@ function eval_wavelet_test()
   end
 end
 implementation_test()
-periodicbsplinetest()
-elementarypropsofsplinetest()
 cascadetest()
 primalfunctiontest()
 scalingtest()

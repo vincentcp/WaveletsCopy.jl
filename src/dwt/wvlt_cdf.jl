@@ -1,5 +1,5 @@
 # wvlt_cdf.jl
-
+using CardinalBSplines
 "The Cohen-Daubechies-Feauveau family of compactly supported biorthogonal wavelets."
 struct CDFWavelet{P,Q,T} <: DiscreteWavelet{T}
 end
@@ -95,7 +95,6 @@ vanishingmoments{N1,N2,T}(::Prl, ::Type{CDFWavelet{N1,N2,T}}) = N1
 vanishingmoments{N1,N2,T}(::Dul, ::Type{CDFWavelet{N1,N2,T}}) = N2
 support{N1,N2,T}(::Prl, ::Scl, ::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
 
-using .Cardinal_b_splines
 evaluate{N1,N2,T,S<:Real}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S; options...) =
       T(2)^(j/2)*evaluate_Bspline(N1-1, T(2)^j*x-T(k)-T(DWT.symmetric_offset(N1+1)), promote_type(T, eltype(x)))
 

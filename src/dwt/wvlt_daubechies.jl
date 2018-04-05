@@ -40,7 +40,6 @@ name{N}(::Type{DaubechiesWavelet{N,Float64}}) = string("db",N)
 support{N,T}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
 vanishingmoments{N,T}(::Prl, ::Type{DaubechiesWavelet{N,T}}) = N
 
-using .Cardinal_b_splines
 # Commented for testing purposes
 # evaluate{T,S<:Real}(::Prl, ::Scl, w::DWT.HaarWavelet{T}, j, k, x::Number; options...) =
 #       evaluate(Prl(), Scl(), CDFWavelet{1,1,T}(), j, k, x; options...)
