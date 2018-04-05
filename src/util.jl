@@ -14,7 +14,7 @@ function maxtransformlevels(arraysize::Integer)
     return tl - 1
 end
 
-ndyadicscales(n::Integer) = @compat round(Int, log2(n))
+ndyadicscales(n::Integer) = round(Int, log2(n))
 ndyadicscales(x::AbstractArray) = ndyadicscales(size(x,1))
 
 function isdyadic(x::AbstractArray)
