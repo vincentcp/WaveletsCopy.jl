@@ -11,6 +11,9 @@ export filter
 
 # from scaling_coefficients.jl
 export wavelet_indices
+# from boudaries
+export perbound, symbound, zerobound
+
 
 # from wvlt.jl
 export is_symmetric, is_orthogonal, is_biorthogonal
