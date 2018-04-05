@@ -1,4 +1,5 @@
 ## Plotting recipe for a wavelet:
+using RecipesBase
 
 @recipe function f(w::DWT.DiscreteWavelet)
   w, is_orthogonal(w)

@@ -1,7 +1,5 @@
-module Util
-export   maxtransformlevels,
-        isdyadic
-
+# Convenience method
+eltype(x, y) = promote_type(eltype(x), eltype(y))
 # WAVELET INDEXING AND SIZES
 
 maxtransformlevels(x::AbstractArray) = maxtransformlevels(minimum(size(x)))
@@ -26,5 +24,3 @@ end
 isdyadic(n::Integer) = (n == 2^(ndyadicscales(n)))
 
 sufficientpoweroftwo(n::Integer, L::Integer) = (n%(2^L) == 0)
-
-end # module

@@ -1,5 +1,5 @@
 # scaling_coefficients.jl
-import ..Util: ndyadicscales, isdyadic
+
 """
     The scaling coeffients function deals with the wavelt crime.
     The input of the DWT are inner products between dual functions and the function `f`

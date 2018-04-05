@@ -210,7 +210,7 @@ symmetric_extension_halfpoint_even{A}(a::A) = SymmetricExtension{A,:hp,:hp,:even
 
 symmetric_extension_wholepoint_odd{A}(a::A) = SymmetricExtension{A,:wp,:wp,:odd,:odd}(a)
 
-symmetric_extension_halfpoint_even{A}(a::A) = SymmetricExtension{A,:hp,:hp,:odd,:odd}(a)
+symmetric_extension_halfpoint_odd{A}(a::A) = SymmetricExtension{A,:hp,:hp,:odd,:odd}(a)
 
 
 left_parity{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT})    = SYM_LEFT

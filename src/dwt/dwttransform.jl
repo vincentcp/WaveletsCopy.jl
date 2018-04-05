@@ -1,5 +1,4 @@
 # dwttransform.jl
-using ..Util: isdyadic, maxtransformlevels, ndyadicscales
 
 export dwt, idwt, full_dwt, full_idwt
 "Perform `L` steps of the wavelet transform"

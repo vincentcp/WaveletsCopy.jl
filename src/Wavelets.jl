@@ -7,15 +7,13 @@ using RecipesBase
 using Reexport
 using CardinalBSplines
 
-# Code from early Wavelet Toolbox
-include("util.jl")
-@reexport using .Util
-
+# Load module Sequences
 include("sequences/sequence.jl")
-include("filterbank.jl")
-include("dwt/discretewavelets.jl")
-include("util/recipes.jl")
+# Load module Filterbank
+include("filterbanks/filterbank.jl")
 
-@reexport using .DWT, .Sequences, .Filterbanks
+include("dwt/discretewavelets.jl")
+
+@reexport using .DWT
 
 end
