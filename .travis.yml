@@ -2,7 +2,7 @@ language: julia
 julia:
   - 0.6
 notifications:
-  email: 3883996+vincentcp@users.noreply.github.com
+  email: none
 before_install:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 script:
