@@ -1,9 +1,10 @@
 # test_evaluation.jl
 using Base.Test
-
 using Wavelets
 using QuadGK
 using CardinalBSplines
+using Wavelets.Sequences
+using Wavelets.Filterbanks
 
 
 WTS = Wavelets
@@ -65,7 +66,7 @@ function scalingtest()
   @testset "$(rpad("scaling_coefficients of constant function",P))" begin
     T = Float64
     tol = sqrt(eps(T))
-    for w in (DWT.IMPLEMENTED_DB_WAVELETS..., DWT.IMPLEMENTED_CDF_WAVELETS...)
+    for w in IMPLEMENTED_WAVELETS
       for L in 4:10
         c = Wavelets.DWT.scaling_coefficients(x->one(T), w, L, PeriodicEmbedding())
         for i in 1:length(c)

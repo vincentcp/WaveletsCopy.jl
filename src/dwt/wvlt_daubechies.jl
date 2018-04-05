@@ -26,13 +26,14 @@ filter{T}(::Prl, ::Cof, ::Type{DaubechiesWavelet{1,T}}) = CompactSequence(db1_h)
 
 IMPLEMENTED_DB_WAVELETS = []
 for N in 1:10
-  db = Symbol(string("db",N))
-  T = DaubechiesWavelet{N,T0}
-  @eval begin
-    $db = $T()
-    class(::$T) = string($T)
-    push!(IMPLEMENTED_DB_WAVELETS,$db)
-  end
+    db = Symbol(string("db",N))
+    T = DaubechiesWavelet{N,T0}
+    @eval begin
+        $db = $T()
+        class(::$T) = string($T)
+        push!(IMPLEMENTED_DB_WAVELETS,$db)
+        export $db
+    end
 end
 name{N,T}(::Type{DaubechiesWavelet{N,T}}) = string("db",N,"_",T)
 name{N}(::Type{DaubechiesWavelet{N,Float64}}) = string("db",N)

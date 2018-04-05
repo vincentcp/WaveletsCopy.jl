@@ -136,6 +136,12 @@ function DWT.support(side::Side, n::Int, i::Int, l::Int, w::DiscreteWavelet)
     support(side, kind, w, j, k)
 end
 
+" All wavelet indices on a certain level"
+function wavelet_indices(l::Int)
+    n = 1<<l
+    [wavelet_index(n, i, l) for i in 1:n]
+end
+
 """
   The index ([:scaling/:wavelet], j, k) in the (scaling+wavelet) sequence for coefficient i in a sequence of length n after l dwt synthesis_lowpassfilter
 
