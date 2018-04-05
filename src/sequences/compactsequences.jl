@@ -138,13 +138,13 @@ A FixedSequence has a fixed length `L` starting at a certain offset `OFS`.
 It contains its values in a fixed size array.
 """
 struct FixedSequence{L,OFS,T} <: Sequence
-    a       ::  Vec{L,T}
+    a       ::  SVector{L,T}
 end
 
-FixedSequence{L,T,OFS}(a::Vec{L,T}, ::Type{Val{OFS}}) = FixedSequence{L,OFS,T}(a)
+FixedSequence{L,T,OFS}(a::SVector{L,T}, ::Type{Val{OFS}}) = FixedSequence{L,OFS,T}(a)
 
 # type unstable constructor
-FixedSequence(a::AbstractVector, offset = 0) = FixedSequence(Vec(a...), Val{offset})
+FixedSequence(a::AbstractVector, offset = 0) = FixedSequence(SVector(a...), Val{offset})
 
 # type unstable constructor
 FixedSequence(s::CompactSequence) = FixedSequence(s.a, s.offset)

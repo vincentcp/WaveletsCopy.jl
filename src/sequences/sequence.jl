@@ -1,8 +1,7 @@
 # sequence.jl
 
 module Sequences
-
-using FixedSizeArrays
+using StaticArrays
 
 import Base: eltype, getindex, setindex!, eachindex, collect
 
@@ -129,7 +128,7 @@ end
 (f::ZTransform)(z) = ztransform(z.seq, z)
 
 "FourierTransform is a wrapper type for the `fouriertransform` function."
-struct FourierTransform{S} 
+struct FourierTransform{S}
     seq     ::  S
 end
 

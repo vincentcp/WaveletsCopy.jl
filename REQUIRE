@@ -1,4 +1,4 @@
 Plots
 Reexport
 RecipesBase
-FixedSizeArrays
+StaticArrays
