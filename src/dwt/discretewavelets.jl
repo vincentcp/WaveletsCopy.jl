@@ -331,9 +331,6 @@ include("dwttransform.jl")
 # Convenience function
 name{T}(::T) = name(T)
 
-# TODO remove
-# include("util/cardinal_b_splines.jl")
-
 include("wvlt_daubechies.jl")
 include("wvlt_cdf.jl")
 

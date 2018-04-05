@@ -364,12 +364,10 @@ coefficient_util_test()
 
 # # Plot Daubechies wavelets
 using Plots
-gr()
 plot(DWT.cdf11)
 plot(DWT.db1)
 
 # using Plots
-# gr()
 # plot(layout=(2,2))
 # for i in 1:2:20
 #   plot!(Primal, DWT.scaling, DWT.DaubechiesWavelet{i,Float64}(),subplot=1)
@@ -390,7 +388,7 @@ plot(DWT.db1)
 
 
 # # Plot spline scaling functions
-# using Plots; gr(); plot()
+# using Plots; plot()
 # x = linspace(-5,5,1000)
 # for i in 1:6
 #   f = x->Wavelets.DWT.evaluate(Primal, scaling, DWT.CDFWavelet{i,i,Float64}(), 0,0,x)
@@ -426,13 +424,11 @@ plot(DWT.db1)
 
 # using Plots
 # using Wavelets
-# gr()
 # w = DWT.CDFWavelet{1,3,Float64}()
 # plot(w; j=0, k=-1, periodic=false)
 # plot(w; side=Dual, j=0, k=-1, periodic=true)
 
 # using Plots
-# gr()
 # f = x-> DWT.evaluate_periodic_Bspline(3, x, 0.75, Float64)
 # x = linspace(-1,2,200)
 # ff = map(f, x)
