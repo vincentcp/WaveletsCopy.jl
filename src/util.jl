@@ -1,7 +1,6 @@
 module Util
 export   maxtransformlevels,
         isdyadic
-using Compat
 
 # WAVELET INDEXING AND SIZES
 
