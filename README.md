@@ -77,7 +77,7 @@ Use
 
 `function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10)`
 
-to evaluate the primal/dual wavelet function $\phi_{k,j}(x) = 2^{-j/2}\phi(2^jx-k)$ of type `w` in `2^d` points.
+to evaluate the primal/dual wavelet function $\phi_{k,j}(x) = 2^{j/2}\phi(2^jx-k)$ of type `w` in equispaced grid with a separation of $2^{-d}$
 
 Here an example plotting the scaling (red) and wavelet (blue) functions of the CDF wavelets cdf11, cdf13, ..., cdf44.
 In the left columns the primal functions and in the righ columns the dual functions.
@@ -179,7 +179,7 @@ evaluate(Primal, scaling, db3, 0, 0, .123, xtol=1e-1), evaluate(Primal, scaling,
 
 
 
-    (1.0, 0.9999999999999999)
+    (0.13394983521281625, 0.13129163397063862)
 
 
 

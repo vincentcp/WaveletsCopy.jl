@@ -83,158 +83,247 @@ end
 ###############################################################################
 include("util/cascade.jl")
 include("util/periodize.jl")
+
+
+"""
+evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet function of type `w` in `x`. The result is periodized with period 1.
+
+See also `evaluate`
+"""
 function evaluate_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
-  a = T(0); b = T(1)
-  offset = floor(x)
-  x -= offset
-  d, kpoint = closest_dyadic_point(x, xtol; options...)
-  (!in_periodic_support(kpoint/2^d, periodic_support(side, kind, w, j, k, a, b)...)) && return T(0)
-  f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, d)
-  f[kpoint+1]
+    # Map x to [0,1]
+    a = T(0); b = T(1)
+    offset = floor(x)
+    x -= offset
+
+    # Look for kpoint*2^{-d} close to x
+    d, kpoint = closest_dyadic_point(x, xtol; options...)
+
+    # If x is outside of support return 0
+    (!in_periodic_support(kpoint/2^d, periodic_support(side, kind, w, j, k, a, b)...)) && return T(0)
+
+    # Evaluate wavelet in dyadic points
+    f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, d)
+    # and select the correct points
+    f[kpoint+1]
 end
 
+"""
+Evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet function of type `w` in `x`.
+
+This is only approximate we look for a dyadic point `l2^{-d}` l∈Z, d∈N close to x. (this point can not always be found)
+"""
 function evaluate{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
-  d, kpoint = closest_dyadic_point(x, xtol; options...)
-  s = support(side, kind, w, j, k)
-  (!in_support(kpoint/2^d, s)) && return T(0)
-  f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, d)
-  f[-Int(s[1]*(1<<d))+kpoint+1]
+    # Look for kpoint*2^{-d} close to x
+    d, kpoint = closest_dyadic_point(x, xtol; options...)
+
+    # If x is outside of support return 0
+    s = support(side, kind, w, j, k)
+    (!in_support(kpoint/2^d, s)) && return T(0)
+
+    # Evaluate wavelet in dyadic points
+    f = evaluate_in_dyadic_points(side, kind, w, j, k, d)
+    # and select the correct points
+    f[-Int(s[1]*(1<<d))+kpoint+1]
 end
 
-function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
-  f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(side, kind, w, j, k, d))
-  scratch = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
-  scratch2 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
-  DWT.evaluate_periodic_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2; options...)
-  if points
-    f, linspace(T(0),T(1),(1<<d)+1)[1:end-1]
-  else
-    f
-  end
+"""
+Periodic evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet function of type `w` in an equispaced grid with separation `2^-d`.
+
+The result is periodized with period 1.
+See also `evaluate_in_dyadic_points`
+"""
+function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
+    # Wrapper for allocating memory and using evaluate_periodic_in_dyadic_points!
+
+    # allocate the right amount of scratch space
+    f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(side, kind, w, j, k, d))
+    scratch = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
+    scratch2 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
+
+    # Evaluate wavelet in dyadic points
+    evaluate_periodic_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2; options...)
+
+    # Return points also if points if true
+    if points
+        f, linspace(T(0),T(1),(1<<d)+1)[1:end-1]
+    else
+        f
+    end
 end
 
-function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
-  f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(side, kind, w, j, k, d))
-  scratch = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
-  scratch2 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
-  scratch3 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch3_length(side, kind, w, j, k, d))
-  DWT.evaluate_periodic_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2, scratch3; options...)
-  if points
-    f, linspace(T(0),T(1),(1<<d)+1)[1:end-1]
-  else
-    f
-  end
+function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
+    # Wrapper for allocating memory and using evaluate_periodic_in_dyadic_points!,
+    # wavelet evaluation needs more scratch than scaling evaluation.
+
+    # allocate the right amount of scratch space
+    f = zeros(T, DWT.evaluate_periodic_in_dyadic_points_length(side, kind, w, j, k, d))
+    scratch = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
+    scratch2 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
+    scratch3 = zeros(T, DWT.evaluate_periodic_in_dyadic_points_scratch3_length(side, kind, w, j, k, d))
+
+    # Evaluate wavelet in dyadic points
+    evaluate_periodic_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2, scratch3; options...)
+
+    # Return points also if points if true
+    if points
+        f, linspace(T(0),T(1),(1<<d)+1)[1:end-1]
+    else
+        f
+    end
 end
 
-function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Kind, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  f = zeros(T, DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d))
-  scratch = zeros(T, DWT.evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
-  DWT.evaluate_in_dyadic_points!(f, side, kind, w, j, k, d, scratch; options...)
-  if points
-    f, DWT.dyadicpointsofcascade(side, kind, w, j, k, d; options...)
-  else
-    f
-  end
+
+"""
+Evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet function of type `w` in an equispaced grid with separation `2^-d`.
+
+If the options `points=true` is added, the equispaced grid is returned after the evaluations
+"""
+function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Kind, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10;
+        points=false, options...)
+    # Wrapper for allocating memory and using evaluate_in_dyadic_points!
+
+    # allocate the right amount of scratch space
+    f = zeros(T, DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d))
+    scratch = zeros(T, DWT.evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
+
+    # Evaluate wavelet in dyadic points
+    evaluate_in_dyadic_points!(f, side, kind, w, j, k, d, scratch; options...)
+
+    # Return points also if points if true
+    if points
+        f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
+    else
+        f
+    end
 end
 
-function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10; points=false, options...)
-  f = zeros(T, DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d))
-  scratch = zeros(T, DWT.evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
-  scratch2 = zeros(T, DWT.evaluate_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
-  DWT.evaluate_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2; options...)
-  if points
-    f, DWT.dyadicpointsofcascade(side, kind, w, j, k, d; options...)
-  else
-    f
-  end
+function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10;
+        points=false, options...)
+    # Wrapper for allocating memory and using evaluate_in_dyadic_points!
+    # wavelet evaluation needs more scratch than scaling evaluation.
+
+    # allocate the right amount of scratch space
+    f = zeros(T, DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d))
+    scratch = zeros(T, DWT.evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, d))
+    scratch2 = zeros(T, DWT.evaluate_in_dyadic_points_scratch2_length(side, kind, w, j, k, d))
+
+    # Evaluate wavelet in dyadic points
+    evaluate_in_dyadic_points!(f, side, kind, w, j, k, d, scratch, scratch2; options...)
+
+    # Return points also if points if true
+    if points
+        f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
+    else
+        f
+    end
 end
 
 # In place methods
-function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing, scratch2=nothing, scratch3=nothing; options...)
-  DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2, scratch3; options...)
-  DWT._periodize!(f, scratch, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch=nothing, scratch2=nothing, scratch3=nothing; options...)
+    # Periodic evaluation consist of a usual evaluation and a periodization
+    # Wavelet evaluation uses more schratch than scaling evaluation
+
+    DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2, scratch3; options...)
+    DWT._periodize!(f, scratch, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
 end
 
-function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing, scratch2=nothing; options...)
-  DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2; options...)
-  DWT._periodize!(f, scratch, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch=nothing, scratch2=nothing; options...)
+    # Periodic evaluation consist of a usual evaluation and a periodization
+
+    DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2; options...)
+    DWT._periodize!(f, scratch, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
 end
 
-function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10, scratch = nothing, scratch2 = nothing; options...)
-  @assert length(f) == DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
-  if (d-j) >= 1
-    DWT.evaluate_in_dyadic_points!(scratch, side, DWT.Scl(), w, j+1, k, d, scratch2; options...)
-    scratchlength = length(scratch)
-    filter = DWT.filter(side, DWT.Wvl(), w)
-    L = DWT.support_length(side, DWT.Wvl(), w)
-    m = 1<<(d-1-j)
-    for (i,l) in enumerate(firstindex(filter):lastindex(filter))
-      offset = m*(i-1)
-      f[offset+1:offset+scratchlength] += filter[l]*scratch
+function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch = nothing, scratch2 = nothing; options...)
+    # Wavelet evaluation uses scaling evaluation on a finer level and a the linear relation between wavelet and scaling functions
+
+    @assert length(f) == DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
+
+    # if (d-j) >= 1, then a finer level exist
+    if (d-j) >= 1
+        # evaluate scaling functions in finer level
+        DWT.evaluate_in_dyadic_points!(scratch, side, DWT.Scl(), w, j+1, k, d, scratch2; options...)
+
+        # get the wavelet filter
+        filter = DWT.filter(side, DWT.Wvl(), w)
+
+        # use the wavelet filter d_n to calculate
+        # ψ(t) = ∑_n d_nϕ(2t-n)
+        # ψ_jk(t) = 2^{j/2}ψ(2^jt-k)
+        # so scratch = ϕ_{j+1,k}(t_d)
+        # and ψ_{j,k}(t_d) = ∑_n d_n ϕ_{j+1,k}(t_d-n)
+        scratchlength = length(scratch)
+        m = 1<<(d-1-j)
+        for (i,l) in enumerate(firstindex(filter):lastindex(filter))
+            offset = m*(i-1)
+            f[offset+1:offset+scratchlength] += filter[l]*scratch
+        end
+    else
+        # finer level does not exist calculate wavelet on finer level
+        DWT.evaluate_in_dyadic_points!(scratch2, side, kind, w, j, k, j+1, scratch, nothing; options...)
+        # and select the interesting values
+        copy!(f, scratch2[1:1<<(j+1-d):end])
+        nothing
     end
-  else
-    DWT.evaluate_in_dyadic_points!(scratch2, side, kind, w, j, k, j+1, scratch, nothing; options...)
-    copy!(f, scratch2[1:1<<(j+1-d):end])
-    nothing
-  end
 end
 
-function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10, scratch=nothing; verbose=true, options...)
-  @assert length(f) == evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
-  if (d-j) >= 0
-    evaluate_in_dyadic_points!(f, filter(side, kind, w), j, k, d; points=false, options...)
-  else
-    @assert length(scratch) == DWT.cascade_length(filter(side, kind, w), 0)
-    evaluate_in_dyadic_points!(scratch, filter(side, kind, w), j, k, j; options...)
-    copy!(f, scratch[1:1<<(j-d):end])
-  end
+function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::Kind, w::DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch=nothing; verbose=true, options...)
+    # Scaling evaluation uses scaling evaluation on a finer level and a the linear relation between wavelet and scaling functions
+
+    @assert length(f) == evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
+
+    # If grid is fine enough for the level
+    if (d-j) >= 0
+        # Do scaling evalutaion using the scaling filter
+        evaluate_in_dyadic_points!(f, filter(side, kind, w), j, k, d; points=false, options...)
+
+    # If grid is not fine enough
+    else
+        @assert length(scratch) == DWT.cascade_length(filter(side, kind, w), 0)
+
+        # do evaluation on a finer grid
+        evaluate_in_dyadic_points!(scratch, filter(side, kind, w), j, k, j; options...)
+        # and select the interesting values
+        copy!(f, scratch[1:1<<(j-d):end])
+    end
 end
 
 function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, s::CompactSequence{T}, j=0, k=0, d=0; options...)
-  @assert length(f) == DWT.cascade_length(s, (d-j))
-  cascade_algorithm!(f, s, (d-j); options...)
-  scale!(f,T(2)^(T(j)/2))
-  nothing
+    # Evaluation is done through the cascade_algorithm
+
+    @assert length(f) == DWT.cascade_length(s, (d-j))
+    cascade_algorithm!(f, s, (d-j); options...)
+    scale!(f,T(2)^(T(j)/2))
+    nothing
 end
 
+## scratch util function #######################################################
 evaluate_periodic_in_dyadic_points_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) =
     evaluate_periodic_in_dyadic_points_length(d)
 evaluate_periodic_in_dyadic_points_length(d) = 1<<d
-
 evaluate_periodic_in_dyadic_points_scratch_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) =
     evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
 evaluate_periodic_in_dyadic_points_scratch2_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) =
     evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, d)
 evaluate_periodic_in_dyadic_points_scratch3_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) =
     evaluate_in_dyadic_points_scratch2_length(side, kind, w, j, k, d)
-
 evaluate_in_dyadic_points_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) = (d-j) >= 0 ?
     (1<<(d-j))*DWT.support_length(side, kind, w)+1 :
     cld(DWT.support_length(side, kind, w)+1, 1<<(j-d))
-
 evaluate_in_dyadic_points_scratch_length(side::DWT.Side, kind::DWT.Kind, w, j, k, d) = (d-j) >= 0 ?
     0 :
     DWT.support_length(side, kind, w)+1
 evaluate_in_dyadic_points_scratch_length(side::DWT.Side, kind::DWT.Wvl, w, j, k, d) = (d-j) >= 1 ?
     evaluate_in_dyadic_points_length(side, DWT.Scl(), w, j+1, k, d):
     evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, j+1)
-
 evaluate_in_dyadic_points_scratch2_length(side::DWT.Side, kind::DWT.Wvl, w, j, k, d) = (d-j) >= 1 ?
     evaluate_in_dyadic_points_scratch_length(side, DWT.Scl(), w, j+1, k, d) :
     evaluate_in_dyadic_points_length(side, kind, w, j, k, j+1)
-
 ###############################################################################
-
-Filterbank(w::DiscreteWavelet) =
-    Filterbank( FilterPair(filter(Prl(), Scl(), w), filter(Prl(), Wvl(), w)),
-                FilterPair(filter(Dul(), Scl(), w), filter(Dul(), Wvl(), w)) )
-
-"DWT groups the data that fully characterize a discrete wavelet transform."
-struct DWT_Data
-    "The wavelet to use in the discrete wavelet transform."
-    wavelet ::  DiscreteWavelet
-    "The treatment of boundaries."
-    bnd     ::  WaveletBoundary
-    "The transform type."
-    transformtype   ::  TransformType
-end

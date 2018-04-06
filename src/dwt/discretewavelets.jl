@@ -33,6 +33,21 @@ include("boundaries.jl")
 include("transform_types.jl")
 include("wvlt.jl")
 
+Filterbank(w::DiscreteWavelet) =
+    Filterbank( FilterPair(filter(Prl(), Scl(), w), filter(Prl(), Wvl(), w)),
+                FilterPair(filter(Dul(), Scl(), w), filter(Dul(), Wvl(), w)) )
+
+"DWT groups the data that fully characterize a discrete wavelet transform."
+struct DWT_Data
+    "The wavelet to use in the discrete wavelet transform."
+    wavelet ::  DiscreteWavelet
+    "The treatment of boundaries."
+    bnd     ::  WaveletBoundary
+    "The transform type."
+    transformtype   ::  TransformType
+end
+
+
 # Transformation of function evaluations on dyadic grid to scaling coefficients
 include("scaling_coefficients.jl")
 
