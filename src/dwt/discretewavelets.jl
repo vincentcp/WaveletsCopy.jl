@@ -1,12 +1,12 @@
 # discretewavelets.jl
 module DWT
 
-using ..Sequences
+using Sequences
 using ..Filterbanks
 
 import ..Filterbanks: Filterbank
 import Base: eltype, filter
-import ..Sequences: support
+import Sequences: support
 export filter
 
 # from scaling_coefficients.jl

@@ -2,7 +2,7 @@
 using Wavelets
 using Base.Test
 using Wavelets.Filterbanks
-using Wavelets.Sequences
+using Sequences
 W = Wavelets
 P = 80
 DWT.perbound

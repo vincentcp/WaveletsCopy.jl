@@ -2,7 +2,7 @@
 
 module Filterbanks
 
-using Wavelets.Sequences
+using Sequences
 
 import Base: transpose, ctranspose, eltype, getindex
 

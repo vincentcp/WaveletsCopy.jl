@@ -3,7 +3,7 @@ using Base.Test
 using Wavelets
 using QuadGK
 using CardinalBSplines
-using Wavelets.Sequences
+using Sequences
 using Wavelets.Filterbanks
 
 
