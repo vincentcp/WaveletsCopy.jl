@@ -81,7 +81,7 @@ end
 ###############################################################################
 # Evaluation of scaling and wavelet function
 ###############################################################################
-include("util/cascade.jl")
+include("util/recursion.jl")
 include("util/periodize.jl")
 
 
@@ -194,7 +194,7 @@ function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Kind, w::DWT.Dis
 
     # Return points also if points if true
     if points
-        f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
+        f, dyadicpointsofrecursion(side, kind, w, j, k, d; options...)
     else
         f
     end
@@ -215,7 +215,7 @@ function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.Disc
 
     # Return points also if points if true
     if points
-        f, dyadicpointsofcascade(side, kind, w, j, k, d; options...)
+        f, dyadicpointsofrecursion(side, kind, w, j, k, d; options...)
     else
         f
     end
@@ -286,7 +286,7 @@ function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::
 
     # If grid is not fine enough
     else
-        @assert length(scratch) == DWT.cascade_length(filter(side, kind, w), 0)
+        @assert length(scratch) == DWT.recursion_length(filter(side, kind, w), 0)
 
         # do evaluation on a finer grid
         evaluate_in_dyadic_points!(scratch, filter(side, kind, w), j, k, j; options...)
@@ -296,10 +296,10 @@ function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::
 end
 
 function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, s::CompactSequence{T}, j=0, k=0, d=0; options...)
-    # Evaluation is done through the cascade_algorithm
+    # Evaluation is done through the recursion_algorithm
 
-    @assert length(f) == DWT.cascade_length(s, (d-j))
-    cascade_algorithm!(f, s, (d-j); options...)
+    @assert length(f) == DWT.recursion_length(s, (d-j))
+    recursion_algorithm!(f, s, (d-j); options...)
     scale!(f,T(2)^(T(j)/2))
     nothing
 end

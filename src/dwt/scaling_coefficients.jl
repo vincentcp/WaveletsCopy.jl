@@ -89,7 +89,7 @@ function scaling_coefficients!{T}(c, f, filter::CompactSequence{T}, fembedding; 
 end
 
 _scalingcoefficient_filter(f::CompactSequence) =
-    reverse(CompactSequence(cascade_algorithm(f, 0), f.offset))
+    reverse(CompactSequence(recursion_algorithm(f, 0), f.offset))
 
 "Transforms scaling coeffients back to function evaluations on the dyadic grid."
 function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); grid=false, options...)

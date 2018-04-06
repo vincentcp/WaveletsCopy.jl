@@ -13,16 +13,16 @@ function pad(s,i=80)
 end
 P = 80
 
-function cascadetest()
-  @testset "$(rpad("cascade_algorithm",P))"  begin
+function recursiontest()
+  @testset "$(rpad("recursion_algorithm",P))"  begin
     T = Float64
     tol = sqrt(eps(T))
     for L in 0:5
       for N in 1:6
         f = x->evaluate_Bspline(N-1, x+(N>>1), Float64)
         h = DWT.CDFWavelet{N,N,T}()
-        x = Wavelets.DWT.dyadicpointsofcascade(Primal, scaling, h,L)
-        g = Wavelets.DWT.cascade_algorithm(Primal, scaling, h,L)
+        x = Wavelets.DWT.dyadicpointsofrecursion(Primal, scaling, h,L)
+        g = Wavelets.DWT.recursion_algorithm(Primal, scaling, h,L)
         F = map(f,x)
         @test (norm(g-F))<tol
       end
@@ -38,15 +38,15 @@ function primalfunctiontest()
       for N in 1:6
         w = DWT.CDFWavelet{N,N,T}()
         f = x->DWT.evaluate(Primal, scaling, w, 0, 0, x)
-        x = DWT.dyadicpointsofcascade(Primal, scaling, w,L)
-        g = DWT.cascade_algorithm(Primal, scaling, w, L)
+        x = DWT.dyadicpointsofrecursion(Primal, scaling, w,L)
+        g = DWT.recursion_algorithm(Primal, scaling, w, L)
         F = map(f,x)
         @test (norm(g-F))<tol
       end
       w = DWT.HaarWavelet{T}()
       f = x->WTS.DWT.evaluate(Primal, scaling, w, 0, 0, x)
-      x = DWT.dyadicpointsofcascade(Dual, scaling, w,L)
-      g = DWT.cascade_algorithm(Primal, scaling, w,L)
+      x = DWT.dyadicpointsofrecursion(Dual, scaling, w,L)
+      g = DWT.recursion_algorithm(Primal, scaling, w,L)
       F = map(f,x)
       @test (norm(g-F))<tol
     end
@@ -264,11 +264,11 @@ function implementation_test()
     @test DWT.name(DWT.cdf11_Float16) == "cdf11_Float16"
     @test DWT.class(DWT.db1) == "Wavelets.DWT.DaubechiesWavelet{1,Float64}"
     @test DWT.class(DWT.cdf11) == "Wavelets.DWT.CDFWavelet{1,1,Float64}"
-    @test DWT.dyadicpointsofcascade(Primal, scaling, DWT.cdf11,1,0,0)≈linspace(0,0,1)
-    @test DWT.dyadicpointsofcascade(Primal, scaling, DWT.cdf13,1,1,3)≈linspace(.5,1,5)
-    @test DWT.dyadicpointsofcascade(Primal, DWT.wavelet, DWT.cdf13,1,1,3)≈linspace(0,1.5,13)
-    @test DWT.dyadicpointsofcascade(Dual, scaling, DWT.cdf13,1,1,3)≈linspace(-.5,2,21)
-    @test DWT.dyadicpointsofcascade(Dual, DWT.wavelet, DWT.cdf13,1,1,3)≈linspace(0,1.5,13)
+    @test DWT.dyadicpointsofrecursion(Primal, scaling, DWT.cdf11,1,0,0)≈linspace(0,0,1)
+    @test DWT.dyadicpointsofrecursion(Primal, scaling, DWT.cdf13,1,1,3)≈linspace(.5,1,5)
+    @test DWT.dyadicpointsofrecursion(Primal, DWT.wavelet, DWT.cdf13,1,1,3)≈linspace(0,1.5,13)
+    @test DWT.dyadicpointsofrecursion(Dual, scaling, DWT.cdf13,1,1,3)≈linspace(-.5,2,21)
+    @test DWT.dyadicpointsofrecursion(Dual, DWT.wavelet, DWT.cdf13,1,1,3)≈linspace(0,1.5,13)
     @test norm(DWT.evaluate_in_dyadic_points(Dual, DWT.wavelet, DWT.cdf24,1,3,4)-[0.0,8.3234e-6,0.000177566,-0.0014307,0.00378807,0.00350662,
                                                                   -0.0305216,0.0262683,0.0808122,-0.0458831,0.0762876,-0.206873,
                                                                     -0.61956,0.20897,0.306045,1.09198,2.39743,0.456957,-0.351988,
@@ -353,7 +353,7 @@ function eval_wavelet_test()
   end
 end
 implementation_test()
-cascadetest()
+recursiontest()
 primalfunctiontest()
 scalingtest()
 supporttest()

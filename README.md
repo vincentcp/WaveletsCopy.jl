@@ -107,8 +107,8 @@ end
 plot!()
 ```
 
-    [1m[33mWARNING: [39m[22m[33mCascade algorithm is not convergent[39m
-    [1m[33mWARNING: [39m[22m[33mCascade algorithm is not convergent[39m
+    [1m[33mWARNING: [39m[22m[33mRecursion algorithm is not convergent[39m
+    [1m[33mWARNING: [39m[22m[33mRecursion algorithm is not convergent[39m
 
 
 
