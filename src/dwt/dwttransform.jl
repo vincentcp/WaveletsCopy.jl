@@ -12,6 +12,12 @@ end
 dwt_size(x, w::DiscreteWavelet, bnd::WaveletBoundary) = dwt_size(x, Filterbank(w), bnd)
 dwt_size(x, fb::Filterbank, bnd::WaveletBoundary) = length(x)
 
+dwt_dual(x, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
+    dwt(x, dual(Filterbank(w)), bnd, L)
+
+idwt_dual(x, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
+    idwt(x, dual(Filterbank(w)), bnd, L)
+
 dwt(x, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
     dwt(x, Filterbank(w), bnd, L)
 
@@ -58,7 +64,6 @@ function idwt(x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels
     y
 end
 
-""
 function full_dwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
     coefs = scaling_coefficients(x, w, bnd)
     dwt(coefs, Filterbank(w), bnd)

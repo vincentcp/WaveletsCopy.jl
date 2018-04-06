@@ -32,7 +32,8 @@ recursion_algorithm!{T}(f::AbstractArray{T,1}, s::CompactSequence{T}, L; options
 
 function recursion_algorithm!{T}(f::AbstractArray{T,1}, h::AbstractArray{T,1}, L; tol = sqrt(eps(T)), options...)
     @assert L >= 0
-    @assert sum(h)≈sqrt(T(2))
+    sqrt2 = sqrt(T(2))
+    @assert sum(h)≈sqrt2
     N = length(h)
     # find ϕ(0), .. , ϕ(N-1) by solving a eigenvalue problem
     # The eigenvector with eigenvalue equal to 1/√2 is the vector containting ϕ(0), .. , ϕ(N-1)
@@ -42,7 +43,9 @@ function recursion_algorithm!{T}(f::AbstractArray{T,1}, h::AbstractArray{T,1}, L
     H = DWT._get_H(h)
     # Find eigenvector eigv
     E = eigfact(H)
-    index = find(abs.(E[:values]-1/sqrt(T(2))).<tol)
+
+    # Select eigenvector with eigenvalue equal to 1/√2
+    index = find(abs.(E[:values]-1/sqrt2).<tol)
     @assert length(index) > 0
     i = index[1]
     V = E[:vectors][:,i]
@@ -50,7 +53,10 @@ function recursion_algorithm!{T}(f::AbstractArray{T,1}, h::AbstractArray{T,1}, L
     eigv = real(V)
     (abs(sum(eigv)) < tol*100) && (warn("Recursion algorithm is not convergent"))
 
+    # Normalize the eigenvector to have sum equal to 1
     eigv /= sum(eigv)
+
+    # Initialize loop
     eigv_length = N
     f[1:1<<L:end] = eigv
     # # Find intermediate values ϕ(1/2), .. ,ϕ(N-1 -1/2)
@@ -61,7 +67,7 @@ function recursion_algorithm!{T}(f::AbstractArray{T,1}, h::AbstractArray{T,1}, L
             for i in max(1,ceil(Int, (2n-1-length(f))/(1<<L)+1)):min(N, 1+(n-1)>>(L-1))
                 t += h[i].*f[2*n-1-(1<<L)*(i-1)]
             end
-            f[n] = sqrt(T(2))*t
+            f[n] = sqrt2*t
         end
     end
     nothing
