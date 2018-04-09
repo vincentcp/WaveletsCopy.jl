@@ -2,7 +2,7 @@
 #__precompile__()
 
 
-module Wavelets
+module WaveletsCopy
 using RecipesBase
 using Reexport
 using CardinalBSplines
