@@ -1,13 +1,13 @@
 # suit_dwtstep.jl
-using Wavelets
+using WaveletsCopy
 using Base.Test
-using Wavelets.Filterbanks
-using Wavelets.Sequences
-W = Wavelets
+W = WaveletsCopy
+using W.Filterbanks
+using W.Sequences
 P = 80
-DWT.perbound
-DWT.symbound
-DWT.zerobound
+W.DWT.perbound
+W.DWT.symbound
+W.DWT.zerobound
 rng = MersenneTwister(3000)
 jumpfunction(x) = (-0.5 < x < 0.5 ? 1.0: 0.0) + (-0.25 < x < .75 ? 1.0 : 0.0)
 characteristicfunction(x) = (0<x<1) ? 1.0 : 0.0
@@ -20,9 +20,9 @@ randomfunction(x) = rand(rng)
             x = map(f,t)
             for w in (DWT.IMPLEMENTED_WAVELETS...)
                 fb = Filterbank(w)
-                    for bound in (DWT.perbound, DWT.symbound)
-                    y = dwtstep(x, fb, DWT.perbound)
-                    xx = idwtstep(y..., fb, DWT.perbound)
+                    for bound in (DWT.perbound,)
+                    y = dwtstep(x, fb, bound)
+                    xx = idwtstep(y..., fb, bound)
                     @test (norm(xx-x)) < 1e-10
                 end
             end
@@ -38,10 +38,10 @@ end
         for f in (sin, characteristicfunction, randomfunction)
             x = map(f,t)
             for w in (DWT.IMPLEMENTED_WAVELETS...)
-                for bound in (DWT.perbound, DWT.symbound)
+                for bound in (DWT.perbound, )
                     for L in 1:n
-                        y = DWT.dwt(x, w, DWT.perbound, L)
-                        xx = DWT.idwt(y, w, DWT.perbound, L)
+                        y = DWT.dwt(x, w, bound, L)
+                        xx = DWT.idwt(y, w, bound, L)
                         @test (norm(xx-x)) < 1e-10
                     end
                 end

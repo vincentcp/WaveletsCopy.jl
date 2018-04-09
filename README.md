@@ -6,13 +6,13 @@ A julia package for a fast Discrete Wavelet Transform, and plotting and evaluati
 
 
 ```julia
-#Pkg.clone("https://github.com/vincentcp/Wavelets.jl.git")
-#Pkg.build("Wavelets")
+#Pkg.clone("https://github.com/vincentcp/WaveletsCopy.jl.git")
+#Pkg.build("WaveletsCopy")
 ```
 
 
 ```julia
-using Wavelets 
+using WaveletsCopy 
 using Plots
 ```
 
@@ -36,7 +36,7 @@ db4, cdf53
 
 
 
-    (Wavelets.DWT.DaubechiesWavelet{4,Float64}(), Wavelets.DWT.CDFWavelet{5,3,Float64}())
+    (WaveletsCopy.DWT.DaubechiesWavelet{4,Float64}(), WaveletsCopy.DWT.CDFWavelet{5,3,Float64}())
 
 
 
@@ -60,7 +60,7 @@ perbound
 
 
 
-    Wavelets.DWT.PeriodicBoundary()
+    WaveletsCopy.DWT.PeriodicBoundary()
 
 
 
@@ -227,7 +227,7 @@ plot(cdf33,layout=(2,2))
 
 
 
-Of orthogonal wavelets only primal functionsare shown since the duals are equal to the primal functions
+Of orthogonal wavelets only primal functions are shown since the duals are equal to the primal functions
 
 
 ```julia

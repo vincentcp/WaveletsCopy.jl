@@ -1,6 +1,6 @@
-using Wavelets
+using WaveletsCopy
 using Base.Test
-CREATE_README = false
+CREATE_README = true
 include("suite_dwtstep.jl")
 include("suite_evaluation.jl")
 
