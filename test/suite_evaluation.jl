@@ -160,7 +160,7 @@ function vanishing_moments_test_dual()
     for w in DWT.IMPLEMENTED_WAVELETS
       for d in 1:1
         p = DWT.vanishingmoments(Primal, w)-1
-        scaling_coefficients = DWT.scaling_coefficients(x->x^p, w, d, nothing, side=Primal)
+        scaling_coefficients = DWT.scaling_coefficients(x->x^p, Primal, w, d, nothing)
         for k in 0:(1<<d)-1
           D = 10
           scaling_function, x = DWT.evaluate_in_dyadic_points(Primal, scaling, w, d, k, D, points = true)

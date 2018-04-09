@@ -1,5 +1,5 @@
 # disable precompilation during development
-#__precompile__()
+__precompile__(true)
 
 
 module WaveletsCopy

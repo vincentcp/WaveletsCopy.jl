@@ -43,6 +43,10 @@ end
                         y = DWT.dwt(x, w, bound, L)
                         xx = DWT.idwt(y, w, bound, L)
                         @test (norm(xx-x)) < 1e-10
+
+                        y = DWT.dwt(x, Dual, w, bound, L)
+                        xx = DWT.idwt(y, Dual, w, bound, L)
+                        @test (norm(xx-x)) < 1e-8
                     end
                 end
             end

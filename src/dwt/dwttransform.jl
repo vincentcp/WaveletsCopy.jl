@@ -12,17 +12,23 @@ end
 dwt_size(x, w::DiscreteWavelet, bnd::WaveletBoundary) = dwt_size(x, Filterbank(w), bnd)
 dwt_size(x, fb::Filterbank, bnd::WaveletBoundary) = length(x)
 
-dwt_dual(x, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
-    dwt(x, dual(Filterbank(w)), bnd, L)
-
-idwt_dual(x, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
-    idwt(x, dual(Filterbank(w)), bnd, L)
-
 dwt(x, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
-    dwt(x, Filterbank(w), bnd, L)
+    dwt(x, Primal, w, bnd, L)
 
 idwt(x, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
+    idwt(x, Primal, w, bnd, L)
+
+dwt(x, s::Prl, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
+    dwt(x, Filterbank(w), bnd, L)
+
+idwt(x, s::Prl, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
     idwt(x, Filterbank(w), bnd, L)
+
+dwt(x, s::Dul, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
+    dwt(x, DualFilterbank(w), bnd, L)
+
+idwt(x, s::Dul, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
+    idwt(x, DualFilterbank(w), bnd, L)
 
 function dwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x))
     lx = length(x)
@@ -64,12 +70,18 @@ function idwt(x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels
     y
 end
 
-function full_dwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
-    coefs = scaling_coefficients(x, w, bnd)
-    dwt(coefs, Filterbank(w), bnd)
+full_dwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary) =
+    full_dwt(x, Primal, w, bnd)
+
+full_idwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary) =
+    full_idwt(x, Primal, w, bnd)
+
+function full_dwt{T}(x, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
+    coefs = scaling_coefficients(x, s, w, bnd)
+    dwt(coefs, s, w, bnd)
 end
 
-function full_idwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
-    scalingcoefs = idwt(x, Filterbank(w), bnd)
-    scaling_coefficients_to_dyadic_grid(scalingcoefs, w, bnd)
+function full_idwt{T}(x, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
+    scalingcoefs = idwt(x, s, w, bnd)
+    scaling_coefficients_to_dyadic_grid(scalingcoefs, s, w, bnd)
 end

@@ -36,6 +36,9 @@ include("wvlt.jl")
 Filterbank(w::DiscreteWavelet) =
     Filterbank( FilterPair(filter(Prl(), Scl(), w), filter(Prl(), Wvl(), w)),
                 FilterPair(filter(Dul(), Scl(), w), filter(Dul(), Wvl(), w)) )
+DualFilterbank(w::DiscreteWavelet) =
+    Filterbank( FilterPair(filter(Dul(), Scl(), w), filter(Dul(), Wvl(), w)),
+                FilterPair(filter(Prl(), Scl(), w), filter(Prl(), Wvl(), w)) )
 
 "DWT groups the data that fully characterize a discrete wavelet transform."
 struct DWT_Data
