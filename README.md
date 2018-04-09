@@ -1,6 +1,6 @@
 
-[![Build Status](https://travis-ci.org/vincentcp/Wavelets.jl.svg?branch=master)](https://travis-ci.org/vincentcp/Wavelets.jl)
-[![Coverage Status](https://coveralls.io/repos/github/vincentcp/Wavelets.jl/badge.svg?branch=master)](https://coveralls.io/github/vincentcp/Wavelets.jl?branch=master)
+[![Build Status](https://travis-ci.org/vincentcp/WaveletsCopy.jl.svg?branch=master)](https://travis-ci.org/vincentcp/WaveletsCopy.jl)
+[![Coverage Status](https://coveralls.io/repos/github/vincentcp/WaveletsCopy.jl/badge.svg?branch=master)](https://coveralls.io/github/vincentcp/WaveletsCopy.jl?branch=master)
 # Wavelets
 A julia package for a fast Discrete Wavelet Transform, and plotting and evaluation of wavelets 
 
