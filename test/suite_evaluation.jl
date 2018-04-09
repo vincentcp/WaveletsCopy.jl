@@ -209,7 +209,7 @@ function coefficient_util_test()
   @testset "$(rpad("coefficient util tests",P))" begin
     levels = [0,0,1,1,2,2,2,2,3,3,3,3,3,3,3,3]
     for i in 1:16
-      @test DWT.level(16,i) == levels[i]
+        @test DWT.level(16,i) == levels[i]
     end
     @test DWT.wavelet_index(4,1,0) == (scaling, 2, 0)
     @test DWT.wavelet_index(4,2,0) == (scaling, 2, 1)
@@ -223,6 +223,10 @@ function coefficient_util_test()
     @test DWT.wavelet_index(4,2,2) == (wavelet, 0, 0)
     @test DWT.wavelet_index(4,3,2) == (wavelet, 1, 0)
     @test DWT.wavelet_index(4,4,2) == (wavelet, 1, 1)
+    @test DWT.wavelet_indices(3)[1] == (scaling, 0, 0)
+    @test DWT.wavelet_indices(3)[2] == (wavelet, 0, 0)
+    @test DWT.wavelet_indices(3)[3] == (wavelet, 1, 0)
+    @test DWT.wavelet_indices(3)[4] == (wavelet, 1, 1)
     @test DWT.support(Primal, 8, 1, 3, DWT.db1) == (0,1)
     @test DWT.support(Primal, 8, 2, 3, DWT.db1) == (0,1)
     @test DWT.support(Primal, 8, 3, 3, DWT.db1) == (.0,.5)
@@ -240,6 +244,8 @@ function implementation_test()
     @test DWT.name(DWT.wavelet) == "wavelet"
     @test DWT.name(DWT.Primal) == "primal"
     @test DWT.name(DWT.Dual) == "dual"
+    print_implemented_wavelets()
+    print_all_implemented_wavelets()
     @test DWT.is_symmetric(DWT.TestWavelet{Float16}) == False
     @test DWT.is_biorthogonal(DWT.TestWavelet{Float16}) == False
     @test DWT.is_orthogonal(DWT.TestWavelet{Float16}) == False
@@ -340,20 +346,26 @@ function implementation_test()
 end
 
 function eval_wavelet_test()
-  @testset "$(rpad("evaluate wavelet in point",P))" begin
-    @test DWT._periodize((.25,.5),-1,1)==((.25,.5),)
-    @test DWT._periodize((-1.25,1.5),-1,1)==((-1,1),)
-    @test DWT._periodize((-1.25,.5),-1,1)==((.75,1.),(-1.,.5))
-    @test DWT._periodize((-1.5,0.),-1,1)==((0.5,1.),(-1,0))
-    for side in (Primal, Dual)
-      for kind in (scaling, DWT.wavelet)
-        @test DWT.in_periodic_support(1,DWT.periodic_support(side,kind, DWT.cdf11, 0,0)...)
-        @test DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 3,0)...)
-        @test !DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 1,1)...)
-      end
+    @testset "$(rpad("evaluate wavelet in point",P))" begin
+        @test DWT._periodize((.25,.5),-1,1)==((.25,.5),)
+        @test DWT._periodize((-1.25,1.5),-1,1)==((-1,1),)
+        @test DWT._periodize((-1.25,.5),-1,1)==((.75,1.),(-1.,.5))
+        @test DWT._periodize((-1.5,0.),-1,1)==((0.5,1.),(-1,0))
+
+        t = linspace(0,1,10)
+        for side in (Primal, Dual)
+            for kind in (scaling, DWT.wavelet)
+                @test DWT.in_periodic_support(1,DWT.periodic_support(side,kind, DWT.cdf11, 0,0)...)
+                @test DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 3,0)...)
+                @test !DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 1,1)...)
+                for w in [db2, cdf15]
+                    @test 1+evaluate_periodic.(Primal, scaling, w, 3, 0, t-1) ≈ 1+evaluate.(Primal, scaling, w, 3, 0, t)+evaluate.(Primal, scaling, w, 3, 0, t-1)+evaluate.(Primal, scaling, w, 3, 0, t+1)
+                end
+            end
+        end
     end
-  end
 end
+
 implementation_test()
 recursiontest()
 primalfunctiontest()
@@ -369,6 +381,7 @@ coefficient_util_test()
 using Plots
 plot(DWT.cdf11)
 plot(DWT.db1)
+plot(DWT.db2,periodic=true)
 
 # using Plots
 # plot(layout=(2,2))

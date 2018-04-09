@@ -30,10 +30,11 @@ scaling = Scl(); DWT.name(::Scl) = "scaling"
 wavelet = Wvl(); DWT.name(::Wvl) = "wavelet"
 Base.inv(::Prl) = Dul()
 Base.inv(::Dul) = Prl()
+Base.inv(::Type{Prl}) = Dul
+Base.inv(::Type{Dul}) = Prl
 ###############################################################################
 # vanishingmoments
 ###############################################################################
-vanishingmoments{WT<:DiscreteWavelet}(side::Side, kind::Kind, ::Type{WT}) = vanishingmoments(s, WT)
 vanishingmoments{WT<:DiscreteWavelet}(::Prl, ::Type{WT}) = throw("unimplemented")
 vanishingmoments{WT<:DiscreteWavelet}(::Dul, W::Type{WT}) = _vanishingmoments(Prl(), W, is_orthogonal(W))
 _vanishingmoments(::Prl, W, is_orthogonal::Type{True}) = vanishingmoments(Prl(), W)

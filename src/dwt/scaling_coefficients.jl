@@ -61,22 +61,9 @@ function scaling_coefficients{T}(f::Function, s::CompactSequence{T}, L::Int, fem
       scaling_coefficients(fcoefs, filter, fembedding; options...)
 end
 
-# Convenience function: default
-scaling_coefficients{T}(f::AbstractArray, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
-    scaling_coefficients(f, Primal, w, bnd; options...)
-
-# Convenience function: default
-scaling_coefficients!{T}(c::AbstractArray, f::AbstractArray, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
-    scaling_coefficients!(c, f, Primal, w, bnd; options...)
-
 # Convenience function: wavelet to filter
 scaling_coefficients{T}(f::AbstractArray, s::Side, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
     scaling_coefficients(f, _scalingcoefficient_filter(filter(inv(s), Scl(), w)), PeriodicEmbedding(); options...)
-
-# Convenience function: wavelet to filter
-scaling_coefficients!{T}(c::AbstractArray, f::AbstractArray, s::Side, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
-    scaling_coefficients!(c, f, _scalingcoefficient_filter(filter(inv(s), Scl(), w)), PeriodicEmbedding(); options...)
-
 
 # function samples to scaling coeffients
 function scaling_coefficients{T}(f::AbstractArray, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
@@ -102,9 +89,10 @@ end
 _scalingcoefficient_filter(f::CompactSequence) =
     reverse(CompactSequence(recursion_algorithm(f, 0), f.offset))
 
-"Transforms scaling coeffients back to function evaluations on the dyadic grid."
-scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); options...) =
-    scaling_coefficients_to_dyadic_grid(scaling_coefficients, Primal, w, bmd, d; options...)
+# Remove
+# "Transforms scaling coeffients back to function evaluations on the dyadic grid."
+# scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); options...) =
+    # scaling_coefficients_to_dyadic_grid(scaling_coefficients, Primal, w, bmd, d; options...)
 
 "Transforms scaling coeffients back to function evaluations on the dyadic grid."
 function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, s::Side, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); grid=false, options...)

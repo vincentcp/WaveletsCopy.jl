@@ -8,7 +8,7 @@ using Reexport
 using CardinalBSplines
 
 include("sequences/sequence.jl")
-include("filterbank.jl")
+include("filterbanks/filterbank.jl")
 include("dwt/discretewavelets.jl")
 
 @reexport using .DWT
