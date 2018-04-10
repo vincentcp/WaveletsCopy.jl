@@ -105,8 +105,8 @@ function evaluate_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavele
 
     # Evaluate wavelet in dyadic points
     f = evaluate_periodic_in_dyadic_points(side, kind, w, j, k, d)
-    # and select the correct points
-    f[kpoint+1]
+    # and select the correct point
+    f[mod(kpoint,length(f))+1]
 end
 
 """
