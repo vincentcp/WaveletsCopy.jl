@@ -229,11 +229,12 @@ function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.S
     # Wavelet evaluation uses more schratch than scaling evaluation
 
     DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2, scratch3; options...)
-    try
-        DWT._periodize!(f, scratch, -Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
-    catch InexactError
-        DWT._periodize!(f, scratch, -Int(cld(DWT.support(side, kind, w, 0, k)[1],1<<(j-d))/(1<<d))+1)
-    end
+    DWT._periodize!(f, scratch, -ceil(Int,(1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+    # try
+    #     DWT._periodize!(f, scratch, -Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+    # catch InexactError
+    #     DWT._periodize!(f, scratch, -Int(cld(DWT.support(side, kind, w, 0, k)[1],1<<(j-d))/(1<<d))+1)
+    # end
 end
 
 function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
@@ -241,11 +242,12 @@ function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.S
     # Periodic evaluation consist of a usual evaluation and a periodization
 
     DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2; options...)
-    try
-        DWT._periodize!(f, scratch, -Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
-    catch InexactError
-        DWT._periodize!(f, scratch, -Int(cld(DWT.support(side, kind, w, 0, k)[1],1<<(j-d))/(1<<d))+1)
-    end
+    # try
+        DWT._periodize!(f, scratch, -ceil(Int,(1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+        # DWT._periodize!(f, scratch, -Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+    # catch InexactError
+        # DWT._periodize!(f, scratch, -Int(cld(DWT.support(side, kind, w, 0, k)[1],1<<(j-d))/(1<<d))+1)
+    # end
 end
 
 function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
