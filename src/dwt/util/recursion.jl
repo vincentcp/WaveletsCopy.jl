@@ -88,7 +88,8 @@ function dyadicpointsofrecursion{T}(side::Side, kind::Kind, w::DiscreteWavelet{T
     if L >= 0
         linspace(T(s[1]), T(s[2]), (1<<L)*H+1)
     else
-        linspace(T(s[1]), T(s[2]), H+1)[1:1<<-L:end]
+        # include zero, therefore, do some rounding
+        (1<<-L)*(cld(s[1],1<<-L):fld(s[2],1<<-L))
     end
 end
 

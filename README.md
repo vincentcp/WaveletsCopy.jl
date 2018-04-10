@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/vincentcp/WaveletsCopy.jl.svg?branch=master)](https://travis-ci.org/vincentcp/WaveletsCopy.jl)
 [![Coverage Status](https://coveralls.io/repos/github/vincentcp/WaveletsCopy.jl/badge.svg?branch=master)](https://coveralls.io/github/vincentcp/WaveletsCopy.jl?branch=master)
 # Wavelets
-A julia package for a fast Discrete Wavelet Transform, and plotting and evaluation of wavelets 
+A julia package for a fast Discrete Wavelet Transform, and plotting and evaluation of wavelets
 
 
 ```julia
@@ -12,7 +12,7 @@ A julia package for a fast Discrete Wavelet Transform, and plotting and evaluati
 
 
 ```julia
-using WaveletsCopy 
+using WaveletsCopy
 using Plots
 ```
 
@@ -50,7 +50,7 @@ a = rand(1<<8);
 dwt(a, db3, perbound);
 ```
 
-Only periodic boundaries boundaries and dyadic length are supported. 
+Only periodic boundaries boundaries and dyadic length are supported.
 
 
 ```julia
@@ -166,7 +166,7 @@ plot!()
 
 
 
-Also pointwise evaluation of scaling functions is possible up to some given precision. (There are still errors in the code depending on the point evaluation)
+Also pointwise evaluation of scaling functions is possible up to some given precision.
 `evaluate{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5)`
 
 `evaluate_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5)`
@@ -264,5 +264,3 @@ plot(Dual, wavelet,cdf13)
 
 
 ![svg](README_files/README_33_0.svg)
-
-

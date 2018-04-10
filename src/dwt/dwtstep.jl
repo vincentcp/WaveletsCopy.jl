@@ -47,7 +47,7 @@ idwtstep_size(sc, dc, fb::Filterbank, bnd::WaveletBoundary) = idwtstep_size(leng
 
 
 function dwtstep(x, fb::Filterbank, bnd::WaveletBoundary)
-    sc_len, dc_len = dwtstep_size(length(x), fb, bnd)
+    sc_len, dc_len = dwtstep_size(x, fb, bnd)
     T = promote_type(eltype(x), eltype(fb))
     sc = zeros(T, sc_len)
     dc = zeros(T, dc_len)
@@ -73,41 +73,42 @@ idwtstep!(x, sc, dc, fb::Filterbank, bnd::PeriodicBoundary) =
 
 
 ## Symmetric boundaries
-
-
-function dwtstep!(sc, dc, x, fb::Filterbank, bnd::SymmetricBoundary)
-    if iseven(length(x))
-        if isodd(sublength(dual_lowpassfilter(fb)))
-            polyphase_analysis!(sc, dc, x, fb.pm_analysis, SymmetricEmbedding{:wp,:wp,:even,:even}())
-        end
-    end
-end
-
-function idwtstep!(x, sc, dc, fb::Filterbank, bnd::SymmetricBoundary)
-    if iseven(length(x))
-        if isodd(sublength(primal_lowpassfilter(fb)))
-            polyphase_synthesis!(x, sc, dc, fb.pm_synthesis, SymmetricEmbedding{:hp,:hp,:even,:even}())
-        end
-    end
-end
-
-
-"Compute a matrix representation of one DWT step for a signal of size n."
-function dwtstep_matrix(n, fb::Filterbank, bnd::WaveletBoundary)
-    T = eltype(fb)
-    A = zeros(n,n)
-    sc_len, dc_len = dwtstep_size(n, fb, bnd)
-    sc = zeros(T, sc_len)
-    dc = zeros(T, dc_len)
-    x = zeros(T, n)
-    for i = 1:n
-        if i > 1
-            x[i-1] = 0
-        end
-        x[i] = 1
-        dwtstep!(sc, dc, x, fb, bnd)
-        A[1:sc_len,i] = sc
-        A[sc_len+1:n,i] = dc
-    end
-    A
-end
+# TODO implement
+#
+#
+# function dwtstep!(sc, dc, x, fb::Filterbank, bnd::SymmetricBoundary)
+#     if iseven(length(x))
+#         if isodd(sublength(dual_lowpassfilter(fb)))
+#             polyphase_analysis!(sc, dc, x, fb.pm_analysis, SymmetricEmbedding{:wp,:wp,:even,:even}())
+#         end
+#     end
+# end
+#
+# function idwtstep!(x, sc, dc, fb::Filterbank, bnd::SymmetricBoundary)
+#     if iseven(length(x))
+#         if isodd(sublength(primal_lowpassfilter(fb)))
+#             polyphase_synthesis!(x, sc, dc, fb.pm_synthesis, SymmetricEmbedding{:hp,:hp,:even,:even}())
+#         end
+#     end
+# end
+#
+#
+# "Compute a matrix representation of one DWT step for a signal of size n."
+# function dwtstep_matrix(n, fb::Filterbank, bnd::WaveletBoundary)
+#     T = eltype(fb)
+#     A = zeros(n,n)
+#     sc_len, dc_len = dwtstep_size(n, fb, bnd)
+#     sc = zeros(T, sc_len)
+#     dc = zeros(T, dc_len)
+#     x = zeros(T, n)
+#     for i = 1:n
+#         if i > 1
+#             x[i-1] = 0
+#         end
+#         x[i] = 1
+#         dwtstep!(sc, dc, x, fb, bnd)
+#         A[1:sc_len,i] = sc
+#         A[sc_len+1:n,i] = dc
+#     end
+#     A
+# end

@@ -40,5 +40,5 @@ end
     Dual, w
   end
 end
-
-@recipe f(x::LinSpace, f::AbstractVector) = collect(x), f
+# REMOVE
+# @recipe f(x::LinSpace, f::AbstractVector) = collect(x), f

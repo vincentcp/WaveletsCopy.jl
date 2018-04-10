@@ -33,18 +33,14 @@ end
 #          src1
 #        + ________________
 #  =>      res1, res2, res3
-function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart)
-  L = length(dest)
-  j = mod(istart, L)
-  srclength = length(src)
-  (j == 0) && (j = L)
-  for i in 1:length(dest)
-    t = T(0)
-    for m in i:L:srclength
-      t += src[m]
+function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int=1)
+    L = length(dest)
+    srclength = length(src)
+    for i in 1:L
+        t = T(0)
+        for m in mod(istart-1+step*(i-1),step*L)+1:step*L:srclength
+            t += src[m]
+        end
+        dest[i] = t
     end
-    dest[j] = t
-    j += 1
-    (j > L) && (j = 1)
-  end
 end

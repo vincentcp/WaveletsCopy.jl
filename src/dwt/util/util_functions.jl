@@ -1,5 +1,4 @@
-# Convenience method
-eltype(x, y) = promote_type(eltype(x), eltype(y))
+# Convenience methods
 # WAVELET INDEXING AND SIZES
 
 maxtransformlevels(x::AbstractArray) = maxtransformlevels(minimum(size(x)))
