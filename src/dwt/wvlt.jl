@@ -114,7 +114,7 @@ Evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet funct
 
 This is only approximate we look for a dyadic point `l2^{-d}` l∈Z, d∈N close to x. (this point can not always be found)
 """
-function evaluate{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
+function evaluate{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
     # Look for kpoint*2^{-d} close to x
     d, kpoint = closest_dyadic_point(x, xtol; options...)
 
@@ -124,8 +124,8 @@ function evaluate{T, S<:Real}(side::Side, kind::Scl, w::DiscreteWavelet{T}, j::I
 
     # Evaluate wavelet in dyadic points
     f = evaluate_in_dyadic_points(side, kind, w, j, k, d)
-    # and select the correct points
-    f[-Int(s[1]*(1<<d))+kpoint+1]
+    # and select the correct points knowing that zero is always present
+    f[-ceil(Int,s[1]*(1<<d))+kpoint+1]
 end
 
 """
@@ -229,7 +229,11 @@ function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.S
     # Wavelet evaluation uses more schratch than scaling evaluation
 
     DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2, scratch3; options...)
-    DWT._periodize!(f, scratch, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+    try
+        DWT._periodize!(f, scratch, -Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+    catch InexactError
+        DWT._periodize!(f, scratch, -Int(cld(DWT.support(side, kind, w, 0, k)[1],1<<(j-d))/(1<<d))+1)
+    end
 end
 
 function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
@@ -237,7 +241,11 @@ function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.S
     # Periodic evaluation consist of a usual evaluation and a periodization
 
     DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2; options...)
-    DWT._periodize!(f, scratch, Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+    try
+        DWT._periodize!(f, scratch, -Int((1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
+    catch InexactError
+        DWT._periodize!(f, scratch, -Int(cld(DWT.support(side, kind, w, 0, k)[1],1<<(j-d))/(1<<d))+1)
+    end
 end
 
 function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
@@ -268,8 +276,14 @@ function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, ki
     else
         # finer level does not exist calculate wavelet on finer level
         DWT.evaluate_in_dyadic_points!(scratch2, side, kind, w, j, k, j+1, scratch, nothing; options...)
-        # and select the interesting values
-        copy!(f, scratch2[1:1<<(j+1-d):end])
+        # and select the interesting values including zero
+
+        # index of value related with x=0
+        istart = -Int((1<<(j+1))*DWT.support(side, kind, w, j, k)[1])+1
+        # Look for the first dyadic point in the array
+        istart = mod(istart-1, 1<<(j+1-d))+1
+        # Copy the interesting values
+        copy!(f, scratch2[istart:1<<(j+1-d):end])
         nothing
     end
 end
@@ -291,8 +305,12 @@ function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::
 
         # do evaluation on a finer grid
         evaluate_in_dyadic_points!(scratch, filter(side, kind, w), j, k, j; options...)
-        # and select the interesting values
-        copy!(f, scratch[1:1<<(j-d):end])
+        # index of value related with x=0
+        istart = -Int((1<<(j+1))*DWT.support(side, kind, w, j, k)[1])+1
+        # Look for the first dyadic point in the array
+        istart = mod(istart-1, 1<<(j+1-d))+1
+        # Copy the interesting values
+        copy!(f, scratch[istart:1<<(j+1-d):end])
     end
 end
 

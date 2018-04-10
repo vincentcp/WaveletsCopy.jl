@@ -352,15 +352,18 @@ function eval_wavelet_test()
         @test DWT._periodize((-1.25,.5),-1,1)==((.75,1.),(-1.,.5))
         @test DWT._periodize((-1.5,0.),-1,1)==((0.5,1.),(-1,0))
 
-        t = linspace(0,1,10)
+        t = linspace(0,1)[1:end-1]
         for side in (Primal, Dual)
             for kind in (scaling, DWT.wavelet)
                 @test DWT.in_periodic_support(1,DWT.periodic_support(side,kind, DWT.cdf11, 0,0)...)
                 @test DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 3,0)...)
                 @test !DWT.in_periodic_support(0,DWT.periodic_support(side,kind, DWT.cdf11, 1,1)...)
-                for w in [db2, cdf15]
-                    @test 1+evaluate_periodic.(Primal, scaling, w, 3, 0, t-1) ≈ 1+evaluate.(Primal, scaling, w, 3, 0, t)+evaluate.(Primal, scaling, w, 3, 0, t-1)+evaluate.(Primal, scaling, w, 3, 0, t+1)
-                end
+
+                w = cdf15
+                @test 1+evaluate_periodic.(side, kind, w, 3, 0, t-1) ≈ 1+evaluate.(side, kind, w, 3, 0, t)+evaluate.(side, kind, w, 3, 0, t-1)+evaluate.(side, kind, w, 3, 0, t+1)
+
+                w = db2
+                @test 1+evaluate_periodic.(side, kind, w, 3, 0, t-1) ≈ 1+evaluate.(side, kind, w, 3, 0, t)+evaluate.(side, kind, w, 3, 0, t-1)+evaluate.(side, kind, w, 3, 0, t+1)
             end
         end
     end
@@ -382,6 +385,8 @@ using Plots
 plot(DWT.cdf11)
 plot(DWT.db1)
 plot(DWT.db2,periodic=true)
+
+
 
 # using Plots
 # plot(layout=(2,2))

@@ -5,9 +5,7 @@ W = WaveletsCopy
 using W.Filterbanks
 using W.Sequences
 P = 80
-W.DWT.perbound
-W.DWT.symbound
-W.DWT.zerobound
+
 rng = MersenneTwister(3000)
 jumpfunction(x) = (-0.5 < x < 0.5 ? 1.0: 0.0) + (-0.25 < x < .75 ? 1.0 : 0.0)
 characteristicfunction(x) = (0<x<1) ? 1.0 : 0.0
@@ -68,7 +66,7 @@ end
 @testset "$(rpad("Inversibility of full_dwt (periodic)",P))"  begin
     for l in 0:7
         for p in 0:9
-            x0 = x0 = [Float64(i^p)/(1<<l) for i in 1:1<<l]; x0/=sum(x0)
+            x0 = [Float64(i^p) for i in 1:1<<l]; x0/=sum(x0)
             for i in p:9
                 w = DWT.DaubechiesWavelet{i+1,Float64}()
                 offset = (max([support_length(side, kind, w) for side in (Primal, Dual) for kind in (scaling, DWT.wavelet)]...))
