@@ -365,7 +365,50 @@ function eval_wavelet_test()
     end
 end
 
+function linear_combo_test()
+    @testset "$(rpad("Cascade test",P))" begin
+        w = db2; d = 10
+        l = 2
+        c = zeros(1<<l)
+        for index in wavelet_indices(l)
+            c[value(index)] = 1
+            t1 = evaluate_periodic_in_dyadic_points(Primal, cdf11, c, d)
+            c[value(index)] = 0
+            t2 = evaluate_periodic_in_dyadic_points(Primal, kind(index), cdf11, level(index), offset(index), d)
+            @test t1≈t2
+        end
+    end
+end
+
+function scratchspace_test()
+    @testset "$(rpad("Scratch space test",P))" begin
+        w = db2; d = 4
+        l = 2
+        SSp = DWT.EvalPeriodicScratchSpace(Primal, w, l, d)
+        SS = DWT.EvalScratchSpace(Primal, w, l, d)
+        for index in wavelet_indices(l)
+            f1 = zeros(Float64, DWT.evaluate_periodic_in_dyadic_points_length(Primal, kind(index), w, level(index), offset(index), d))
+            t1 = evaluate_periodic_in_dyadic_points(Primal, kind(index), w, level(index), offset(index), d)
+            DWT.evaluate_periodic_in_dyadic_points!(f1, Primal, kind(index), w, level(index), offset(index), d, SSp)
+            @test t1 == f1
+            f2 = zeros(Float64, DWT.evaluate_in_dyadic_points_length(Primal, kind(index), w, level(index), offset(index), d))
+            t2 = evaluate_in_dyadic_points(Primal, kind(index), w, level(index), offset(index), d)
+            DWT.evaluate_in_dyadic_points!(f2, Primal, kind(index), w, level(index), offset(index), d, SS)
+            @test t2 == f2
+
+
+            ssp = DWT.EvalPeriodicScratchSpace(Primal, kind(index), w, level(index), offset(index), d)
+            ss = DWT.EvalScratchSpace(Primal, kind(index), w, level(index), offset(index), d)
+            DWT.evaluate_periodic_in_dyadic_points!(f1, Primal, kind(index), w, level(index), offset(index), d, ssp)
+            @test t1 == f1
+            DWT.evaluate_in_dyadic_points!(f2, Primal, kind(index), w, level(index), offset(index), d, ss)
+            @test t2 == f2
+        end
+    end
+end
 implementation_test()
+linear_combo_test()
+scratchspace_test()
 recursiontest()
 primalfunctiontest()
 scalingtest()

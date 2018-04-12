@@ -95,7 +95,7 @@ _scalingcoefficient_filter(f::CompactSequence) =
     # scaling_coefficients_to_dyadic_grid(scaling_coefficients, Primal, w, bmd, d; options...)
 
 "Transforms scaling coeffients back to function evaluations on the dyadic grid."
-function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, s::Side, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); grid=false, options...)
+function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray{T,1}, s::Side, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); grid=false, options...)
     function_evals = zeros(T,DWT.scaling_coefficients_to_dyadic_grid_length(s,w,d))
     scratch = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch_length(s,w,d))
     scratch2 = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch2_length(s,w,d))
@@ -108,12 +108,12 @@ end
 
 # Scaling coefficients to function evaluations on dyadic grid (assumes periodic extension)
 "In place method of scaling_coefficients_to_dyadic_grid."
-scaling_coefficients_to_dyadic_grid!{T}(function_evals::AbstractArray, scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, bnd::DWT.PeriodicBoundary, scratch=nothing, scratch2=nothing; options...) =
+scaling_coefficients_to_dyadic_grid!{T}(function_evals::AbstractArray{T,1}, scaling_coefficients::AbstractArray{T,1}, w::DWT.DiscreteWavelet{T}, bnd::DWT.PeriodicBoundary, scratch, scratch2; options...) =
     scaling_coefficients_to_dyadic_grid!(function_evals, scaling_coefficients, Primal, w, bnd, scratch, scratch2; options...)
 
 
 "In place method of scaling_coefficients_to_dyadic_grid."
-function scaling_coefficients_to_dyadic_grid!{T}(function_evals::AbstractArray, scaling_coefficients::AbstractArray, s::Side, w::DWT.DiscreteWavelet{T}, ::DWT.PeriodicBoundary, scratch=nothing, scratch2=nothing; grid=false, options...)
+function scaling_coefficients_to_dyadic_grid!{T}(function_evals::AbstractArray{T,1}, scaling_coefficients::AbstractArray{T,1}, s::Side, w::DWT.DiscreteWavelet{T}, ::DWT.PeriodicBoundary, scratch, scratch2; grid=false, options...)
     d = Int(log2(length(function_evals)))
     @assert length(function_evals) == length(scratch)
     @assert DWT.scaling_coefficients_to_dyadic_grid_scratch2_length(s, w, d) == length(scratch2)
@@ -142,48 +142,4 @@ scaling_coefficients_to_dyadic_grid_scratch2_length(s::Side, w::DWT.DiscreteWave
 function DWT.support(side::Side, n::Int, i::Int, l::Int, w::DiscreteWavelet)
     kind, j, k = wavelet_index(n,i,l)
     support(side, kind, w, j, k)
-end
-
-" All wavelet indices on a certain level"
-function wavelet_indices(l::Int)
-    n = 1<<l
-    [wavelet_index(n, i, l) for i in 1:n]
-end
-
-"""
-  The index ([:scaling/:wavelet], j, k) in the (scaling+wavelet) sequence for coefficient i in a sequence of length n after l dwt synthesis_lowpassfilter
-
-  For example, the indices of a sequence with 4 elements after
-  0 dwt steps
-    (Scl(), 2, 0),    (Scl(), 2, 1),    (Scl(), 2, 2),     (Scl(), 2, 3)
-  1 dwt step
-    (Scl(), 1, 0),    (Scl(), 1, 1),    (Wvl(), 1, 0),     (Wvl(), 1, 1)
-  2 dwt steps
-    (Scl(), 0, 0),    (Wvl(), 0, 0),    (Wvl(), 1, 0),     (Wvl(), 1, 1)
-"""
-function wavelet_index(n::Int, i::Int, l::Int)
-    if i > n/(1<<l)
-        j = level(n,i)
-        k = mod(i-1,1<<j)
-        Wvl(), j, k
-    else
-        Scl(), Int(log2(n))-l, i-1
-    end
-end
-
-"""
-  The coefficient corresponding to the wavelet index (kind, j, k). The integer
-  is the index in the array of the DWT.
-"""
-coefficient_index(kind::Scl, j::Int, k::Int)::Int = k+1
-coefficient_index(kind::Wvl, j::Int, k::Int)::Int = 1<<j+k+1
-
-"Return the wavelet level of a coefficient in an array of length `n` with index `i`"
-function level(n::Int, i::Int)
-    (i == 1 || i == 2) && (return 0)
-    for l in 1:round(Int,log2(n))
-        if i <= (1<<(l+1))
-            return l
-        end
-    end
 end

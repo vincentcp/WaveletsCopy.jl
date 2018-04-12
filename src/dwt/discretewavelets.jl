@@ -10,7 +10,7 @@ import ..Sequences: support
 export filter
 
 # from scaling_coefficients.jl
-export wavelet_indices
+
 # from boudaries
 export perbound, symbound, zerobound
 
@@ -19,6 +19,7 @@ export perbound, symbound, zerobound
 export is_symmetric, is_orthogonal, is_biorthogonal
 export Primal, Dual, scaling, wavelet, coefficient
 export support, vanishingmoments, support_length, filter
+# from evaluation.jl
 export evaluate, evaluate_periodic, evaluate_periodic_in_dyadic_points, evaluate_in_dyadic_points
 # from DiscreteWavelets.jl
 export print_implemented_wavelets, IMPLEMENTED_WAVELETS, print_all_implemented_wavelets, ALL_IMPLEMENTED_WAVELETS
@@ -28,10 +29,20 @@ export CDFWavelet
 # wvlt_daubechies.jl
 export HaarWavelet, DaubechiesWavelet
 
+# from util/waveletindex.jl
+export WaveletIndex, wavelet_indices, kind, level, offset, value
+
+# from util/scratchspace.jl
+export EvalScratchSpace, EvalPeriodicScratchSpace
+
+
+
 include("util/util_functions.jl")
+
 include("boundaries.jl")
 include("transform_types.jl")
 include("wvlt.jl")
+
 
 Filterbank(w::DiscreteWavelet) =
     Filterbank( FilterPair(filter(Prl(), Scl(), w), filter(Prl(), Wvl(), w)),
