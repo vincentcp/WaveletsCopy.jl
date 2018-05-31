@@ -44,3 +44,15 @@ function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::I
         dest[i] = t
     end
 end
+
+function _periodize_add!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int=1)
+    L = length(dest)
+    srclength = length(src)
+    for i in 1:L
+        t = T(0)
+        for m in mod(istart-1+step*(i-1),step*L)+1:step*L:srclength
+            t += src[m]
+        end
+        dest[i] += t
+    end
+end

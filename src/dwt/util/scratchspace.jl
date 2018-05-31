@@ -98,8 +98,23 @@ ScratchSpace(s::Vector{Vector{T}}) where {T} = ScratchSpace{T}(s, map(length, s)
 
 "Retrieve vectors of given lengths of the scratch space container."
 get_scratch_space(SS::ScratchSpace, lengths) =
-    [SS.scratch[index]  for index in [find(SS.lengths.==l)[1] for l in lengths]]
+    [SS.scratch[index]  for index in _get_indices(SS.lengths, lengths)]
 
+function _get_indices(lengths::Vector{Int}, input)
+    L = length(lengths)
+    LL = length(input)
+    r = Array{Int}(LL)
+    @inbounds for i in 1:LL
+        s = input[i]
+        for j in 1:L
+            if lengths[j] == s
+                r[i] = j
+                break
+            end
+        end
+    end
+    r
+end
 
 "Scratch space for a wavelet evaluation with l levels"
 EvalScratchSpace(side::Side, w::DiscreteWavelet, l::Int, d::Int) =

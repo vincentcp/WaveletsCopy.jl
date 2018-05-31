@@ -43,13 +43,11 @@ function getindex(s::CompactSequence, c::Range)
 end
 
 function Base.getindex(s::CompactSequence, c::UnitRange)
-  e = zeros(eltype(s), length(c))
-  i1 = max(s.offset, c[1])
-  i2 = min(s.offset + s.n-1, c[end])
-  e1 = max(1, 1-c[1]+s.offset)
-  e2 = min(length(e),i2-i1+1-c[1]+s.offset)
-  e[e1:e2] = s.a[i1-s.offset+1:i2-s.offset+1]
-  e
+    e = zeros(eltype(s), length(c))
+    i1 = max(s.offset, c[1])
+    i2 = min(s.offset + s.n-1, c[end])
+    e[(1:i2-i1+1)+max(0,s.offset-c[1])] = s.a[i1-s.offset+1:i2-s.offset+1]
+    e
 end
 
 firstindex(s::CompactSequence) = imapindex(s, 1)
@@ -57,6 +55,27 @@ firstindex(s::CompactSequence) = imapindex(s, 1)
 lastindex(s::CompactSequence) = imapindex(s, sublength(s))
 
 hascompactsupport{T}(::Type{CompactSequence{T}}) = True
+
+Base.isapprox(s1::CompactSequence, s2::CompactSequence) = s1.a≈s2.a
+
+function shifted_conv(c1::CompactSequence{ELT}, c2::CompactSequence{ELT}, shift::Int) where {ELT}
+    l1 = sublength(c1)
+    l2 = sublength(c2)
+    o1 = c1.offset
+    o2 = c2.offset
+    offset = o1+shift*o2
+    L = (l2-1)+shift*(l1-1)+1
+    a = zeros(ELT, L)
+    for ai in 0:L-1
+        t = ELT(0)
+        for k in max(0,floor(Int,(firstindex(c1)-l2+1)//shift)):max(0,floor(Int,(lastindex(c1)+l2)//shift))
+#         for k in firstindex(c1):lastindex(c1)
+            t += c1[k]*c2[ai-shift*k]
+        end
+        a[ai+1] = t
+    end
+    CompactSequence(a, offset)
+end
 
 """
 From a given filter h_i, compute a new filter satisfying the alternating flip relation,
@@ -165,7 +184,6 @@ shift{L,OFS,T}(s::FixedSequence{L,OFS,T}, k::Int) = FixedSequence(s.a, Val{OFS+k
 
 
 hascompactsupport{L,OFS,T}(::Type{FixedSequence{L,OFS,T}}) = True
-
 
 for op in (:ctranspose, :evenpart, :oddpart, :alternating_flip, :reverse, :conj, :alternating)
     @eval $op{L,OFS,T}(s::FixedSequence{L,OFS,T}) = FixedSequence($op(CompactSequence{T}(s)))

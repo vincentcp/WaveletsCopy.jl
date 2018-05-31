@@ -15,6 +15,8 @@
     function with period `1`.
 """
 function cascade_algorithm_linear_combination(side::Side, w::DiscreteWavelet{T}, coeffs, d::Int, bnd::WaveletBoundary) where {T}
+    # TODO implement for different lengths.
+    @assert d ≈ log2(length(coeffs))
     input = zeros(T,1<<d)
     copy!(input, coeffs)
     T(2)^(d//2)*idwt(input, side, w, bnd)
@@ -22,6 +24,8 @@ end
 
 
 function inv_cascade_algorithm_linear_combination(side::Side, w::DiscreteWavelet{T}, coeffs, d::Int, bnd::WaveletBoundary) where {T}
+    # TODO implement for different lengths.
+    @assert d ≈ log2(length(coeffs))
     input = zeros(T,1<<d)
     copy!(input, coeffs)
     T(2)^(d//2)*dwt(input, side, w, bnd)

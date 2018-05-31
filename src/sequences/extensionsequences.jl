@@ -24,7 +24,7 @@ abstract type ExtensionSequence{A} <: Sequence end
 # imapindex(s::SomeSubType, i) -> the inverse map
 
 eltype{A}(::Type{ExtensionSequence{A}}) = eltype(A)
-eltype{E <: ExtensionSequence}(::Type{E}) = eltype(super(E))
+eltype{E <: ExtensionSequence}(::Type{E}) = eltype(supertype(E))
 
 "The subvector of the extension sequence."
 subvector(s::ExtensionSequence) = s.a
@@ -108,7 +108,7 @@ end
 ZeroPadding{A}(a::A) = ZeroPadding{A}(a)
 
 # We override getindex to return zero outside our embedded vector.
-getindex(s::ZeroPadding, k::Int) = (k < 0) || (k >= s.n) ? zero(eltype(s)) : getindex(s.a, k+1)
+Base.getindex(s::ZeroPadding, k::Int) = (k < 0) || (k >= s.n) ? eltype(s)(0) : getindex(s.a, k+1)
 
 firstindex(s::ZeroPadding) = 0
 
