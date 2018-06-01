@@ -81,5 +81,6 @@ ALL_IMPLEMENTED_WAVELETS = (IMPLEMENTED_DB_WAVELETS...,IMPLEMENTED_CDF_WAVELETS.
 print_implemented_wavelets() = println(map(name, IMPLEMENTED_WAVELETS))
 print_all_implemented_wavelets() = println(map(name, ALL_IMPLEMENTED_WAVELETS))
 
+include("quadrature.jl")
 include("util/recipes.jl")
 end

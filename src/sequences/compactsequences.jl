@@ -29,6 +29,8 @@ shift(s::CompactSequence, k::Int) = CompactSequence(s.a, s.offset+k)
 
 sublength(s::CompactSequence) = s.n
 
+offset(s::CompactSequence) = s.offset
+
 mapindex(s::CompactSequence, k) = k - s.offset + 1
 
 imapindex(s::CompactSequence, l) = l + s.offset - 1
@@ -68,9 +70,9 @@ function shifted_conv(c1::CompactSequence{ELT}, c2::CompactSequence{ELT}, shift:
     a = zeros(ELT, L)
     for ai in 0:L-1
         t = ELT(0)
-        for k in max(0,floor(Int,(firstindex(c1)-l2+1)//shift)):max(0,floor(Int,(lastindex(c1)+l2)//shift))
-#         for k in firstindex(c1):lastindex(c1)
-            t += c1[k]*c2[ai-shift*k]
+        # for k in max(0,floor(Int,(firstindex(c1)-l2+1)//shift)):max(0,floor(Int,(lastindex(c1)+l2)//shift))
+        for k in firstindex(c1):lastindex(c1)
+            t += c1.a[k-c1.offset+1]*c2[ai-shift*k]
         end
         a[ai+1] = t
     end

@@ -3,6 +3,7 @@ using Base.Test
 CREATE_README = false
 include("suite_dwtstep.jl")
 include("suite_evaluation.jl")
+include("suite_quadrature.jl")
 
 if CREATE_README
     try
@@ -14,6 +15,6 @@ if CREATE_README
     catch
         nothing
     end
-end
+end 
 
 print("\ntesting: success\n")

@@ -149,6 +149,10 @@ function evaluate_periodic_scaling_basis_in_dyadic_points!(y::Vector{T}, s::DWT.
     points = false,
     options...) where {T}
     j = Int(log2(length(coeffs)))
+    
+    if d < j
+        error("grid has to be at least as fine as the basis. ")
+    end
     DWT.evaluate_in_dyadic_points!(f, s, scaling, w, j, 0, d, scratch)
     f_scaled = similar(f)
     for k in 0:(1<<j)-1
