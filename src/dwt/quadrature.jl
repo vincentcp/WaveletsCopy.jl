@@ -20,15 +20,6 @@ function quad_sf_weights(lo_d::AbstractVector{ELT}, M::Int; cutoff=1e-12, option
     ELT.(w)[:]
 end
 
-""""
-Return the uniformly distributed points that are used in the quadrature
-rule of the given scaling function.
-"""
-function quad_sf_points(lo_f::AbstractVector{ELT}, M::Int) where ELT
-    K = (length(lo_f)-1)//2
-    linspace(ELT(-K), ELT(K), M+1)
-end
-
 function vdm_matrix_chebyshev(t::AbstractVector{ELT}) where {ELT}
     M = length(t)-1;
     A = zeros(M+1,M+1);
@@ -108,14 +99,8 @@ end
 """
 The weights of the quadrature ∑w_if(x_i) ≈ ∫f(x)φ(x)dx where ∫ϕ(x)dx = 1 and ϕ is the scaling function.
 """
-quad_sf_weights(wav::DiscreteWavelet, M::Int; options...) =
-    quad_sf_weights(filter(Primal, scaling, wav).a, M; options...)
-
 quad_sf_weights(side::Side, kind::Kind, wav::DiscreteWavelet, M::Int; options...) =
     quad_sf_weights(filter(side, kind, wav).a, M; options...)
-
-
-
 
 fun_data(f::Function, side::Side, kind::Kind, wav::DiscreteWavelet, M::Int, j::Int, k::Int, d::Int) =
     y = f.(linspace(support(side, kind, wav, j, k)..., (1<<d)*M+1))
@@ -204,16 +189,6 @@ function quad_trap(fun::Function, side::Side, kind::Kind, wav::DiscreteWavelet, 
     sum(fun.(x).*w)/(1<<d)*sqrt(2<<j)/sqrt(2)
 end
 
-lowest_scale_per_N(f, wav::DiscreteWavelet, M::Int, j::Int, d::Int) =
-    lowest_scale_per_N(f, Primal, scaling, wav, M, j, d)
-
-function lowest_scale_per_N(f, side::Side, kind::Kind, wav::DiscreteWavelet{ELT}, M::Int, j::Int, d::Int) where ELT
-    L = support_length(side, kind, wav)
-    s = Int(M/L)
-    x = linspace(ELT(0), ELT(1), s*1<<(j+d)+1)[1:end-1]
-    lowest_scale_per_N(f.(x), side, kind, wav, M, j, d)
-end
-
 function lowest_scale_per_N(y::Vector, side::Side, kind::Kind, wav::DiscreteWavelet{ELT}, M::Int, j::Int, d::Int) where {ELT}
     w = quad_sf_weights(side, kind, wav, M)
     a = zeros(ELT, length(y))
@@ -288,3 +263,13 @@ function quad_sf_weights(side::Side, kind::Kind, wav::DiscreteWavelet{ELT}, M::I
     end
     w.a
 end
+
+
+# """"
+# Return the uniformly distributed points that are used in the quadrature
+# rule of the given scaling function.
+# """
+# function quad_sf_points(lo_f::AbstractVector{ELT}, M::Int) where ELT
+#     K = (length(lo_f)-1)//2
+#     linspace(ELT(-K), ELT(K), M+1)
+# end

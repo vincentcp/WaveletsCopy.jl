@@ -371,12 +371,20 @@ function linear_combo_test()
         l = 2
         c = zeros(1<<l)
         for index in wavelet_indices(l)
+            if value(index) == 1
+                c[value(index)] = 1
+                t1 = DWT.evaluate_periodic_wavelet_basis_in_dyadic_points(Primal, cdf11, c, d; points=true)[2]
+                c[value(index)] = 0
+                t2 = evaluate_periodic_in_dyadic_points(Primal, kind(index), cdf11, level(index), offset(index), d; points=true)[2]
+                @test t1≈t2
+            end
             c[value(index)] = 1
             t1 = DWT.evaluate_periodic_wavelet_basis_in_dyadic_points(Primal, cdf11, c, d)
             c[value(index)] = 0
             t2 = evaluate_periodic_in_dyadic_points(Primal, kind(index), cdf11, level(index), offset(index), d)
             @test t1≈t2
         end
+         @test_throws ErrorException DWT.evaluate_periodic_wavelet_basis_in_dyadic_points(Primal, cdf11, c, 0)
     end
 end
 
