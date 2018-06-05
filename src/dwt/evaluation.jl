@@ -132,39 +132,56 @@ function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.Disc
     end
 end
 
-evaluate_periodic_wavelet_basis_in_dyadic_points(s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d::Int=10; options...) where {T} =
-    evaluate_periodic_scaling_basis_in_dyadic_points(s, w, DWT.idwt(coeffs, w, perbound), d; options...)
-
-function evaluate_periodic_scaling_basis_in_dyadic_points(s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d::Int=10; options...) where {T}
-    f = zeros(T, evaluate_periodic_in_dyadic_points_scratch_length(s, scaling, w, Int(log2(length(coeffs))), 0, d))
-    scratch = zeros(T, evaluate_periodic_in_dyadic_points_scratch2_length(s, scaling, w, Int(log2(length(coeffs))), 0, d))
-    f_scaled = similar(f)
-    evaluate_periodic_wavelet_basis_in_dyadic_points!(zeros(T, 1<<d), s, w, coeffs, d, f, f_scaled, scratch; options...)
-end
-
-evaluate_periodic_wavelet_basis_in_dyadic_points!(y::Vector{T}, s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d, f, f_scaled, scratch; options...) where T=
-    evaluate_periodic_scaling_basis_in_dyadic_points!(y, s, w, coeffs, d, f, f_scaled, scratch; options...)
-
-function evaluate_periodic_scaling_basis_in_dyadic_points!(y::Vector{T}, s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d::Int, f, f_scaled, scratch;
-    points = false,
-    options...) where {T}
-    j = Int(log2(length(coeffs)))
-    
-    if d < j
-        error("grid has to be at least as fine as the basis. ")
-    end
-    DWT.evaluate_in_dyadic_points!(f, s, scaling, w, j, 0, d, scratch)
-    f_scaled = similar(f)
-    for k in 0:(1<<j)-1
-        f_scaled .= f .* coeffs[k+1]
-        DWT._periodize_add!(y, f_scaled, -ceil(Int,(1<<d)*DWT.support(s, scaling, w, j, k)[1])+1)
-    end
+function evaluate_periodic_wavelet_basis_in_dyadic_points(s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d::Int=10; points = false, options...) where {T}
+    y = evaluate_periodic_scaling_basis_in_dyadic_points(s, w, DWT.idwt(coeffs, w, perbound), d; options...)
     if points
         y, DWT.periodic_dyadic_points(d, T)
     else
         y
     end
 end
+
+function evaluate_periodic_scaling_basis_in_dyadic_points(s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d::Int=10; points = false, options...) where {T}
+    f = zeros(T, evaluate_periodic_in_dyadic_points_scratch_length(s, scaling, w, Int(log2(length(coeffs))), 0, d))
+    scratch = zeros(T, evaluate_periodic_in_dyadic_points_scratch2_length(s, scaling, w, Int(log2(length(coeffs))), 0, d))
+    f_scaled = similar(f)
+    y = zeros(T, 1<<d)
+    evaluate_periodic_scaling_basis_in_dyadic_points!(y, s, w, coeffs, d, f, f_scaled, scratch; options...)
+    if points
+        y, DWT.periodic_dyadic_points(d, T)
+    else
+        y
+    end
+end
+
+function evaluate_periodic_wavelet_basis_in_dyadic_points!(y::Vector{T}, s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d, f, f_scaled, scratch, coefscopy; options...) where T
+    DWT.idwt!(coefscopy, coeffs, SFilterBank(s, w), perbound)
+    evaluate_periodic_scaling_basis_in_dyadic_points!(y, s, w, coefscopy, d, f, f_scaled, scratch; options...)
+end
+
+function evaluate_periodic_scaling_basis_in_dyadic_points!(y::Vector{T}, s::DWT.Side, w::DWT.DiscreteWavelet{T}, coeffs, d::Int, f, f_scaled, scratch;
+    options...) where {T}
+    j = Int(log2(length(coeffs)))
+
+    if d < j
+        error("grid has to be at least as fine as the basis. ")
+    end
+    DWT.evaluate_in_dyadic_points!(f, s, scaling, w, j, 0, d, scratch)
+    _evaluate_periodic_scaling_basis_in_dyadic_points!(y, f, coeffs, j, d, f_scaled)
+end
+
+function _evaluate_periodic_scaling_basis_in_dyadic_points!(y, f, coeffs, j::Int, d::Int, f_scaled)
+    offset = 1
+    jump = -(1<<(d-j))
+    y[:] = 0
+    for k in 0:(1<<j)-1
+        f_scaled .= f .* coeffs[k+1]
+        # @time offset = -ceil(Int,(1<<d)*DWT.support(s, scaling, w, j, k)[1])+1
+        DWT._periodize_add!(y, f_scaled, offset)
+        offset += jump
+    end
+end
+
 
 
 

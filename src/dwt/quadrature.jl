@@ -189,7 +189,7 @@ function quad_trap(fun::Function, side::Side, kind::Kind, wav::DiscreteWavelet, 
     sum(fun.(x).*w)/(1<<d)*sqrt(2<<j)/sqrt(2)
 end
 
-function lowest_scale_per_N(y::Vector, side::Side, kind::Kind, wav::DiscreteWavelet{ELT}, M::Int, j::Int, d::Int) where {ELT}
+function lowest_scale_per_N(y::Vector, side::Side, kind::Kind, wav::DiscreteWavelet{ELT}, M::Int, j::Int) where {ELT}
     w = quad_sf_weights(side, kind, wav, M)
     a = zeros(ELT, length(y))
     L = support_length(side, kind, wav)
@@ -222,8 +222,9 @@ quad_sf_N(fun::Function, side::Side, kind::Kind, wav::DiscreteWavelet, M::Int, j
     quad_sf_N(fun_data_N(fun, side, kind, wav, M, j, d), side, kind, wav, M, j, d)
 
 function quad_sf_N(y::Vector, side::Side, kind::Kind, wav::DiscreteWavelet, M::Int, j::Int, d::Int)
-    x = lowest_scale_per_N(y, side, kind, wav, M, j, d)
     L = support_length(side, kind, wav)
+    @assert length(y) == Int(M/L)*1<<(j+d)
+    x = lowest_scale_per_N(y, side, kind, wav, M, j)
     for i in d-1:-1:0
         x = step_N(1<<(i+j),filter(side, kind, wav), x)
     end
@@ -246,7 +247,7 @@ function quad_trap_N(y::Vector{ELT}, w::Vector{ELT}, j::Int, d::Int) where ELT
     z = similar(y)
     a = zeros(ELT, 1<<j)
     for i in 1:1<<j
-        a[i] = dot(w, y)/(1<<d)*sqrt(2<<j)/sqrt(2)
+        a[i] = dot(w, y)/(1<<d)*sqrt(1<<j)
         circshift!(z, y,-(1<<(d-j)))
         copy!(y, z)
     end

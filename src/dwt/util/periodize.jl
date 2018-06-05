@@ -45,14 +45,44 @@ function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::I
     end
 end
 
-function _periodize_add!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int=1)
+function _periodize_add!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int)
     L = length(dest)
     srclength = length(src)
     for i in 1:L
         t = T(0)
+        loop_start = istart+step*(i-1)
         for m in mod(istart-1+step*(i-1),step*L)+1:step*L:srclength
             t += src[m]
         end
         dest[i] += t
+    end
+end
+
+function _periodize_add!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int)
+    L = length(dest)
+    srclength = length(src)
+    if L <= srclength
+        for i in 1:L
+            t = T(0)
+            for m in mod(istart-1+(i-1),L)+1:L:srclength
+                t += src[m]
+            end
+            dest[i] += t
+        end
+    else
+        dest_start = mod(1-istart, L)+1
+        dest_end = dest_start+srclength-1
+        if dest_end > L
+            add!(dest, dest_start, src, 1, L-dest_start+1)
+            add!(dest, 1, src, L-dest_start+2, dest_end-L)
+        else
+            add!(dest, dest_start, src, 1, srclength)
+        end
+    end
+end
+
+@inline function add!(dest::Array{T}, dest_o::Int, src::Array{T}, src_o::Int, N::Int) where T
+    for i in 0:N-1
+        dest[dest_o + i] += src[src_o+i]
     end
 end

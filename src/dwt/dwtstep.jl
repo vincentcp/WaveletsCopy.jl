@@ -71,6 +71,11 @@ dwtstep!(sc, dc, x, fb::Filterbank, bnd::PeriodicBoundary) =
 idwtstep!(x, sc, dc, fb::Filterbank, bnd::PeriodicBoundary) =
     polyphase_synthesis!(x, sc, dc, fb.pm_synthesis, PeriodicEmbedding())
 
+dwtstep!(y, l1, l2, x, L, fb::Filterbank, bnd::PeriodicBoundary) =
+    polyphase_analysis!(y, l1, l2, x, L, fb.pm_analysis, PeriodicEmbedding())
+
+idwtstep!(x, l, y, l1, l2, fb::Filterbank, bnd::PeriodicBoundary) =
+    polyphase_synthesis!(x, l, y, l1, l2, fb.pm_synthesis, PeriodicEmbedding())
 
 ## Symmetric boundaries
 # TODO implement

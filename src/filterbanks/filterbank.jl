@@ -123,7 +123,7 @@ function polyphase_analysis!(y1, y2, x, f::PolyphaseMatrix, embedding)
       upper_i = L>>1 - L%2 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd)))
     upper_i = max(0, upper_i)
     # Lower boundary region
-    for i in 0:lower_i
+    @inbounds for i in 0:lower_i
         y1i = zero(T)
         y2i = zero(T)
         for l = firstindex(Heven):lastindex(Heven)
@@ -167,7 +167,7 @@ function polyphase_analysis!(y1, y2, x, f::PolyphaseMatrix, embedding)
     end
 
     # Upper boundary region
-    for i in upper_i:length(y1)-1
+    @inbounds for i in upper_i:length(y1)-1
         y1i = zero(T)
         y2i = zero(T)
         for l = firstindex(Heven):lastindex(Heven)
@@ -189,7 +189,6 @@ function polyphase_analysis!(y1, y2, x, f::PolyphaseMatrix, embedding)
     end
 end
 
-
 function polyphase_synthesis!(x, y1, y2, f::PolyphaseMatrix, embedding)
     Heven = f.a11
     Geven = f.a12
@@ -197,27 +196,136 @@ function polyphase_synthesis!(x, y1, y2, f::PolyphaseMatrix, embedding)
     Godd = f.a22
 
     T = eltype(x)
+    l1 = length(y1)
+    l2 = length(y2)
 
     for j in 0:length(x)>>1 - 1
         xj_e = zero(T)
         xj_o = zero(T)
         for l = firstindex(Heven):lastindex(Heven)
-            xj_e += Heven[l] * embedding[y1,j-l]
+            xj_e += Heven[l] * embedding[y1,j-l, l1]
         end
         for l = firstindex(Geven):lastindex(Geven)
-            xj_e += Geven[l] * embedding[y2,j-l]
+            xj_e += Geven[l] * embedding[y2,j-l, l2]
         end
         for l = firstindex(Hodd):lastindex(Hodd)
-            xj_o += Hodd[l] * embedding[y1,j-l]
+            xj_o += Hodd[l] * embedding[y1,j-l, l1]
         end
         for l = firstindex(Godd):lastindex(Godd)
-            xj_o += Godd[l] * embedding[y2,j-l]
+            xj_o += Godd[l] * embedding[y2,j-l, l2]
         end
         x[2*j+1] = xj_e
         x[2*j+2] = xj_o
     end
 end
 
+function polyphase_analysis!(y::AbstractVector{T}, l1::Int, l2::Int, x::AbstractVector{T}, L::Int, f::Filterbanks.PolyphaseMatrix, embedding) where T
+    Heven = f.a11
+    Hodd = f.a12
+    Geven = f.a21
+    Godd = f.a22
 
+    # Determine for which range the convolution of the filters with x results
+    # in evaluations of x that not occur outside of the embedding.
+    # Remark (TODO?): this could be even more efficient.
+
+
+    lower_i = min(l1-1, maximum(map(lastindex,(Heven,Geven,Godd,Hodd))))
+    L%2 == 0?
+      upper_i = L>>1 - 1 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd))) :
+      upper_i = L>>1 - L%2 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd)))
+    upper_i = max(0, upper_i)
+
+    # Lower boundary region
+    @inbounds for i in 0:lower_i
+        y1i = zero(T)
+        y2i = zero(T)
+        for l = firstindex(Heven):lastindex(Heven)
+            y1i += Heven[l] * embedding[x, 2*i-2*l, L]
+        end
+        for l = firstindex(Geven):lastindex(Geven)
+            y2i += Geven[l] * embedding[x, 2*i-2*l, L]
+        end
+        for l = firstindex(Hodd):lastindex(Hodd)
+            y1i += Hodd[l] * embedding[x, 2*i-2*l+1, L]
+        end
+        for l = firstindex(Godd):lastindex(Godd)
+            y2i += Godd[l] * embedding[x, 2*i-2*l+1, L]
+        end
+        y[i+1] = y1i
+        y[l1+i+1] = y2i
+    end
+
+    # Middle region
+    @inbounds for i in lower_i+1:upper_i-1
+        y1i = zero(T)
+        y2i = zero(T)
+        for l = firstindex(Heven):lastindex(Heven)
+            y1i += Heven[l] * x[2*i-2*l+1]
+        end
+        for l = firstindex(Geven):lastindex(Geven)
+            y2i += Geven[l] * x[2*i-2*l+1]
+        end
+        for l = firstindex(Hodd):lastindex(Hodd)
+            y1i += Hodd[l] * x[2*i-2*l+2]
+        end
+        for l = firstindex(Godd):lastindex(Godd)
+            y2i += Godd[l] * x[2*i-2*l+2]
+        end
+        y[i+1] = y1i
+        y[l1+i+1] = y2i
+    end
+
+    # Upper boundary region
+    @inbounds for i in upper_i:l1-1
+        y1i = zero(T)
+        y2i = zero(T)
+        for l = firstindex(Heven):lastindex(Heven)
+            y1i += Heven[l] * embedding[x, 2*i-2*l, L]
+        end
+        for l = firstindex(Geven):lastindex(Geven)
+            y2i += Geven[l] * embedding[x, 2*i-2*l, L]
+        end
+        for l = firstindex(Hodd):lastindex(Hodd)
+            y1i += Hodd[l] * embedding[x, 2*i-2*l+1, L]
+        end
+        for l = firstindex(Godd):lastindex(Godd)
+            y2i += Godd[l] * embedding[x, 2*i-2*l+1, L]
+        end
+        y[i+1] = y1i
+        if i+1 <= l2
+            y[l1+i+1] = y2i
+        end
+    end
+end
+
+function polyphase_synthesis!(x, L::Int, y, l1::Int, l2::Int, f::PolyphaseMatrix, embedding)
+    Heven = f.a11
+    Geven = f.a12
+    Hodd = f.a21
+    Godd = f.a22
+
+    T = eltype(x)
+    l = L>>1 - 1
+
+    @inbounds for j in 0:l
+        xj_e = zero(T)
+        xj_o = zero(T)
+        for l = firstindex(Heven):lastindex(Heven)
+            xj_e += Heven[l] * embedding[y,j-l, l1]
+        end
+        for l = firstindex(Geven):lastindex(Geven)
+            xj_e += Geven[l] * embedding[y,j-l, l2, l1]
+        end
+        for l = firstindex(Hodd):lastindex(Hodd)
+            xj_o += Hodd[l] * embedding[y,j-l, l1]
+        end
+        for l = firstindex(Godd):lastindex(Godd)
+            xj_o += Godd[l] * embedding[y,j-l, l2, l1]
+        end
+        x[(j<<1)+1] = xj_e
+        x[(j<<1)+2] = xj_o
+    end
+end
 
 end # module

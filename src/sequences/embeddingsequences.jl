@@ -10,8 +10,11 @@ abstract type EmbeddingSequence <: Sequence end
 struct PeriodicEmbedding <: EmbeddingSequence
 end
 
-getindex(s::PeriodicEmbedding, x, k) = 0 <= k < length(x) ? x[k+1] : x[mod(k, length(x)) + 1]
+@inline getindex(s::PeriodicEmbedding, x, k::Int) = getindex(s, x, k, length(x))
 
+getindex(s::PeriodicEmbedding, x, k::Int, length::Int) = 0 <= k < length ? x[k+1] : x[mod(k, length) + 1]
+
+getindex(s::PeriodicEmbedding, x, k::Int, length::Int, offset::Int) = 0 <= k < length ? x[offset+k+1] : x[offset+mod(k, length) + 1]
 
 struct SymmetricEmbedding{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: EmbeddingSequence
 end
