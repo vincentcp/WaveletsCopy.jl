@@ -167,12 +167,12 @@ function evaluate_periodic_scaling_basis_in_dyadic_points!(y::Vector{T}, s::DWT.
         error("grid has to be at least as fine as the basis. ")
     end
     DWT.evaluate_in_dyadic_points!(f, s, scaling, w, j, 0, d, scratch)
-    _evaluate_periodic_scaling_basis_in_dyadic_points!(y, f, coeffs, j, d, f_scaled)
+    _evaluate_periodic_scaling_basis_in_dyadic_points!(y, f, s, w, coeffs, j, d, f_scaled)
 end
 
-function _evaluate_periodic_scaling_basis_in_dyadic_points!(y, f, coeffs, j::Int, d::Int, f_scaled)
-    offset = 1
+function _evaluate_periodic_scaling_basis_in_dyadic_points!(y, f, s::DWT.Side, w, coeffs, j::Int, d::Int, f_scaled)
     jump = -(1<<(d-j))
+    offset = 1+jump*Sequences.offset(filter(s, scaling, w))
     y[:] = 0
     for k in 0:(1<<j)-1
         f_scaled .= f .* coeffs[k+1]

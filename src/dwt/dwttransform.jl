@@ -129,16 +129,6 @@ function idwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformle
     end
 end
 
-
-function idwtstep(sc, dc, fb::Filterbank, bnd::WaveletBoundary)
-    x_len = idwtstep_size(sc, dc, fb, bnd)
-    T = promote_type(eltype(sc), eltype(fb))
-    x = zeros(T, x_len)
-    idwtstep!(x, sc, dc, fb, bnd)
-    x
-end
-
-
 function idwt(x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x))
     @assert isdyadic(x)
     T = promote_type(eltype(x), eltype(fb))

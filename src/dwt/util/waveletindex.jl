@@ -70,3 +70,29 @@ function level(n::Int, i::Int)
         end
     end
 end
+
+"""
+`DWTScalingIndexList` defines the map from native indices to linear indices
+for a finite wavelet basis, when the indices are ordered in the way they
+are expected in the DWT routine.
+"""
+struct DWTScalingIndexList <: AbstractVector{WaveletIndex}
+	l	::	Int
+end
+
+# Assume linear indexing,
+Base.IndexStyle(list::DWTScalingIndexList) = Base.IndexLinear()
+
+Base.length(list::DWTScalingIndexList) = 1<<list.l
+Base.size(list::DWTScalingIndexList) = (1<<list.l,)
+
+Base.getindex(m::DWTScalingIndexList, idx::Int) ::WaveletIndex = scaling_index(m.l, idx)
+
+Base.getindex(list::DWTScalingIndexList, wind::WaveletIndex)::Int = scaling_value(wind)
+
+" All wavelet indices on a certain level"
+scaling_indices(l::Int) = DWTScalingIndexList(l)
+
+scaling_index(level::Int, index::Int) = (Scl(), level, index-1)
+
+scaling_value(wind::WaveletIndex)::Int = offset(wind)+1
