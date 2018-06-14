@@ -39,7 +39,11 @@ name{N,T}(::Type{DaubechiesWavelet{N,T}}) = string("db",N,"_",T)
 name{N}(::Type{DaubechiesWavelet{N,Float64}}) = string("db",N)
 
 support{N,T}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+support_length(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = 2N-1
+support{N,T}(::Dul, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+support_length(::Dul, ::Scl, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = 2N-1
 vanishingmoments{N,T}(::Prl, ::Type{DaubechiesWavelet{N,T}}) = N
+vanishingmoments{N,T}(::Dul, ::Type{DaubechiesWavelet{N,T}}) = N
 
 # Commented for testing purposes
 # evaluate{T,S<:Real}(::Prl, ::Scl, w::DWT.HaarWavelet{T}, j, k, x::Number; options...) =

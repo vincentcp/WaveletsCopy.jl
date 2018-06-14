@@ -45,16 +45,16 @@ _vanishingmoments(::Prl, W, is_orthogonal::Type{True}) = vanishingmoments(Prl(),
 ###############################################################################
 # support/support_length
 ###############################################################################
-support{WT<:DiscreteWavelet}(side::Side, kind::Scl, ::Type{WT}, j::Int=0, k::Int=0) = (j == 0 && k == 0) ?
-    Sequences.support(filter(side, Scl(), WT)) :
-    Sequences.support(filter(side, Scl(), WT), j, k)
-
-function support{WT<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{WT}, j::Int=0, k::Int=0)
-  supp1 = support(side, Scl(), WT)
-  supp2 = support(inv(side), Scl(), WT)
-  S1 = Int(1/2*(supp1[1]-supp2[2]+1))
-  S2 = Int(1/2*(supp1[2]-supp2[1]+1))
-  (j == 0 && k == 0) ? (S1,S2) : (1/(1<<j)*(S1[1]+k), 1/(1<<j)*(S2+k))
+support{WT<:DiscreteWavelet}(side::Side, kind::Scl, ::Type{WT}) =
+    Sequences.support(filter(side, Scl(), WT))
+function support{WT<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{WT})
+    l1, r1 = support(side, Scl(), WT)
+    l2, r2 = support(inv(side), Scl(), WT)
+    ((l1-r2+1)>>1, (r1-l2+1)>>1)
+end
+function support{WT<:DiscreteWavelet}(side::Side, kind::Kind, ::Type{WT}, j::Int, k::Int)
+    l, r = support(side, kind, WT)
+    (1/(1<<j)*(l+k), 1/(1<<j)*(r+k))
 end
 
 support_length{WT<:DiscreteWavelet}(side::Side, kind::Kind,  ::Type{WT}) = support(side, kind, WT)[2] - support(side, kind, WT)[1]

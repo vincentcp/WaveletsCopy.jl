@@ -79,7 +79,7 @@ cdf66_htilde = (16384, [-63, 378, -476, -1554, 4404, 1114, -13860, 4158, 28182, 
 
 # Determine the offset of the filter such that the filter is even symmetric w.r.t
 # 0 (for filters of odd length) or 1/2 (for filters of even length).
-symmetric_offset(n) = iseven(n) ? -n>>1+1 : -(n-1)>>1
+symmetric_offset(n) = -((n-1)>>1)
 
 # The coefficients of the primal scaling function are simply a binomial sequence for all n.
 cdf_coef(n) = 1//(1<<(n-1))*[binomial(n,k) for k in 0:n]
@@ -95,11 +95,14 @@ for (p,q,htilde) in ( (1, 1, :cdf11_htilde), (1, 3, :cdf13_htilde), (1, 5, :cdf1
                       (6, 2, :cdf62_htilde), (6, 4, :cdf64_htilde), (6, 6, :cdf66_htilde)  )
     @eval filter{T}(side::Dul, kind::Cof, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(2//$htilde[1]*$htilde[2], symmetric_offset(length($htilde[2])))
     @eval filter{T}(side::Dul, kind::Scl, ::Type{CDFWavelet{$p,$q,T}}) = CompactSequence(sqrt(T(2))/$htilde[1]*convert(Array{T,1}, $htilde[2]), symmetric_offset(length($htilde[2])))
+    @eval support{T}(side::Dul, kind::Scl, ::Type{CDFWavelet{$p,$q,T}}) = (symmetric_offset(length($htilde[2])),symmetric_offset(length($htilde[2]))+length($htilde[2])-1)
+    @eval support_length{T}(side::Dul, kind::Scl, ::Type{CDFWavelet{$p,$q,T}}) = length($htilde[2])-1
 end
 
 vanishingmoments{N1,N2,T}(::Prl, ::Type{CDFWavelet{N1,N2,T}}) = N1
 vanishingmoments{N1,N2,T}(::Dul, ::Type{CDFWavelet{N1,N2,T}}) = N2
 support{N1,N2,T}(::Prl, ::Scl, ::Type{CDFWavelet{N1,N2,T}}) = (symmetric_offset(N1+1), symmetric_offset(N1+1) + N1)
+support_length(::Prl, ::Scl, ::Type{CDFWavelet{N1,N2,T}}) where {N1,N2,T} = N1
 
 evaluate{N1,N2,T,S<:Real}(side::Prl, kind::Scl, w::CDFWavelet{N1,N2,T}, j::Int, k::Int, x::S; options...) =
       T(2)^(j/2)*evaluate_Bspline(N1-1, T(2)^j*x-T(k)-T(DWT.symmetric_offset(N1+1)), promote_type(T, eltype(x)))
