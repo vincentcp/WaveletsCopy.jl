@@ -192,7 +192,10 @@ shift(s::FixedSequence{L,OFS,T}, k::Int) where {L,OFS,T} = FixedSequence(s.a, Va
 
 
 hascompactsupport(::Type{FixedSequence{L,OFS,T}}) where {L,OFS,T}= True
+fs = (VERSION > v"0.7-") ?
+        (:adjoint, :evenpart, :oddpart, :alternating_flip, :reverse, :conj, :alternating) :
+        (:ctranspose, :evenpart, :oddpart, :alternating_flip, :reverse, :conj, :alternating)
 
-for op in (:adjoint, :evenpart, :oddpart, :alternating_flip, :reverse, :conj, :alternating)
+for op in fs
     @eval $op(s::FixedSequence{L,OFS,T}) where {L,OFS,T} = FixedSequence($op(CompactSequence{T}(s)))
 end

@@ -1,11 +1,11 @@
 language: julia
+os:
+    - linux
+    - osx
 julia:
-  - 0.6
-before_install:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-script:
-  - julia -e 'Pkg.clone(pwd())'
-  - julia -e 'Pkg.build("WaveletsCopy")'
-  - julia --check-bounds=yes -e 'Pkg.test("WaveletsCopy", coverage=true)'
+    - nightly
+    - 0.6
+notifications:
+    email: false
 after_success:
-  - julia -e 'cd(Pkg.dir("WaveletsCopy")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
+    - julia -e 'cd(Pkg.dir("WaveletsCopy")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'

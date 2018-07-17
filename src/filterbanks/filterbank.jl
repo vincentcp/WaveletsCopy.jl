@@ -62,8 +62,11 @@ PolyphaseMatrix = FilterMatrix
 eltype(::Type{FilterMatrix{F11,F12,F21,F22}}) where {F11,F12,F21,F22} = eltype(F11)
 
 transpose(m::FilterMatrix) = FilterMatrix(m.a11, m.a21, m.a12, m.a22)
-
-adjoint(m::FilterMatrix) = FilterMatrix(m.a11', m.a21', m.a12', m.a22')
+if (VERSION > v"0.7-")
+    adjoint(m::FilterMatrix) = FilterMatrix(m.a11', m.a21', m.a12', m.a22')
+else
+    ctranspose(m::FilterMatrix) = FilterMatrix(m.a11', m.a21', m.a12', m.a22')
+end
 
 # Done removed: call(m::FilterMatrix, z) = [ztransform(m.a11, z) ztransform(m.a12, z); ztransform(m.a21, z) ztransform(m.a22, z)]
 (m::FilterMatrix)(z) = [ztransform(m.a11, z) ztransform(m.a12, z); ztransform(m.a21, z) ztransform(m.a22, z)]

@@ -3,6 +3,10 @@ module DWT
 if VERSION > v"0.7-"
     using LinearAlgebra
     linspace(a,b,c) = range(a, stop=b, length=c)
+else
+    ComplexF64 = Complex128
+    rmul! = scale!
+    copyto! = copy!
 end
 
 using ..Sequences

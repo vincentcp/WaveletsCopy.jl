@@ -68,7 +68,7 @@ scaling_coefficients(f::AbstractArray, s::Side, w::DiscreteWavelet{T}, bnd::Peri
 # function samples to scaling coeffients
 function scaling_coefficients(f::AbstractArray, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...) where {T}
       @assert isdyadic(f)
-      c = Array{T}(undef, n)
+      c = (VERSION<v"0.7-") ? Array{T}(n) : Array{T}(undef, n)
       scaling_coefficients!(c, f, filter, fembedding; options...)
       c
 end

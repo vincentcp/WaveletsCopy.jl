@@ -55,7 +55,7 @@ vanishingmoments(::Dul, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = N
 function daubechies(N::Int)
     @assert N > 0
     # Create polynomial
-    C = Array{Int}(undef, N)
+    C = (VERSION<v"0.7-") ?  Array{Int}(N) :  Array{Int}(undef, N)
     @inbounds for n = 0:N-1
         C[N-n] = binomial(N-1+n, n)
     end
@@ -85,7 +85,7 @@ function daubechies(N::Int)
 
     # Find coefficients of the polynomial
     # (1 + z)^N * \prod_i (z - z_i)
-    R = Array{ComplexF64}(undef, N+nr)
+    R = (VERSION<v"0.7-") ? Array{ComplexF64}(N+nr) : Array{ComplexF64}(undef, N+nr)
     @inbounds for i = 1:N
         R[i] = -1
     end

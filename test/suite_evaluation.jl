@@ -332,13 +332,13 @@ function implementation_test()
         DWT.evaluate_periodic_in_dyadic_points(Dual, DWT.wavelet, DWT.cdf11))<1e-14
 
 
-    @test evaluate_periodic_in_dyadic_points(Dual, scaling, DWT.db1, 0,0,2,points=true)[2] == linspace(0,1,5)[1:end-1]
-    @test evaluate_periodic_in_dyadic_points(Dual, DWT.wavelet, DWT.db1, 0,0,2,points=true)[2] == linspace(0,1,5)[1:end-1]
-    @test evaluate_in_dyadic_points(Dual, DWT.wavelet, DWT.db1, 0,0,2,points=true)[2]==linspace(0,1,5)
-    @test evaluate_in_dyadic_points(Dual, DWT.wavelet, DWT.cdf24, 0,0,2,points=true)[2]==linspace(-2,3,21)
+    @test collect(evaluate_periodic_in_dyadic_points(Dual, scaling, DWT.db1, 0,0,2,points=true)[2]) == collect(linspace(0,1,5)[1:end-1])
+    @test collect(evaluate_periodic_in_dyadic_points(Dual, DWT.wavelet, DWT.db1, 0,0,2,points=true)[2]) == collect(linspace(0,1,5)[1:end-1])
+    @test collect(evaluate_in_dyadic_points(Dual, DWT.wavelet, DWT.db1, 0,0,2,points=true)[2])==collect(linspace(0,1,5))
+    @test collect(evaluate_in_dyadic_points(Dual, DWT.wavelet, DWT.cdf24, 0,0,2,points=true)[2])==collect(linspace(-2,3,21))
     f, points = evaluate_in_dyadic_points(Primal, scaling, DWT.db1, 2,0,1, points=true)
     @test f == [2.]
-    @test points == linspace(0,0,1)
+    @test collect(points) == collect(linspace(0,0,1))
     f3, points3 = evaluate_in_dyadic_points(Primal, wavelet, DWT.db3, 2,0,3, points=true)
     f2, points2 = evaluate_in_dyadic_points(Primal, wavelet, DWT.db3, 2,0,2, points=true)
     f1, points1 = evaluate_in_dyadic_points(Primal, wavelet, DWT.db3, 2,0,1, points=true)

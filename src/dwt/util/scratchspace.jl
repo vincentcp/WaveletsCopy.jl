@@ -103,7 +103,8 @@ get_scratch_space(SS::ScratchSpace, lengths) =
 function _get_indices(lengths::Vector{Int}, input)
     L = length(lengths)
     LL = length(input)
-    r = Array{Int}(undef, LL)
+    
+    r = (VERSION<v"0.7-") ? Array{Int}(LL) : Array{Int}(undef, LL)
     @inbounds for i in 1:LL
         s = input[i]
         for j in 1:L
