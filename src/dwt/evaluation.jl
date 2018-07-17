@@ -6,7 +6,7 @@ evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet funct
 
 See also `evaluate`
 """
-function evaluate_periodic{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
+function evaluate_periodic(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...) where {T, S<:Real}
     # Map x to [0,1]
     a = T(0); b = T(1)
     offset = floor(x)
@@ -29,7 +29,7 @@ Evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet funct
 
 This is only approximate we look for a dyadic point `l2^{-d}` l∈Z, d∈N close to x. (this point can not always be found)
 """
-function evaluate{T, S<:Real}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...)
+function evaluate(side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, x::S; xtol::S=1e-5, options...) where {T, S<:Real}
     # Look for kpoint*2^{-d} close to x
     d, kpoint = closest_dyadic_point(x, xtol; options...)
 
@@ -51,8 +51,8 @@ Periodic evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wave
 The result is periodized with period 1.
 See also `evaluate_in_dyadic_points`
 """
-function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
-        scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
+function evaluate_periodic_in_dyadic_points(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...) where {T}
     # Wrapper for allocating memory and using evaluate_periodic_in_dyadic_points!
 
     # allocate the right amount of scratch space
@@ -69,8 +69,8 @@ function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Scl, w:
     end
 end
 
-function evaluate_periodic_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
-        scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...)
+function evaluate_periodic_in_dyadic_points(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10,
+        scratch=nothing, scratch2=nothing, scratch3=nothing; points=false, options...) where {T}
     # Wrapper for allocating memory and using evaluate_periodic_in_dyadic_points!,
     # wavelet evaluation needs more scratch than scaling evaluation.
 
@@ -93,8 +93,8 @@ Evaluation of 2^{j/2}ϕ(2^jx-k) where f is the primal/dual scaling/wavelet funct
 
 If the options `points=true` is added, the equispaced grid is returned after the evaluations
 """
-function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10;
-        points=false, options...)
+function evaluate_in_dyadic_points(side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10;
+        points=false, options...) where {T}
     # Wrapper for allocating memory and using evaluate_in_dyadic_points!
 
     # allocate the right amount of scratch space
@@ -113,8 +113,8 @@ end
 
 
 
-function evaluate_in_dyadic_points{T}(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10;
-        points=false, options...)
+function evaluate_in_dyadic_points(side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j=0, k=0, d=10;
+        points=false, options...) where {T}
     # Wrapper for allocating memory and using evaluate_in_dyadic_points!
     # wavelet evaluation needs more scratch than scaling evaluation.
 
@@ -173,7 +173,7 @@ end
 function _evaluate_periodic_scaling_basis_in_dyadic_points!(y, f, s::DWT.Side, w, coeffs, j::Int, d::Int, f_scaled)
     jump = -(1<<(d-j))
     offset = 1+jump*Sequences.offset(filter(s, scaling, w))
-    y[:] = 0
+    y .= 0
     for k in 0:(1<<j)-1
         f_scaled .= f .* coeffs[k+1]
         # @time offset = -ceil(Int,(1<<d)*DWT.support(s, scaling, w, j, k)[1])+1
@@ -212,8 +212,8 @@ evaluate_periodic_in_dyadic_points!(f::AbstractArray{T,1}, side::Side, kind::Kin
     evaluate_periodic_in_dyadic_points!(f, side, kind, w, j, k, d, get_evaluate_periodic_scratch_space(SS, side, kind, w, j, k, d)[2:end]...; options...)
 
 
-function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j::Int, k::Int, d::Int,
-        scratch, scratch2, scratch3; options...)
+function evaluate_periodic_in_dyadic_points!(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j::Int, k::Int, d::Int,
+        scratch, scratch2, scratch3; options...) where {T}
     # Periodic evaluation consist of a usual evaluation and a periodization
     # Wavelet evaluation uses more schratch than scaling evaluation
 
@@ -221,20 +221,20 @@ function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.S
     DWT._periodize!(f, scratch, -ceil(Int,(1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
 end
 
-function evaluate_periodic_in_dyadic_points!{T}(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j::Int, k::Int, d::Int,
-        scratch, scratch2; options...)
+function evaluate_periodic_in_dyadic_points!(f::AbstractArray{T}, side::DWT.Side, kind::DWT.Scl, w::DWT.DiscreteWavelet{T}, j::Int, k::Int, d::Int,
+        scratch, scratch2; options...) where {T}
     # Periodic evaluation consist of a usual evaluation and a periodization
 
     DWT.evaluate_in_dyadic_points!(scratch, side, kind, w, j ,k ,d, scratch2; options...)
     DWT._periodize!(f, scratch, -ceil(Int,(1<<d)*DWT.support(side, kind, w, j, k)[1])+1)
 end
 
-function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j::Int, k::Int, d::Int,
-        scratch, scratch2 ; options...)
+function evaluate_in_dyadic_points!(f::AbstractArray{T,1}, side::DWT.Side, kind::DWT.Wvl, w::DWT.DiscreteWavelet{T}, j::Int, k::Int, d::Int,
+        scratch, scratch2 ; options...) where {T}
     # Wavelet evaluation uses scaling evaluation on a finer level and a the linear relation between wavelet and scaling functions
 
     @assert length(f) == DWT.evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
-    f[:] = 0
+    f .= 0
     # if (d-j) >= 1, then a finer level exist
     if (d-j) >= 1
         # evaluate scaling functions in finer level
@@ -264,13 +264,13 @@ function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::DWT.Side, ki
         # Look for the first dyadic point in the array
         istart = mod(istart-1, 1<<(j+1-d))+1
         # Copy the interesting values
-        copy!(f, scratch2[istart:1<<(j+1-d):end])
+        copyto!(f, scratch2[istart:1<<(j+1-d):end])
         nothing
     end
 end
 
-function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int,
-        scratch; verbose=true, options...)
+function evaluate_in_dyadic_points!(f::AbstractArray{T,1}, side::Side, kind::Kind, w::DiscreteWavelet{T}, j::Int, k::Int, d::Int,
+        scratch; verbose=true, options...) where {T}
     # Scaling evaluation uses scaling evaluation on a finer level and a the linear relation between wavelet and scaling functions
 
     @assert length(f) == evaluate_in_dyadic_points_length(side, kind, w, j, k, d)
@@ -291,15 +291,16 @@ function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, side::Side, kind::
         # Look for the first dyadic point in the array
         istart = mod(istart-1, 1<<(j+1-d))+1
         # Copy the interesting values
-        copy!(f, scratch[istart:1<<(j+1-d):end])
+        copyto!(f, scratch[istart:1<<(j+1-d):end])
     end
 end
 
-function evaluate_in_dyadic_points!{T}(f::AbstractArray{T,1}, s::CompactSequence{T}, j::Int, k::Int, d::Int; options...)
+function evaluate_in_dyadic_points!(f::AbstractArray{T,1}, s::CompactSequence{T}, j::Int, k::Int, d::Int; options...) where {T}
     # Evaluation is done through the recursion_algorithm
 
     @assert length(f) == DWT.recursion_length(s, (d-j))
     recursion_algorithm!(f, s, (d-j); options...)
-    scale!(f,T(2)^(T(j)/2))
+    rmul!(f,T(2)^(T(j)/2))
+    # scale!(f,T(2)^(T(j)/2))
     nothing
 end

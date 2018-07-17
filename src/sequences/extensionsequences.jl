@@ -23,8 +23,8 @@ abstract type ExtensionSequence{A} <: Sequence end
 # mapindex(s::SomeSubType, k) -> return the corresponding index of the embedded vector
 # imapindex(s::SomeSubType, i) -> the inverse map
 
-eltype{A}(::Type{ExtensionSequence{A}}) = eltype(A)
-eltype{E <: ExtensionSequence}(::Type{E}) = eltype(supertype(E))
+eltype(::Type{ExtensionSequence{A}}) where {A} = eltype(A)
+eltype(::Type{E}) where {E <: ExtensionSequence} = eltype(supertype(E))
 
 "The subvector of the extension sequence."
 subvector(s::ExtensionSequence) = s.a
@@ -57,7 +57,7 @@ each_subindex(s::ExtensionSequence) = first_subindex(s):last_subindex(s)
 
 # Invoke a constructor of an ExtensionSequence with default values.
 # Default extension: ZeroPadding.
-extend{EXT <: ExtensionSequence}(a, ::Type{EXT} = ZeroPadding) = EXT(a)
+extend(a, ::Type{EXT} where {EXT <: ExtensionSequence} = ZeroPadding) = EXT(a)
 
 
 
@@ -81,7 +81,7 @@ struct PeriodicExtension{A} <: ExtensionSequence{A}
     PeriodicExtension{A}(a) where A = new(a, length(a))
 end
 
-PeriodicExtension{A}(a::A) = PeriodicExtension{A}(a)
+PeriodicExtension(a::A) where {A} = PeriodicExtension{A}(a)
 
 # It is faster to check whether k is in the proper range first, to avoid the expensive `mod`
 mapindex(s::PeriodicExtension, k) = 0 <= k < s.n ? k+1 : mod(k, s.n) + 1
@@ -105,7 +105,7 @@ struct ZeroPadding{A} <: ExtensionSequence{A}
     ZeroPadding{A}(a) where A= new(a, length(a))
 end
 
-ZeroPadding{A}(a::A) = ZeroPadding{A}(a)
+ZeroPadding(a::A) where {A} = ZeroPadding{A}(a)
 
 # We override getindex to return zero outside our embedded vector.
 Base.getindex(s::ZeroPadding, k::Int) = (k < 0) || (k >= s.n) ? eltype(s)(0) : getindex(s.a, k+1)
@@ -114,7 +114,7 @@ firstindex(s::ZeroPadding) = 0
 
 lastindex(s::ZeroPadding) = s.n-1
 
-hascompactsupport{A}(::Type{ZeroPadding{A}}) = True
+hascompactsupport(::Type{ZeroPadding{A}}) where {A} = True
 
 """
 A ConstantPadding extends a vector 'a' with a given `constant` to a bi-infinite sequence.
@@ -133,7 +133,7 @@ struct ConstantPadding{T,A} <: ExtensionSequence{A}
     ConstantPadding{T,A}(a, constant) where {T,A} = new(a, constant, length(a))
 end
 
-ConstantPadding{T,A}(a::A, constant::T) = ConstantPadding{T,A}(a, constant)
+ConstantPadding(a::A, constant::T) where {T,A} = ConstantPadding{T,A}(a, constant)
 
 # We override getindex to return the constant outside our embedded vector.
 getindex(s::ConstantPadding, k::Int) = (k < 0) || (k >= s.n) ? s.constant : getindex(s.a, k+1)
@@ -161,7 +161,7 @@ struct UndefinedExtension{A} <: ExtensionSequence{A}
     UndefinedExtension{A}(a) where A = new(a, length(a))
 end
 
-UndefinedExtension{A}(a::A) = UndefinedExtension{A}(a)
+UndefinedExtension(a::A) where {A} = UndefinedExtension{A}(a)
 
 # We simply inherit the defaults for getindex and setindex!.
 
@@ -200,23 +200,23 @@ struct SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} <: ExtensionSeq
     SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(a) where {A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} = new(a, length(a))
 end
 
-SymmetricExtension{A}(a::A) = symmetric_extension_wholepoint_even(a)
+SymmetricExtension(a::A) where {A} = symmetric_extension_wholepoint_even(a)
 
 # Provide four of the sixteen combinations for convenience. Construct the others by explicitly
 # specifying the type parameters symbols.
-symmetric_extension_wholepoint_even{A}(a::A) = SymmetricExtension{A,:wp,:wp,:even,:even}(a)
+symmetric_extension_wholepoint_even(a::A) where {A} = SymmetricExtension{A,:wp,:wp,:even,:even}(a)
 
-symmetric_extension_halfpoint_even{A}(a::A) = SymmetricExtension{A,:hp,:hp,:even,:even}(a)
+symmetric_extension_halfpoint_even(a::A) where {A} = SymmetricExtension{A,:hp,:hp,:even,:even}(a)
 
-symmetric_extension_wholepoint_odd{A}(a::A) = SymmetricExtension{A,:wp,:wp,:odd,:odd}(a)
+symmetric_extension_wholepoint_odd(a::A) where {A} = SymmetricExtension{A,:wp,:wp,:odd,:odd}(a)
 
-symmetric_extension_halfpoint_odd{A}(a::A) = SymmetricExtension{A,:hp,:hp,:odd,:odd}(a)
+symmetric_extension_halfpoint_odd(a::A) where {A} = SymmetricExtension{A,:hp,:hp,:odd,:odd}(a)
 
 
-left_parity{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT})    = SYM_LEFT
-right_parity{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT})   = SYM_RIGHT
-left_symmetry{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT})  = PT_LEFT
-right_symmetry{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}) = PT_RIGHT
+left_parity(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}) where {A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} = SYM_LEFT
+right_parity(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}) where {A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} = SYM_RIGHT
+left_symmetry(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}) where {A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} = PT_LEFT
+right_symmetry(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}) where {A,PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT} = PT_RIGHT
 
 
 # Compute the index by mapping any index outside the range of the embedded vector to
@@ -240,19 +240,19 @@ end
 
 # Right whole point symmetry: map across the midpoint at index n-1, then convert to index of a.
 # Index in k-space is:  n-1 - (k - (n-1)) = 2n - k - 2
-mapindex_right{A,PT_LEFT}(s::SymmetricExtension{A,PT_LEFT,:wp}, k) = mapindex(s, 2s.n-k-2)
+mapindex_right(s::SymmetricExtension{A,PT_LEFT,:wp}, k) where {A,PT_LEFT} = mapindex(s, 2s.n-k-2)
 
 # Right half point symmetry: map across the midpoint at index n-1/2, then convert to index of a.
 # Index in k-space is:  n-1/2 - (k - (n-1/2)) = 2n - k - 1
-mapindex_right{A,PT_LEFT}(s::SymmetricExtension{A,PT_LEFT,:hp}, k) = mapindex(s, 2s.n-k-1)
+mapindex_right(s::SymmetricExtension{A,PT_LEFT,:hp}, k) where {A,PT_LEFT} = mapindex(s, 2s.n-k-1)
 
 # Left whole point symmetry: map across the midpoint at index 0, then convert to index of a.
 # Index in k-space is:  0 + (0-k) = -k
-mapindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:wp,PT_RIGHT}, k) = mapindex(s, -k)
+mapindex_left(s::SymmetricExtension{A,:wp,PT_RIGHT}, k) where {A,PT_RIGHT} = mapindex(s, -k)
 
 # Left half point symmetry: map across the midpoint at index -1/2, then convert to index of a.
 # Index in k-space is:  -1/2 + (-1/2-k) = -k-1
-mapindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:hp,PT_RIGHT}, k) = mapindex(s, -k-1)
+mapindex_left(s::SymmetricExtension{A,:hp,PT_RIGHT}, k) where {A,PT_RIGHT} = mapindex(s, -k-1)
 
 
 # For getindex we have to use the same logic as mapindex, but now we also have to trace
@@ -271,20 +271,20 @@ end
 
 # For even symmetry on both endpoints, it is simple: the sign never flips. Short circuit.
 # This probably does not gain much, as mapindex still does the recursion anyway...
-getindex{A,PT_LEFT,PT_RIGHT}(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,:even,:even}, k) = getindex(s.a, mapindex(s, k))
+getindex(s::SymmetricExtension{A,PT_LEFT,PT_RIGHT,:even,:even}, k) where {A,PT_LEFT,PT_RIGHT} = getindex(s.a, mapindex(s, k))
 
 # Right whole point symmetry
-getindex_right{A,PT_LEFT,SYM_LEFT}(s::SymmetricExtension{A,PT_LEFT,:wp,SYM_LEFT,:even}, k) = getindex(s, 2s.n-k-2)
-getindex_right{A,PT_LEFT,SYM_LEFT}(s::SymmetricExtension{A,PT_LEFT,:wp,SYM_LEFT,:odd}, k) = -getindex(s, 2s.n-k-2)
+getindex_right(s::SymmetricExtension{A,PT_LEFT,:wp,SYM_LEFT,:even}, k) where {A,PT_LEFT,SYM_LEFT} = getindex(s, 2s.n-k-2)
+getindex_right(s::SymmetricExtension{A,PT_LEFT,:wp,SYM_LEFT,:odd}, k) where {A,PT_LEFT,SYM_LEFT} = -getindex(s, 2s.n-k-2)
 
 # Right half point symmetry
-getindex_right{A,PT_LEFT,SYM_LEFT}(s::SymmetricExtension{A,PT_LEFT,:hp,SYM_LEFT,:even}, k) = getindex(s, 2s.n-k-1)
-getindex_right{A,PT_LEFT,SYM_LEFT}(s::SymmetricExtension{A,PT_LEFT,:hp,SYM_LEFT,:odd}, k) = -getindex(s, 2s.n-k-1)
+getindex_right(s::SymmetricExtension{A,PT_LEFT,:hp,SYM_LEFT,:even}, k) where {A,PT_LEFT,SYM_LEFT} = getindex(s, 2s.n-k-1)
+getindex_right(s::SymmetricExtension{A,PT_LEFT,:hp,SYM_LEFT,:odd}, k) where {A,PT_LEFT,SYM_LEFT} = -getindex(s, 2s.n-k-1)
 
 # Left whole point symmetry
-getindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:wp,PT_RIGHT,:even}, k) = getindex(s, -k)
-getindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:wp,PT_RIGHT,:odd}, k) = -getindex(s, -k)
+getindex_left(s::SymmetricExtension{A,:wp,PT_RIGHT,:even}, k) where {A,PT_RIGHT} = getindex(s, -k)
+getindex_left(s::SymmetricExtension{A,:wp,PT_RIGHT,:odd}, k) where {A,PT_RIGHT} = -getindex(s, -k)
 
 # Left half point symmetry
-getindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:hp,PT_RIGHT,:even}, k) = getindex(s, -k-1)
-getindex_left{A,PT_RIGHT}(s::SymmetricExtension{A,:hp,PT_RIGHT,:odd}, k) = -getindex(s, -k-1)
+getindex_left(s::SymmetricExtension{A,:hp,PT_RIGHT,:even}, k) where {A,PT_RIGHT} = getindex(s, -k-1)
+getindex_left(s::SymmetricExtension{A,:hp,PT_RIGHT,:odd}, k) where {A,PT_RIGHT} = -getindex(s, -k-1)

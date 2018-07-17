@@ -1,5 +1,11 @@
-using Base.Test
-using WaveletsCopy.DWT: quad_trap, quad_sf, quad_sf_weights, quad_sf_N, quad_trap_N
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test, LinearAlgebra
+    linspace(a,b,c) = range(a, stop=b, length=c)
+end
+
+using WaveletsCopy.DWT: quad_trap, quad_sf, quad_sf_weights, quad_sf_N, quad_trap_N, db4, db3, scaling, Primal
 function test_wavelet_quadrature()
     @testset begin
         @test quad_trap(x->x, db4, 0, 0, 8)^2≈quad_trap(x->x^2, db4, 0, 0, 8)

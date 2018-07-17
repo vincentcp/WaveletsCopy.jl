@@ -1,11 +1,17 @@
 # sequence.jl
-
 module Sequences
 using StaticArrays
 
+if VERSION < v"0.7-"
+    import Base: ctranspose
+else
+    using LinearAlgebra
+    import Base: lastindex, firstindex, adjoint
+end
+
 import Base: eltype, getindex, setindex!, eachindex, collect
 
-import Base: &, |, *, transpose, ctranspose, conj, sum, +, -, /
+import Base: &, |, *, transpose, conj, sum, +, -, /
 
 import Base: convert, widen
 
@@ -49,11 +55,11 @@ export shift, reverse, upsample, downsample
 True = Val{true}
 False = Val{false}
 
-(&){T1,T2}(::Type{Val{T1}}, ::Type{Val{T2}}) = Val{T1 & T2}
-(|){T1,T2}(::Type{Val{T1}}, ::Type{Val{T2}}) = Val{T1 | T2}
+(&)(::Type{Val{T1}}, ::Type{Val{T2}}) where {T1,T2} = Val{T1 & T2}
+(|)(::Type{Val{T1}}, ::Type{Val{T2}}) where {T1,T2} = Val{T1 | T2}
 
-(&){T1,T2}(::Val{T1}, ::Val{T2}) = Val{T1 & T2}()
-(|){T1,T2}(::Val{T1}, ::Val{T2}) = Val{T1 | T2}()
+(&)(::Val{T1}, ::Val{T2}) where {T1,T2} = Val{T1 & T2}()
+(|)(::Val{T1}, ::Val{T2}) where {T1,T2} = Val{T1 | T2}()
 
 
 
@@ -83,13 +89,13 @@ each_nonzero_index(s::Sequence) = eachindex(s)
 
 #getindex(s::Sequence, r::Range) = eltype(s)[s[k] for k in range]
 
-hascompactsupport{S <: Sequence}(::Type{S}) = False
+hascompactsupport(::Type{S}) where {S <: Sequence} = False
 hascompactsupport(s::Sequence) = hascompactsupport(typeof(s))()
 
 
 transpose(s::Sequence) = reverse(s)
 
-"The j-th discrete moment of a sequence is defined as `\sum_k h_k k^j`."
+"The j-th discrete moment of a sequence is defined as `\\sum_k h_k k^j`."
 function moment(s::Sequence, j)
     z = zero(eltype(s))
     for k in each_nonzero_index(s)
@@ -101,7 +107,7 @@ end
 
 """
 The Z transform of a sequence is a continuous function of `z`, defined by
-`S(z) = \sum_k s_k z^{-k}`.
+`S(z) = \\sum_k s_k z^{-k}`.
 """
 function ztransform(s::Sequence, z)
     T = promote_type(eltype(s), eltype(z), eltype(1/z))
@@ -113,7 +119,7 @@ function ztransform(s::Sequence, z)
 end
 
 """
-The Fourier transform of a sequence is defined by `S(ω) = \sum_k s_k e^{-i ω k}`. It is like
+The Fourier transform of a sequence is defined by `S(ω) = \\sum_k s_k e^{-i ω k}`. It is like
 the Z transform with `z = e^{i ω}`. The Fourier transform is a `2π`-periodic continuous function
 of `ω`.
 """
@@ -156,6 +162,6 @@ include("derivedsequences.jl")
 include("embeddingsequences.jl")
 
 
-promote_eltype{T}(s::CompactSequence{T}, ::Type{T}) = s
+promote_eltype(s::CompactSequence{T}, ::Type{T}) where {T} = s
 
 end # module

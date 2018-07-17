@@ -4,7 +4,13 @@ module Filterbanks
 
 using WaveletsCopy.Sequences
 
-import Base: transpose, ctranspose, eltype, getindex
+import Base: transpose, eltype, getindex
+
+if VERSION < v"0.7-"
+    import Base: ctranspose
+else
+    import Base: adjoint
+end
 
 export FilterPair, FilterMatrix, PolyphaseMatrix, Filterbank
 
@@ -19,7 +25,7 @@ struct FilterPair{F1 <: Sequence,F2 <: Sequence}
     f2  ::  F2
 end
 
-eltype{F1,F2}(::Type{FilterPair{F1,F2}}) = eltype(F1)
+eltype(::Type{FilterPair{F1,F2}}) where {F1,F2} = eltype(F1)
 
 lowpassfilter(fp::FilterPair) = fp.f1
 
@@ -35,8 +41,12 @@ function getindex(fp::FilterPair, k::Int)
         throw(BoundsError())
     end
 end
+if VERSION < v"0.7-"
+    ctranspose(fb::FilterPair) = FilterPair(fb.f1', fb.f2')
+else
+    adjoint(fb::FilterPair) = FilterPair(fb.f1', fb.f2')
+end
 
-ctranspose(fb::FilterPair) = FilterPair(fb.f1', fb.f2')
 
 
 "A 2x2 matrix of filters."
@@ -49,11 +59,11 @@ end
 
 PolyphaseMatrix = FilterMatrix
 
-eltype{F11,F12,F21,F22}(::Type{FilterMatrix{F11,F12,F21,F22}}) = eltype(F11)
+eltype(::Type{FilterMatrix{F11,F12,F21,F22}}) where {F11,F12,F21,F22} = eltype(F11)
 
 transpose(m::FilterMatrix) = FilterMatrix(m.a11, m.a21, m.a12, m.a22)
 
-ctranspose(m::FilterMatrix) = FilterMatrix(m.a11', m.a21', m.a12', m.a22')
+adjoint(m::FilterMatrix) = FilterMatrix(m.a11', m.a21', m.a12', m.a22')
 
 # Done removed: call(m::FilterMatrix, z) = [ztransform(m.a11, z) ztransform(m.a12, z); ztransform(m.a21, z) ztransform(m.a22, z)]
 (m::FilterMatrix)(z) = [ztransform(m.a11, z) ztransform(m.a12, z); ztransform(m.a21, z) ztransform(m.a22, z)]
@@ -89,7 +99,7 @@ Filterbank(primal_pair::FilterPair) = Filterbank(primal_pair, primal_pair)
 Filterbank(primal_pair::FilterPair, dual_pair::FilterPair) =
     Filterbank(primal_pair, dual_pair, polyphasematrix(primal_pair), polyphasematrix(dual_pair)')
 
-eltype{P1,P2,FP1,FP2}(::Type{Filterbank{P1,P2,FP1,FP2}}) = eltype(P1)
+eltype(::Type{Filterbank{P1,P2,FP1,FP2}}) where {P1,P2,FP1,FP2} = eltype(P1)
 
 primal_lowpassfilter(fb::Filterbank) = lowpassfilter(fb.primal_pair)
 primal_highpassfilter(fb::Filterbank) = highpassfilter(fb.primal_pair)
@@ -118,7 +128,7 @@ function polyphase_analysis!(y1, y2, x, f::PolyphaseMatrix, embedding)
     # Remark (TODO?): this could be even more efficient.
     L = length(x)
     lower_i = min(length(y1)-1, maximum(map(lastindex,(Heven,Geven,Godd,Hodd))))
-    L%2 == 0?
+    (L%2 == 0) ?
       upper_i = L>>1 - 1 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd))) :
       upper_i = L>>1 - L%2 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd)))
     upper_i = max(0, upper_i)
@@ -231,7 +241,7 @@ function polyphase_analysis!(y::AbstractVector{T}, l1::Int, l2::Int, x::Abstract
 
 
     lower_i = min(l1-1, maximum(map(lastindex,(Heven,Geven,Godd,Hodd))))
-    L%2 == 0?
+    (L%2 == 0) ?
       upper_i = L>>1 - 1 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd))) :
       upper_i = L>>1 - L%2 + minimum(map(firstindex,(Heven,Geven,Godd,Hodd)))
     upper_i = max(0, upper_i)

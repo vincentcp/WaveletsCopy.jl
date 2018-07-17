@@ -3,9 +3,16 @@ __precompile__(true)
 
 
 module WaveletsCopy
-using RecipesBase
-using Reexport
-using CardinalBSplines
+using LinearAlgebra
+
+using RecipesBase, Reexport, CardinalBSplines
+
+if VERSION < v"0.7-"
+    ComplexF64 = Complex128
+else
+    import Base: lastindex, firstindex
+    # linspace(a,b,c) = range(a, stop=b, length=c)
+end
 
 include("sequences/sequence.jl")
 include("filterbanks/filterbank.jl")

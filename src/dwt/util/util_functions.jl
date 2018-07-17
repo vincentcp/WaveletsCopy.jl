@@ -27,7 +27,7 @@ sufficientpoweroftwo(n::Integer, L::Integer) = (n%(2^L) == 0)
 """
   A dyadic point given by `k/2^d` at most xtol separated from x.
 """
-function closest_dyadic_point{T}(x::T, xtol::T; dmax = 20)
+function closest_dyadic_point(x::T, xtol::T; dmax = 20) where {T}
     offset = floor(x)
     x -= offset
     up = 1.;  low = 0.

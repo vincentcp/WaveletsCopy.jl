@@ -159,7 +159,7 @@ quad_sf(fun::Function, wav::DiscreteWavelet, M::Int, j::Int, k::Int, d::Int=0;
 
 function quad_sf(fun::Function, side::Side, kind::Kind, wav::DiscreteWavelet, M::Int, j::Int, k::Int, d::Int=0;
         periodic=false)
-    y = periodic ? fun_data_per(fun, side, kind, wav, M, j, k, d):
+    y = (periodic) ? fun_data_per(fun, side, kind, wav, M, j, k, d) :
                    fun_data(fun, side, kind, wav, M, j, k, d)
     quad_sf(y, side, kind, wav, M, j, k, d)
 end
@@ -184,7 +184,7 @@ quad_trap(fun::Function, wav::DiscreteWavelet, j::Int, k::Int, d::Int; periodic=
 
 
 function quad_trap(fun::Function, side::Side, kind::Kind, wav::DiscreteWavelet, j::Int, k::Int, d::Int; periodic=false)
-    w, x = periodic? evaluate_periodic_in_dyadic_points(side, kind, wav, j, k, d; points=true):
+    w, x = periodic ? evaluate_periodic_in_dyadic_points(side, kind, wav, j, k, d; points=true) :
                      evaluate_in_dyadic_points(side, kind, wav, j, k, d; points=true)
     sum(fun.(x).*w)/(1<<d)*sqrt(2<<j)/sqrt(2)
 end
@@ -206,7 +206,7 @@ step_N(L, h, x) = PeriodicExtension(step(L, h, x).a)
 function fun_data_N(f, side::Side, kind::Kind, wav::DiscreteWavelet{ELT}, M::Int, j::Int, d::Int) where ELT
     L = support_length(side, kind, wav)
     s = Int(M/L)
-    x = linspace(ELT(0), ELT(1), s*1<<(j+d)+1)[1:end-1]
+    x = linspace(ELT(0), ELT(1), s*(1<<(j+d))+1)[1:end-1]
     # info("Length is $(length(x))")
     f.(x)
 end
@@ -223,7 +223,7 @@ quad_sf_N(fun::Function, side::Side, kind::Kind, wav::DiscreteWavelet, M::Int, j
 
 function quad_sf_N(y::Vector, side::Side, kind::Kind, wav::DiscreteWavelet, M::Int, j::Int, d::Int)
     L = support_length(side, kind, wav)
-    @assert length(y) == Int(M/L)*1<<(j+d)
+    @assert length(y) == Int(M/L)*(1<<(j+d))
     x = lowest_scale_per_N(y, side, kind, wav, M, j)
     for i in d-1:-1:0
         x = step_N(1<<(i+j),filter(side, kind, wav), x)
@@ -249,7 +249,7 @@ function quad_trap_N(y::Vector{ELT}, w::Vector{ELT}, j::Int, d::Int) where ELT
     for i in 1:1<<j
         a[i] = dot(w, y)/(1<<d)*sqrt(1<<j)
         circshift!(z, y,-(1<<(d-j)))
-        copy!(y, z)
+        copyto!(y, z)
     end
     a
 end

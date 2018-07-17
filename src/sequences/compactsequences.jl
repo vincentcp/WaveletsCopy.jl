@@ -17,13 +17,13 @@ struct CompactSequence{T} <: Sequence
     CompactSequence{T}(a, offset) where T = new(a, offset, length(a))
 end
 
-CompactSequence{T}(a::Vector{T}, offset = 0) = CompactSequence{T}(a, offset)
+CompactSequence(a::Vector{T}, offset = 0) where {T} = CompactSequence{T}(a, offset)
 
-CompactSequence{T}(a::AbstractVector{T}, offset = 0) = CompactSequence{T}(collect(a), offset)
+CompactSequence(a::AbstractVector{T}, offset = 0) where {T} = CompactSequence{T}(collect(a), offset)
 
-eltype{T}(::Type{CompactSequence{T}}) = T
+eltype(::Type{CompactSequence{T}}) where {T} = T
 
-promote_eltype{T1,T2}(s::CompactSequence{T1}, ::Type{T2}) = CompactSequence(convert(Vector{promote_type(T1,T2)}, s.a), s.offset)
+promote_eltype(s::CompactSequence{T1}, ::Type{T2}) where {T1,T2} = CompactSequence(convert(Vector{promote_type(T1,T2)}, s.a), s.offset)
 
 shift(s::CompactSequence, k::Int) = CompactSequence(s.a, s.offset+k)
 
@@ -40,7 +40,10 @@ imapindex(s::CompactSequence, l) = l + s.offset - 1
 # TODO: test whether there is overhead in calling length(s.a), rather than having the s.n field.
 getindex(s::CompactSequence, k::Int) =
     (k < s.offset) || (k >= s.offset+s.n) ? zero(eltype(s)) : getindex(s.a, k-s.offset+1)
-function getindex(s::CompactSequence, c::Range)
+if VERSION < v"0.7-"
+    AbstractRange = Range
+end
+function getindex(s::CompactSequence, c::AbstractRange)
   e = Array(eltype(s), length(c))
 end
 
@@ -56,7 +59,7 @@ firstindex(s::CompactSequence) = imapindex(s, 1)
 
 lastindex(s::CompactSequence) = imapindex(s, sublength(s))
 
-hascompactsupport{T}(::Type{CompactSequence{T}}) = True
+hascompactsupport(::Type{CompactSequence{T}}) where {T} = True
 
 Base.isapprox(s1::CompactSequence, s2::CompactSequence) = s1.a≈s2.a
 
@@ -126,10 +129,13 @@ evenpart(s::CompactSequence) =
 oddpart(s::CompactSequence) =
     CompactSequence(eltype(s)[s[j] for j in nextodd(firstindex(s)):2:lastindex(s)], div(previouseven(firstindex(s)),2))
 
+if VERSION < v"0.7-"
+    ctranspose(s::CompactSequence) = CompactSequence(conj(reverse(s.a,1)), -lastindex(s))
+else
+    adjoint(s::CompactSequence) = CompactSequence(conj(reverse(s.a,1)), -lastindex(s))
+end
 
-ctranspose(s::CompactSequence) = CompactSequence(conj(flipdim(s.a,1)), -lastindex(s))
-
-reverse(s::CompactSequence) = CompactSequence(flipdim(s.a, 1), -lastindex(s))
+reverse(s::CompactSequence) = CompactSequence(reverse(s.a, 1), -lastindex(s))
 
 conj(s::CompactSequence) = CompactSequence(conj(s.a), firstindex(s))
 
@@ -142,7 +148,7 @@ support(s::CompactSequence, j::Int, k::Int) = (1/(1<<j)*(support(s)[1]+k), 1/(1<
 Base.sum(s::CompactSequence) = sum(s.a)
 
 widen(s::CompactSequence) = CompactSequence(widen(s.a), s.offset)
-widen{T,N}(a::Array{T,N}) = convert(Array{widen(T),N}, a)
+widen(a::Array{T,N}) where {T,N} = convert(Array{widen(T),N}, a)
 
 for op in (:+, :-, :/, :*)
   @eval ($op)(x::Number, s::CompactSequence) = CompactSequence(($op)(s.a,x),s.offset)
@@ -162,7 +168,7 @@ struct FixedSequence{L,OFS,T} <: Sequence
     a       ::  SVector{L,T}
 end
 
-FixedSequence{L,T,OFS}(a::SVector{L,T}, ::Type{Val{OFS}}) = FixedSequence{L,OFS,T}(a)
+FixedSequence(a::SVector{L,T}, ::Type{Val{OFS}}) where {L,T,OFS} = FixedSequence{L,OFS,T}(a)
 
 # type unstable constructor
 FixedSequence(a::AbstractVector, offset = 0) = FixedSequence(SVector(a...), Val{offset})
@@ -170,23 +176,23 @@ FixedSequence(a::AbstractVector, offset = 0) = FixedSequence(SVector(a...), Val{
 # type unstable constructor
 FixedSequence(s::CompactSequence) = FixedSequence(s.a, s.offset)
 
-convert{L,OFS,T}(::Type{CompactSequence{T}}, s::FixedSequence{L,OFS,T}) = CompactSequence(Array(s.a), OFS)
+convert(::Type{CompactSequence{T}}, s::FixedSequence{L,OFS,T}) where {L,OFS,T} = CompactSequence(Array(s.a), OFS)
 
-eltype{L,OFS,T}(::Type{FixedSequence{L,OFS,T}}) = T
+eltype(::Type{FixedSequence{L,OFS,T}}) where {L,OFS,T} = T
 
-sublength{L,OFS,T}(s::FixedSequence{L,OFS,T}) = L
+sublength(s::FixedSequence{L,OFS,T}) where {L,OFS,T} = L
 
-getindex{L,OFS,T}(s::FixedSequence{L,OFS,T}, i) = s.a[i-OFS+1]
+getindex(s::FixedSequence{L,OFS,T}, i) where {L,OFS,T} = s.a[i-OFS+1]
 
-firstindex{L,OFS,T}(s::FixedSequence{L,OFS,T}) = OFS
+firstindex(s::FixedSequence{L,OFS,T}) where {L,OFS,T} = OFS
 
-lastindex{L,OFS,T}(s::FixedSequence{L,OFS,T}) = OFS+L-1
+lastindex(s::FixedSequence{L,OFS,T}) where {L,OFS,T} = OFS+L-1
 
-shift{L,OFS,T}(s::FixedSequence{L,OFS,T}, k::Int) = FixedSequence(s.a, Val{OFS+k})
+shift(s::FixedSequence{L,OFS,T}, k::Int) where {L,OFS,T} = FixedSequence(s.a, Val{OFS+k})
 
 
-hascompactsupport{L,OFS,T}(::Type{FixedSequence{L,OFS,T}}) = True
+hascompactsupport(::Type{FixedSequence{L,OFS,T}}) where {L,OFS,T}= True
 
-for op in (:ctranspose, :evenpart, :oddpart, :alternating_flip, :reverse, :conj, :alternating)
-    @eval $op{L,OFS,T}(s::FixedSequence{L,OFS,T}) = FixedSequence($op(CompactSequence{T}(s)))
+for op in (:adjoint, :evenpart, :oddpart, :alternating_flip, :reverse, :conj, :alternating)
+    @eval $op(s::FixedSequence{L,OFS,T}) where {L,OFS,T} = FixedSequence($op(CompactSequence{T}(s)))
 end

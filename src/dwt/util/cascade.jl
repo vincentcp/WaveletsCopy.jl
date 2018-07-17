@@ -18,7 +18,7 @@ function cascade_algorithm_linear_combination(side::Side, w::DiscreteWavelet{T},
     # TODO implement for different lengths.
     @assert d ≈ log2(length(coeffs))
     input = zeros(T,1<<d)
-    copy!(input, coeffs)
+    copyto!(input, coeffs)
     T(2)^(d//2)*idwt(input, side, w, bnd)
 end
 
@@ -27,6 +27,6 @@ function inv_cascade_algorithm_linear_combination(side::Side, w::DiscreteWavelet
     # TODO implement for different lengths.
     @assert d ≈ log2(length(coeffs))
     input = zeros(T,1<<d)
-    copy!(input, coeffs)
+    copyto!(input, coeffs)
     T(2)^(d//2)*dwt(input, side, w, bnd)
 end

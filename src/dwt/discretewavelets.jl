@@ -1,5 +1,9 @@
 # discretewavelets.jl
 module DWT
+if VERSION > v"0.7-"
+    using LinearAlgebra
+    linspace(a,b,c) = range(a, stop=b, length=c)
+end
 
 using ..Sequences
 using ..Filterbanks
@@ -70,7 +74,7 @@ include("dwtstep.jl")
 include("dwttransform.jl")
 
 # Convenience function
-name{T}(::T) = name(T)
+name(::T) where {T<:DiscreteWavelet} = name(T)
 
 include("wvlt_daubechies.jl")
 include("wvlt_cdf.jl")

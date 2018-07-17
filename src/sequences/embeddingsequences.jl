@@ -44,20 +44,20 @@ function getindex(s::SymmetricEmbedding, x, k)
 end
 
 # Right whole point symmetry
-getindex_right{PT_LEFT,SYM_LEFT}(s::SymmetricEmbedding{PT_LEFT,:wp,SYM_LEFT,:even}, x, k) = getindex(s, x, 2*length(x)-k-2)
-getindex_right{PT_LEFT,SYM_LEFT}(s::SymmetricEmbedding{PT_LEFT,:wp,SYM_LEFT,:odd}, x, k) = -getindex(s, x, 2*length(x)-k-2)
+getindex_right(s::SymmetricEmbedding{PT_LEFT,:wp,SYM_LEFT,:even}, x, k) where {PT_LEFT,SYM_LEFT} = getindex(s, x, 2*length(x)-k-2)
+getindex_right(s::SymmetricEmbedding{PT_LEFT,:wp,SYM_LEFT,:odd}, x, k) where {PT_LEFT,SYM_LEFT} = -getindex(s, x, 2*length(x)-k-2)
 
 # Right half point symmetry
-getindex_right{PT_LEFT,SYM_LEFT}(s::SymmetricEmbedding{PT_LEFT,:hp,SYM_LEFT,:even}, x, k) = getindex(s, x, 2*length(x)-k-1)
-getindex_right{PT_LEFT,SYM_LEFT}(s::SymmetricEmbedding{PT_LEFT,:hp,SYM_LEFT,:odd}, x, k) = -getindex(s, x, 2*length(x)-k-1)
+getindex_right(s::SymmetricEmbedding{PT_LEFT,:hp,SYM_LEFT,:even}, x, k) where {PT_LEFT,SYM_LEFT} = getindex(s, x, 2*length(x)-k-1)
+getindex_right(s::SymmetricEmbedding{PT_LEFT,:hp,SYM_LEFT,:odd}, x, k) where {PT_LEFT,SYM_LEFT} = -getindex(s, x, 2*length(x)-k-1)
 
 # Left whole point symmetry
-getindex_left{PT_RIGHT}(s::SymmetricEmbedding{:wp,PT_RIGHT,:even}, x, k) = getindex(s, x, -k)
-getindex_left{PT_RIGHT}(s::SymmetricEmbedding{:wp,PT_RIGHT,:odd}, x, k) = -getindex(s, x, -k)
+getindex_left(s::SymmetricEmbedding{:wp,PT_RIGHT,:even}, x, k) where {PT_RIGHT} = getindex(s, x, -k)
+getindex_left(s::SymmetricEmbedding{:wp,PT_RIGHT,:odd}, x, k) where {PT_RIGHT} = -getindex(s, x, -k)
 
 # Left half point symmetry
-getindex_left{PT_RIGHT}(s::SymmetricEmbedding{:hp,PT_RIGHT,:even}, x, k) = getindex(s, x, -k-1)
-getindex_left{PT_RIGHT}(s::SymmetricEmbedding{:hp,PT_RIGHT,:odd}, x, k) = -getindex(s, x, -k-1)
+getindex_left(s::SymmetricEmbedding{:hp,PT_RIGHT,:even}, x, k) where {PT_RIGHT} = getindex(s, x, -k-1)
+getindex_left(s::SymmetricEmbedding{:hp,PT_RIGHT,:odd}, x, k) where {PT_RIGHT} = -getindex(s, x, -k-1)
 
 
 struct CompactEmbedding <: EmbeddingSequence

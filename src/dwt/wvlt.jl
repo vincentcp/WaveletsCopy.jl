@@ -2,16 +2,16 @@ abstract type DiscreteWavelet{T} end
 struct TestWavelet{T} <: DWT.DiscreteWavelet{T} end
 
 # Symmetry trait
-is_symmetric{W <: DiscreteWavelet}(::Type{W}) = False
+is_symmetric(::Type{W}) where {W <: DiscreteWavelet} = False
 
 # Orthogonality traits
-is_orthogonal{W <: DiscreteWavelet}(::Type{W}) = False
-is_biorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
-is_semiorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
+is_orthogonal(::Type{W}) where {W <: DiscreteWavelet} = False
+is_biorthogonal(::Type{W}) where {W <: DiscreteWavelet} = False
+is_semiorthogonal(::Type{W}) where {W <: DiscreteWavelet} = False
 # Not sure yet whether this one makes sense:
 #is_semiorthogonal{W <: DiscreteWavelet}(::Type{W}) = False
-eltype{T}(::Type{DiscreteWavelet{T}}) = T
-eltype{W <: DiscreteWavelet}(::Type{W}) = eltype(supertype(W))
+eltype(::Type{DiscreteWavelet{T}}) where {T} = T
+eltype(::Type{W}) where {W <: DiscreteWavelet} = eltype(supertype(W))
 eltype(w::DiscreteWavelet) = eltype(typeof(w))
 
 for op in (:is_symmetric, :is_orthogonal, :is_biorthogonal, :is_semiorthogonal)
@@ -39,40 +39,40 @@ include("util/waveletindex.jl")
 ###############################################################################
 # vanishingmoments
 ###############################################################################
-vanishingmoments{WT<:DiscreteWavelet}(::Prl, ::Type{WT}) = throw("unimplemented")
-vanishingmoments{WT<:DiscreteWavelet}(::Dul, W::Type{WT}) = _vanishingmoments(Prl(), W, is_orthogonal(W))
+vanishingmoments(::Prl, ::Type{WT})  where {WT <: DiscreteWavelet}= throw("unimplemented")
+vanishingmoments(::Dul, W::Type{WT})  where {WT <: DiscreteWavelet}= _vanishingmoments(Prl(), W, is_orthogonal(W))
 _vanishingmoments(::Prl, W, is_orthogonal::Type{True}) = vanishingmoments(Prl(), W)
 ###############################################################################
 # support/support_length
 ###############################################################################
-support{WT<:DiscreteWavelet}(side::Side, kind::Scl, ::Type{WT}) =
+support(side::Side, kind::Scl, ::Type{WT})  where {WT <: DiscreteWavelet}=
     Sequences.support(filter(side, Scl(), WT))
-function support{WT<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{WT})
+function support(side::Side, kind::Wvl, ::Type{WT}) where {WT <: DiscreteWavelet}
     l1, r1 = support(side, Scl(), WT)
     l2, r2 = support(inv(side), Scl(), WT)
     ((l1-r2+1)>>1, (r1-l2+1)>>1)
 end
-function support{WT<:DiscreteWavelet}(side::Side, kind::Kind, ::Type{WT}, j::Int, k::Int)
+function support(side::Side, kind::Kind, ::Type{WT}, j::Int, k::Int) where {WT <: DiscreteWavelet}
     l, r = support(side, kind, WT)
     (1/(1<<j)*(l+k), 1/(1<<j)*(r+k))
 end
 
-support_length{WT<:DiscreteWavelet}(side::Side, kind::Kind,  ::Type{WT}) = support(side, kind, WT)[2] - support(side, kind, WT)[1]
+support_length(side::Side, kind::Kind,  ::Type{WT})  where {WT <: DiscreteWavelet}= support(side, kind, WT)[2] - support(side, kind, WT)[1]
 ###############################################################################
 # filter
 ###############################################################################
 # By default, the wavelet filters are associated with the dual scaling filters via the alternating flip relation
-filter{W<:DiscreteWavelet}(side::Side, kind::Wvl, ::Type{W}) = alternating_flip(filter(inv(side), Scl(), W))
+filter(side::Side, kind::Wvl, ::Type{W}) where {W<:DiscreteWavelet} = alternating_flip(filter(inv(side), Scl(), W))
 
 # If orthogonal, dual and primal scaling functions are equal
-filter{W<:DiscreteWavelet}(side::Dul, kind::Scl, ::Type{W}) = _filter(side, kind, W, is_orthogonal(W))
-_filter{W<:DiscreteWavelet}(::Dul, ::Scl, ::Type{W}, is_orthogonal::Type{True}) = filter(Prl(), Scl(), W)
+filter(side::Dul, kind::Scl, ::Type{W}) where {W<:DiscreteWavelet} = _filter(side, kind, W, is_orthogonal(W))
+_filter(::Dul, ::Scl, ::Type{W}, is_orthogonal::Type{True}) where {W<:DiscreteWavelet} = filter(Prl(), Scl(), W)
 
 # coefficient filter is just, √2 times the scaling filter, overwrite if it can have nice (rational) values
-type Cof <: Kind end
+struct Cof <: Kind end
 coefficient = Cof()
 
-filter{W<:DiscreteWavelet}(side::Side, ::Cof, ::Type{W}) = sqrt(eltype(W)(2))*filter(side, Scl(), W)
+filter(side::Side, ::Cof, ::Type{W}) where {W<:DiscreteWavelet} = sqrt(eltype(W)(2))*filter(side, Scl(), W)
 ###############################################################################
 # All previous functions where applicable on types, now make methods for instances.
 ###############################################################################

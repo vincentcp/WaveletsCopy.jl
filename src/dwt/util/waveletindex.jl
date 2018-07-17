@@ -72,26 +72,26 @@ function level(n::Int, i::Int)
 end
 
 """
-`DWTScalingIndexList` defines the map from native indices to linear indices
+`DWaveletsCopycalingIndexList` defines the map from native indices to linear indices
 for a finite wavelet basis, when the indices are ordered in the way they
 are expected in the DWT routine.
 """
-struct DWTScalingIndexList <: AbstractVector{WaveletIndex}
+struct DWaveletsCopycalingIndexList <: AbstractVector{WaveletIndex}
 	l	::	Int
 end
 
 # Assume linear indexing,
-Base.IndexStyle(list::DWTScalingIndexList) = Base.IndexLinear()
+Base.IndexStyle(list::DWaveletsCopycalingIndexList) = Base.IndexLinear()
 
-Base.length(list::DWTScalingIndexList) = 1<<list.l
-Base.size(list::DWTScalingIndexList) = (1<<list.l,)
+Base.length(list::DWaveletsCopycalingIndexList) = 1<<list.l
+Base.size(list::DWaveletsCopycalingIndexList) = (1<<list.l,)
 
-Base.getindex(m::DWTScalingIndexList, idx::Int) ::WaveletIndex = scaling_index(m.l, idx)
+Base.getindex(m::DWaveletsCopycalingIndexList, idx::Int) ::WaveletIndex = scaling_index(m.l, idx)
 
-Base.getindex(list::DWTScalingIndexList, wind::WaveletIndex)::Int = scaling_value(wind)
+Base.getindex(list::DWaveletsCopycalingIndexList, wind::WaveletIndex)::Int = scaling_value(wind)
 
 " All wavelet indices on a certain level"
-scaling_indices(l::Int) = DWTScalingIndexList(l)
+scaling_indices(l::Int) = DWaveletsCopycalingIndexList(l)
 
 scaling_index(level::Int, index::Int) = (Scl(), level, index-1)
 

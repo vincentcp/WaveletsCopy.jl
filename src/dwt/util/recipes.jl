@@ -26,7 +26,7 @@ end
   end
 end
 
-immutable Both <: DWT.Side end
+struct Both <: DWT.Side end
 
 @recipe function f(w::DWT.DiscreteWavelet, is_orthogonal::DWT.False; side=Both()::DWT.Side)
   side, w

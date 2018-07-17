@@ -29,9 +29,9 @@ function dwt!(m::Matrix{T}, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundary
             # @time u .= m[:,i]
             # @time dwt!(v, u, fb, bnd, L, t)
             # m[:,i] .= v
-            copy!(u, 1, m, os, ls)
+            copyto!(u, 1, m, os, ls)
             dwt!(v, u, fb, bnd, L, t)
-            copy!(m, os, v, 1, ls)
+            copyto!(m, os, v, 1, ls)
             os += ls
         end
     end
@@ -47,16 +47,16 @@ function idwt!(m::Matrix{T}, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundar
         fb = SFilterBank(s, w)
         os = 1
         @inbounds for i in 1:ld
-            copy!(u, 1, m, os, ls)
+            copyto!(u, 1, m, os, ls)
             idwt!(v, u, fb, bnd, L, t)
-            copy!(m, os, v, 1, ls)
+            copyto!(m, os, v, 1, ls)
             os += ls
         end
     end
     m
 end
 
-SFilterBank(s::Side, w::DiscreteWavelet) = s==Primal? Filterbank(w) : DualFilterbank(w)
+SFilterBank(s::Side, w::DiscreteWavelet) = (s==Primal) ? Filterbank(w) : DualFilterbank(w)
 
 dwt(x::AbstractVector, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformlevels(x)) =
     dwt(x, Primal, w, bnd, L)
@@ -73,7 +73,7 @@ idwt(x, s::Side, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformle
 # function dwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x))
 #     lx = length(x)
 #     @assert 2^L <= lx
-#     copy!(y,x)
+#     copyto!(y,x)
 #     @inbounds for l in 1:L
 #         lx2 = lx >> 1
 #         y[1:lx2], y[lx2+1:lx] = DWT.dwtstep(y[1:lx], fb, bnd)
@@ -84,12 +84,12 @@ idwt(x, s::Side, w::DiscreteWavelet, bnd::WaveletBoundary, L::Int=maxtransformle
 function dwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x), s=similar(y))
     lx = length(x)
     @assert 2^L <= lx
-    copy!(y,x)
+    copyto!(y,x) #copyto!
     @inbounds for l in 1:L
         lx2 = lx >> 1
         l1, l2 = dwtstep_size(lx, fb, bnd)
         DWT.dwtstep!(s, l1, l2, y, lx, fb, bnd)
-        copy!(y, 1, s, 1, lx)
+        copyto!(y, 1, s, 1, lx)
         lx = lx2
     end
 end
@@ -105,12 +105,12 @@ end
 # function idwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x))
 #     lx = length(x)
 #     @assert 2^L <= lx
-#     copy!(y,x)
+#     copyto!(y,x)
 #     lx = lx >> L
 #     @inbounds for l in L:-1:1
 #         lx2 = lx << 1
 #         t = DWT.idwtstep(y[1:lx], y[lx+1:lx2], fb, bnd)
-#         copy!(y, 1, t, 1, lx2)
+#         copyto!(y, 1, t, 1, lx2)
 #         lx = lx2
 #     end
 # end
@@ -118,13 +118,13 @@ end
 function idwt!(y, x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels(x),s=similar(x))
     lx = length(x)
     @assert 2^L <= lx
-    copy!(y,x)
+    copyto!(y,x)
     lx = lx >> L
     @inbounds for l in L:-1:1
         lx2 = lx << 1
         # t = DWT.idwtstep(y[1:lx], y[lx+1:lx2], fb, bnd)
         DWT.idwtstep!(s, lx2, y, lx, lx, fb, bnd)
-        copy!(y, 1, s, 1, lx2)
+        copyto!(y, 1, s, 1, lx2)
         lx = lx2
     end
 end
@@ -137,18 +137,18 @@ function idwt(x, fb::Filterbank, bnd::WaveletBoundary, L::Int=maxtransformlevels
     y
 end
 
-full_dwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary) =
+full_dwt(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)  where {T} =
     full_dwt(x, Primal, w, bnd)
 
-full_idwt{T}(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary) =
+full_idwt(x, w::DiscreteWavelet{T}, bnd::WaveletBoundary)  where {T} =
     full_idwt(x, Primal, w, bnd)
 
-function full_dwt{T}(x, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
+function full_dwt(x, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundary) where {T}
     coefs = scaling_coefficients(x, s, w, bnd)
     dwt(coefs, s, w, bnd)
 end
 
-function full_idwt{T}(x, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundary)
+function full_idwt(x, s::Side, w::DiscreteWavelet{T}, bnd::WaveletBoundary) where {T}
     scalingcoefs = idwt(x, s, w, bnd)
     scaling_coefficients_to_dyadic_grid(scalingcoefs, s, w, bnd)
 end

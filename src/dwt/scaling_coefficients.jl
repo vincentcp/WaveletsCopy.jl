@@ -8,7 +8,7 @@
     ```
     or also the scaling coefficients of the projection of `f`, `P_Nf`, on `V_N`
     ```
-    P_Nf(t) = \sum_k v_Nkϕ_Nk(t)
+    P_Nf(t) = \\sum_k v_Nkϕ_Nk(t)
     ```
     not function samples
     ```
@@ -19,22 +19,22 @@
     However, assuming that `L` is large and hence that `ϕ` and `ϕ̃` have a narrow support we can think of the
     `v_Nk`s as scaled function values `f_k`
     ```
-    v_Nk ≈\sqrt{Δt/θ}f_Nk, θ=\sqrt{2π}
+    v_Nk ≈\\sqrt{Δt/θ}f_Nk, θ=\\sqrt{2π}
     ```
 
     Then
     ```
-    P_Nf(t) = 1/θ\sum_l f(t-lΔt)ϕ(l) + O(Δt)
+    P_Nf(t) = 1/θ\\sum_l f(t-lΔt)ϕ(l) + O(Δt)
     ```
     but convergence is slow...
 
     Therefore, we use approximants ṽ_Nk for v_Nk using the Riemann sum
 
     ```
-    ṽ_Nk = 1/\sqrt{2π} \sum_n f_n2^{N/2}\overline{ϕ̃(2^NnΔt-k)}Δt
-         = 2^{-N/2}/\sqrt{2π}\sum_n f_n\overline{ϕ̃(n-k)}
+    ṽ_Nk = 1/\\sqrt{2π} \\sum_n f_n2^{N/2}\\overline{ϕ̃(2^NnΔt-k)}Δt
+         = 2^{-N/2}/\\sqrt{2π}\\sum_n f_n\\overline{ϕ̃(n-k)}
     ```
-    which is a convolution between function values and \{\overline{ϕ̃(-n)}\}
+    which is a convolution between function values and \\{\\overline{ϕ̃(-n)}\\}
     which is in turn a low pass filtering.
 """
 function scaling_coefficients end
@@ -52,7 +52,7 @@ function scaling_coefficients(f::Function, side::DWT.Side, w::DWT.DiscreteWavele
 end
 
 # Function on the interval [a,b] to samples
-function scaling_coefficients{T}(f::Function, s::CompactSequence{T}, L::Int, fembedding; options...)
+function scaling_coefficients(f::Function, s::CompactSequence{T}, L::Int, fembedding; options...) where {T}
       x = linspace(T(0), T(1), 1<<L + 1)[1:end-1]
       fcoefs = map(f, x)
       @assert eltype(fcoefs)==T
@@ -62,19 +62,19 @@ function scaling_coefficients{T}(f::Function, s::CompactSequence{T}, L::Int, fem
 end
 
 # Convenience function: wavelet to filter
-scaling_coefficients{T}(f::AbstractArray, s::Side, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...) =
+scaling_coefficients(f::AbstractArray, s::Side, w::DiscreteWavelet{T}, bnd::PeriodicBoundary; options...)  where {T}=
     scaling_coefficients(f, _scalingcoefficient_filter(filter(inv(s), Scl(), w)), PeriodicEmbedding(); options...)
 
 # function samples to scaling coeffients
-function scaling_coefficients{T}(f::AbstractArray, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...)
+function scaling_coefficients(f::AbstractArray, filter::CompactSequence{T}, fembedding; n::Int=length(f), options...) where {T}
       @assert isdyadic(f)
-      c = Array{T}(n)
+      c = Array{T}(undef, n)
       scaling_coefficients!(c, f, filter, fembedding; options...)
       c
 end
 
 "In place method of scaling_coefficients"
-function scaling_coefficients!{T}(c, f, filter::CompactSequence{T}, fembedding; offset::Int=0, options...)
+function scaling_coefficients!(c, f, filter::CompactSequence{T}, fembedding; offset::Int=0, options...) where {T}
     # TODO write a convolution function
     # convolution between low pass filter and function values gives approximation of scaling coefficients
     for j in offset:offset+length(c)-1
@@ -89,20 +89,13 @@ end
 _scalingcoefficient_filter(f::CompactSequence) =
     reverse(CompactSequence(recursion_algorithm(f, 0), f.offset))
 
-# Remove
-# "Transforms scaling coeffients back to function evaluations on the dyadic grid."
-# scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray, w::DWT.DiscreteWavelet{T}, bnd::WaveletBoundary, d=ndyadicscales(scaling_coefficients); options...) =
-    # scaling_coefficients_to_dyadic_grid(scaling_coefficients, Primal, w, bmd, d; options...)
-
 "Transforms scaling coeffients back to function evaluations on the dyadic grid."
-function scaling_coefficients_to_dyadic_grid{T}(scaling_coefficients::AbstractArray{T,1}, s::Side, w::DWT.DiscreteWavelet{T}, bnd::DWT.PeriodicBoundary, d=ndyadicscales(scaling_coefficients); grid=false, options...)
+function scaling_coefficients_to_dyadic_grid(scaling_coefficients::AbstractArray{T,1}, s::Side, w::DWT.DiscreteWavelet{T}, bnd::DWT.PeriodicBoundary, d=ndyadicscales(scaling_coefficients); grid=false, options...) where {T}
     function_evals = zeros(T,DWT.scaling_coefficients_to_dyadic_grid_length(s,w,d))
     j = Int(log2(length(scaling_coefficients)))
     f = zeros(T, evaluate_periodic_in_dyadic_points_scratch_length(s, scaling, w, j, 0, d))
     scratch = zeros(T, evaluate_periodic_in_dyadic_points_scratch2_length(s, scaling, w, j, 0, d))
     f_scaled = similar(f)
-    # scratch = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch_length(s,w,d))
-    # scratch2 = zeros(DWT.scaling_coefficients_to_dyadic_grid_scratch2_length(s,w,d))
 
     scaling_coefficients_to_dyadic_grid!(function_evals, scaling_coefficients, w, bnd, f, f_scaled, scratch; options...)
     grid ?
@@ -112,31 +105,8 @@ end
 
 # Scaling coefficients to function evaluations on dyadic grid (assumes periodic extension)
 "In place method of scaling_coefficients_to_dyadic_grid."
-scaling_coefficients_to_dyadic_grid!{T}(function_evals::AbstractArray{T,1}, scaling_coefficients::AbstractArray{T,1}, w::DWT.DiscreteWavelet{T}, bnd::DWT.PeriodicBoundary, f, f_scaled, scratch; options...) =
+scaling_coefficients_to_dyadic_grid!(function_evals::AbstractArray{T,1}, scaling_coefficients::AbstractArray{T,1}, w::DWT.DiscreteWavelet{T}, bnd::DWT.PeriodicBoundary, f, f_scaled, scratch; options...)  where {T} =
     evaluate_periodic_scaling_basis_in_dyadic_points!(function_evals, Primal, w, scaling_coefficients, Int(log2(length(function_evals))), f, f_scaled, scratch; options...)
-
-    # scaling_coefficients_to_dyadic_grid!(function_evals, scaling_coefficients, Primal, w, bnd, scratch, scratch2; options...)
-
-
-"In place method of scaling_coefficients_to_dyadic_grid."
-# function scaling_coefficients_to_dyadic_grid!{T}(function_evals::AbstractArray{T,1}, scaling_coefficients::AbstractArray{T,1}, s::Side, w::DWT.DiscreteWavelet{T}, ::DWT.PeriodicBoundary, scratch, scratch2; grid=false, options...)
-#     d = Int(log2(length(function_evals)))
-#     @assert length(function_evals) == length(scratch)
-#     @assert DWT.scaling_coefficients_to_dyadic_grid_scratch2_length(s, w, d) == length(scratch2)
-#     @assert isdyadic(scaling_coefficients)
-#     j = ndyadicscales(scaling_coefficients)
-#     function_evals[:] = T(0)
-#     for (c_i,c) in enumerate(scaling_coefficients)
-#         k = c_i - 1
-#         DWT.evaluate_periodic_in_dyadic_points!(scratch, s, DWT.Scl(), w, j, k, d, scratch2, nothing)
-#         scale!(scratch, c)
-#         for i in 1:length(function_evals)
-#             function_evals[i] += scratch[i]
-#         end
-#         # function_evals[:] += c*DWT.evaluate_periodic_in_dyadic_points(Prl(), Scl(), w, j, k, d)
-#     end
-#     nothing
-# end
 
 scaling_coefficients_to_dyadic_grid_length(s::Side, w::DWT.DiscreteWavelet, d::Int) = 1<<d
 

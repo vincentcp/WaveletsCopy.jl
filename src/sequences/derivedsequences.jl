@@ -13,8 +13,8 @@ evaluated. This can be done for compactly supported sequences using `collect`.
 """
 abstract type DerivedSequence{S} <: Sequence end
 
-eltype{S}(::Type{DerivedSequence{S}}) = eltype(S)
-eltype{DS <: DerivedSequence}(::Type{DS}) = eltype(super(DS))
+eltype(::Type{DerivedSequence{S}}) where {S} = eltype(S)
+eltype(::Type{DS}) where {DS <: DerivedSequence} = eltype(super(DS))
 
 # If the subtypes only transform indices, then they can implement mapindex and imapindex,
 # where mapindex maps an index 'k' of the derived sequence into an index 'l' of the original sequence,
@@ -22,15 +22,15 @@ eltype{DS <: DerivedSequence}(::Type{DS}) = eltype(super(DS))
 # We always use the symbol 'l' for an index of the original sequence and 'k' for the derived sequence.
 
 # Default indexing rules are:
-getindex{M}(s::DerivedSequence{M}, k) = s.seq[mapindex(s, k)]
+getindex(s::DerivedSequence{M}, k) where {M} = s.seq[mapindex(s, k)]
 
-setindex!{M}(s::DerivedSequence{M}, val, k) = s.seq[mapindex(s, k)] = val
+setindex!(s::DerivedSequence{M}, val, k) where {M} = s.seq[mapindex(s, k)] = val
 
 "Return the original sequence of the derived sequence."
 sequence(s::DerivedSequence) = s.seq
 
 # Traits
-hascompactsupport{S}(::Type{DerivedSequence{S}}) = hascompactsupport(S)
+hascompactsupport(::Type{DerivedSequence{S}}) where {S} = hascompactsupport(S)
 
 
 collect(s::DerivedSequence) = _collect(s, hascompactsupport(s))
@@ -67,14 +67,14 @@ DownsampledSequence(s) = DownsampledSequence(s, Val{2})
 DownsampledSequence(s, m::Int, shift) = DownsampledSequence(s, Val{m}, shift)
 
 # Default shift is 0.
-DownsampledSequence{M,S}(s::S, ::Type{Val{M}}, shift = 0) = DownsampledSequence{M,S}(s, shift)
+DownsampledSequence(s::S, ::Type{Val{M}}, shift = 0) where {M,S} = DownsampledSequence{M,S}(s, shift)
 
 downsample(s::Sequence, args...) = DownsampledSequence(s, args...)
 
 
-mapindex{M}(s::DownsampledSequence{M}, k) = s.shift+M*k
+mapindex(s::DownsampledSequence{M}, k) where {M} = s.shift+M*k
 
-imapindex{M}(s::DownsampledSequence{M}, l) = mod(l-s.shift, M) == 0 ? div(l-s.shift, M) : throw(BoundsError())
+imapindex(s::DownsampledSequence{M}, l) where {M} = mod(l-s.shift, M) == 0 ? div(l-s.shift, M) : throw(BoundsError())
 
 
 
@@ -96,7 +96,7 @@ end
 UpsampledSequence(s) = UpsampledSequence(s, Val{2})
 
 # Default shift is 0.
-UpsampledSequence{M,S}(s::S, ::Type{Val{M}}, shift = 0) = UpsampledSequence{M,S}(s, shift)
+UpsampledSequence(s::S, ::Type{Val{M}}, shift = 0) where {M,S} = UpsampledSequence{M,S}(s, shift)
 
 # This one is convenient but not type-stable.
 UpsampledSequence(s, m::Int, shift) = UpsampledSequence(s, Val{m}, shift)
@@ -104,11 +104,11 @@ UpsampledSequence(s, m::Int, shift) = UpsampledSequence(s, Val{m}, shift)
 upsample(s::Sequence, args...) = UpsampledSequence(s, args...)
 
 
-mapindex{M}(s::UpsampledSequence{M}, k) = mod(k-s.shift, M) == 0 ? k : throw(BoundsError())
+mapindex(s::UpsampledSequence{M}, k) where {M} = mod(k-s.shift, M) == 0 ? k : throw(BoundsError())
 
-getindex{M}(s::UpsampledSequence{M}, k) = mod(k-s.shift, M) == 0 ? s.seq[k] : zero(eltype(s))
+getindex(s::UpsampledSequence{M}, k) where {M} = mod(k-s.shift, M) == 0 ? s.seq[k] : zero(eltype(s))
 
-each_nonzero_index{M}(s::UpsampledSequence{M}) =
+each_nonzero_index(s::UpsampledSequence{M}) where {M} =
     s.shift+imapindex(s, firstindex(s.seq)):M:s.shift+imapindex(s, lastindex(s.seq))
 
 

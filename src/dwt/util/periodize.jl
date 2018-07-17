@@ -1,19 +1,19 @@
 # periodize.jl
-in_support{T}(x, support::Tuple{T,T}) = support[1] <= x < support[2]
+in_support(x, support::Tuple{T,T}) where {T} = support[1] <= x < support[2]
 
-function in_periodic_support{T}(x, support::Tuple{T,T}...)
+function in_periodic_support(x, support::Tuple{T,T}...) where {T}
   for s in support
     (s[1] <= x <= s[2]) && (return true)
   end
   false
 end
 
-function periodic_support{T}(side::Side, kind::Kind, w::DiscreteWavelet{T}, j, k, a=0, b=1)
+function periodic_support(side::Side, kind::Kind, w::DiscreteWavelet{T}, j, k, a=0, b=1) where {T}
   s = DWT.support(side, kind, w, j, k)
   _periodize(s, a, b)
 end
 
-function _periodize{T}(s::Tuple{T,T}, a=0, b=1)
+function _periodize(s::Tuple{T,T}, a=0, b=1) where {T}
   a = T(a)
   b = T(b)
   p = b-a
@@ -33,7 +33,7 @@ end
 #          src1
 #        + ________________
 #  =>      res1, res2, res3
-function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int=1)
+function _periodize!(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int=1) where {T}
     L = length(dest)
     srclength = length(src)
     for i in 1:L
@@ -45,7 +45,7 @@ function _periodize!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::I
     end
 end
 
-function _periodize_add!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int)
+function _periodize_add!(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int, step::Int) where {T}
     L = length(dest)
     srclength = length(src)
     for i in 1:L
@@ -58,7 +58,7 @@ function _periodize_add!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istar
     end
 end
 
-function _periodize_add!{T}(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int)
+function _periodize_add!(dest::AbstractArray{T}, src::AbstractArray{T}, istart::Int) where {T}
     L = length(dest)
     srclength = length(src)
     if L <= srclength

@@ -4,11 +4,11 @@ end
 
 HaarWavelet{T} = DaubechiesWavelet{1,T}
 
-is_symmetric{T}(::Type{DaubechiesWavelet{1,T}}) = True
+is_symmetric(::Type{DaubechiesWavelet{1,T}}) where {T} = True
 
-is_orthogonal{N,T}(::Type{DaubechiesWavelet{N,T}}) = True
-is_biorthogonal{N,T}(::Type{DaubechiesWavelet{N,T}}) = True
-is_semiorthogonal{N,T}(::Type{DaubechiesWavelet{N,T}}) = True
+is_orthogonal(::Type{DaubechiesWavelet{N,T}}) where {N,T} = True
+is_biorthogonal(::Type{DaubechiesWavelet{N,T}}) where {N,T} = True
+is_semiorthogonal(::Type{DaubechiesWavelet{N,T}}) where {N,T} = True
 
 db1_h = [1, 1]
 
@@ -21,8 +21,8 @@ T0 = Float64
 filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{1,T0}}) = _db1_h(T0)
 filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{2,T0}}) = _db2_h(T0)
 filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{4,T0}}) = CompactSequence(db4_h, 0)
-filter{N}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T0}}) = CompactSequence(daubechies(N), 0)
-filter{T}(::Prl, ::Cof, ::Type{DaubechiesWavelet{1,T}}) = CompactSequence(db1_h)
+filter(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T0}}) where {N} = CompactSequence(daubechies(N), 0)
+filter(::Prl, ::Cof, ::Type{DaubechiesWavelet{1,T}}) where {T} = CompactSequence(db1_h)
 
 IMPLEMENTED_DB_WAVELETS = []
 for N in 1:10
@@ -35,15 +35,15 @@ for N in 1:10
         export $db
     end
 end
-name{N,T}(::Type{DaubechiesWavelet{N,T}}) = string("db",N,"_",T)
-name{N}(::Type{DaubechiesWavelet{N,Float64}}) = string("db",N)
+name(::Type{DaubechiesWavelet{N,T}}) where {N,T} = string("db",N,"_",T)
+name(::Type{DaubechiesWavelet{N,Float64}}) where {N} = string("db",N)
 
-support{N,T}(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+support(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = (0,2N-1)
 support_length(::Prl, ::Scl, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = 2N-1
-support{N,T}(::Dul, ::Scl, ::Type{DaubechiesWavelet{N,T}}) = (0,2N-1)
+support(::Dul, ::Scl, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = (0,2N-1)
 support_length(::Dul, ::Scl, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = 2N-1
-vanishingmoments{N,T}(::Prl, ::Type{DaubechiesWavelet{N,T}}) = N
-vanishingmoments{N,T}(::Dul, ::Type{DaubechiesWavelet{N,T}}) = N
+vanishingmoments(::Prl, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = N
+vanishingmoments(::Dul, ::Type{DaubechiesWavelet{N,T}}) where {N,T} = N
 
 # Commented for testing purposes
 # evaluate{T,S<:Real}(::Prl, ::Scl, w::DWT.HaarWavelet{T}, j, k, x::Number; options...) =
@@ -55,7 +55,7 @@ vanishingmoments{N,T}(::Dul, ::Type{DaubechiesWavelet{N,T}}) = N
 function daubechies(N::Int)
     @assert N > 0
     # Create polynomial
-    C = Array{Int}(N)
+    C = Array{Int}(undef, N)
     @inbounds for n = 0:N-1
         C[N-n] = binomial(N-1+n, n)
     end
@@ -66,7 +66,7 @@ function daubechies(N::Int)
     # Find roots in z domain:
     # z + z^{-1} = 2 - 4*y
     # where y is a root from above
-    Z = zeros(Complex128, 2*N-2)
+    Z = zeros(ComplexF64, 2*N-2)
     @inbounds for i = 1:N-1
         Yi = Y[i]
         d = 2*sqrt( Yi*Yi - Yi )
@@ -85,7 +85,7 @@ function daubechies(N::Int)
 
     # Find coefficients of the polynomial
     # (1 + z)^N * \prod_i (z - z_i)
-    R = Array{Complex128}(N+nr)
+    R = Array{ComplexF64}(undef, N+nr)
     @inbounds for i = 1:N
         R[i] = -1
     end
@@ -99,7 +99,8 @@ function daubechies(N::Int)
     HH = vieta( R )
 
     # Normalize coefficients
-    scale!(HH, 1/norm(HH))
+    # scale!(HH, 1/norm(HH))
+    rmul!(HH, 1/norm(HH))
     return real(HH)
 end
 
@@ -118,7 +119,7 @@ function compan(C::AbstractVector)
 
     if n > 1
         @inbounds A[1,:] = -C[2:end] ./ C[1]
-        @inbounds A[2:n:end] = 1
+        @inbounds A[2:n:end] .= 1
     end
     return A
 end
@@ -128,10 +129,10 @@ end
 # http://www.mathworks.se/help/matlab/ref/poly.html
 function vieta(R::AbstractVector)
     n = length( R )
-    C = zeros(Complex128, n+1)
+    C = zeros(ComplexF64, n+1)
     C[1] = 1
-    Ci::Complex128 = 0
-    Cig::Complex128 = 0
+    Ci::ComplexF64 = 0
+    Cig::ComplexF64 = 0
 
     @inbounds for k = 1:n
         Ci = C[1]

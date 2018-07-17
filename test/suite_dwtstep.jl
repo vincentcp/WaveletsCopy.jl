@@ -1,13 +1,19 @@
 # suit_dwtstep.jl
 using WaveletsCopy
-using Base.Test
-W = WaveletsCopy
-using W.Filterbanks
-using W.Sequences
+using WaveletsCopy.Filterbanks
+using WaveletsCopy.Sequences
+
+if VERSION < v"0.7-"
+    using Base.Test
+else
+    using Test, Random, LinearAlgebra
+    linspace(a,b,c) = range(a, stop=b, length=c)
+end
+
 P = 80
 
 rng = MersenneTwister(3000)
-jumpfunction(x) = (-0.5 < x < 0.5 ? 1.0: 0.0) + (-0.25 < x < .75 ? 1.0 : 0.0)
+jumpfunction(x) = (   (-0.5 < x < 0.5) ? 1.0 : 0.0) + ((-0.25 < x < .75) ? 1.0 : 0.0)
 characteristicfunction(x) = (0<x<1) ? 1.0 : 0.0
 randomfunction(x) = rand(rng)
 
@@ -16,7 +22,7 @@ randomfunction(x) = rand(rng)
         t = linspace(-1,1,N)
         for f in (sin, characteristicfunction, randomfunction)
             x = map(f,t)
-            for w in (DWT.IMPLEMENTED_WAVELETS...)
+            for w in (DWT.IMPLEMENTED_WAVELETS...,)
                 fb = Filterbank(w)
                     for bound in (DWT.perbound,)
                     y = dwtstep(x, fb, bound)
@@ -35,7 +41,7 @@ end
         t = linspace(-1,1,N)
         for f in (sin, characteristicfunction, randomfunction)
             x = map(f,t)
-            for w in (DWT.IMPLEMENTED_WAVELETS...)
+            for w in (DWT.IMPLEMENTED_WAVELETS...,)
                 for bound in (DWT.perbound, )
                     for L in 1:n
                         y = DWT.dwt(x, w, bound, L)
@@ -69,7 +75,7 @@ end
             x0 = [Float64(i^p) for i in 1:1<<l]; x0/=sum(x0)
             for i in p:9
                 w = DWT.DaubechiesWavelet{i+1,Float64}()
-                offset = (max([support_length(side, kind, w) for side in (Primal, Dual) for kind in (scaling, DWT.wavelet)]...))
+                offset = (max([support_length(side, kind, w) for side in (Primal, Dual) for kind in (scaling, DWT.wavelet)]...,))
                 x1 = full_dwt(x0, w, DWT.perbound)
                 y  = full_idwt(x1, w, DWT.perbound)
                 d = abs.(y-x0)

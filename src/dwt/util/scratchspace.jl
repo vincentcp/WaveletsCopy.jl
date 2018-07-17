@@ -12,16 +12,16 @@
     evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, d)
 @inline evaluate_periodic_in_dyadic_points_scratch3_length(side::Side, kind::Kind, w, j, k, d) =
     evaluate_in_dyadic_points_scratch2_length(side, kind, w, j, k, d)
-@inline evaluate_in_dyadic_points_length(side::Side, kind::Kind, w, j, k, d) = (d-j) >= 0 ?
+@inline evaluate_in_dyadic_points_length(side::Side, kind::Kind, w, j, k, d) = ((d-j) >= 0) ?
     (1<<(d-j))*support_length(side, kind, w)+1 :
     cld(support_length(side, kind, w)+1, 1<<(j-d))
-@inline evaluate_in_dyadic_points_scratch_length(side::Side, kind::Kind, w, j, k, d) = (d-j) >= 0 ?
+@inline evaluate_in_dyadic_points_scratch_length(side::Side, kind::Kind, w, j, k, d) = ((d-j) >= 0) ?
     0 :
     support_length(side, kind, w)+1
-@inline evaluate_in_dyadic_points_scratch_length(side::Side, kind::Wvl, w, j, k, d) = (d-j) >= 1 ?
-    evaluate_in_dyadic_points_length(side, Scl(), w, j+1, k, d):
+@inline evaluate_in_dyadic_points_scratch_length(side::Side, kind::Wvl, w, j, k, d) = ((d-j) >= 1) ?
+    evaluate_in_dyadic_points_length(side, Scl(), w, j+1, k, d) :
     evaluate_in_dyadic_points_scratch_length(side, kind, w, j, k, j+1)
-@inline evaluate_in_dyadic_points_scratch2_length(side::Side, kind::Wvl, w, j, k, d) = (d-j) >= 1 ?
+@inline evaluate_in_dyadic_points_scratch2_length(side::Side, kind::Wvl, w, j, k, d) = ((d-j) >= 1) ?
     evaluate_in_dyadic_points_scratch_length(side, Scl(), w, j+1, k, d) :
     evaluate_in_dyadic_points_length(side, kind, w, j, k, j+1)
 
@@ -103,7 +103,7 @@ get_scratch_space(SS::ScratchSpace, lengths) =
 function _get_indices(lengths::Vector{Int}, input)
     L = length(lengths)
     LL = length(input)
-    r = Array{Int}(LL)
+    r = Array{Int}(undef, LL)
     @inbounds for i in 1:LL
         s = input[i]
         for j in 1:L
