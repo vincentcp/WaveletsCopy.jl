@@ -3,7 +3,6 @@ __precompile__(true)
 
 
 module WaveletsCopy
-using LinearAlgebra
 
 using RecipesBase, Reexport, CardinalBSplines
 
