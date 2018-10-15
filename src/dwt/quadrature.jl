@@ -129,7 +129,7 @@ function lowest_scale(y::Vector, side::Side, kind::Kind, wavelet::DiscreteWavele
     s = Int(M/L)
     a = zeros(ELT,1+(1<<d-1)*L)
     for i in 1:1+(1<<d-1)*L
-        a[i] = dot(w,y[(0:M)+1+(i-1)*s])
+        a[i] = dot(w,y[(0:M) .+ 1 .+ (i-1)*s])
     end
     CompactSequence(a)
 end
@@ -195,7 +195,7 @@ function lowest_scale_per_N(y::Vector, side::Side, kind::Kind, wav::DiscreteWave
     L = support_length(side, kind, wav)
     s = Int(M/L)
     for i in 1:length(y)
-        a[i] = dot(w, y[map(x->mod(x-1,length(y))+1,(0:M)+1+(i-1)*s)])
+        a[i] = dot(w, y[map(x->mod(x-1,length(y))+1,(0:M) .+ 1 .+ (i-1)*s)])
     end
     PeriodicExtension(a)
 end

@@ -32,6 +32,11 @@ Base.inv(::Prl) = Dul()
 Base.inv(::Dul) = Prl()
 Base.inv(::Type{Prl}) = Dul
 Base.inv(::Type{Dul}) = Prl
+if !(VERSION < v"0.7-")
+    Base.broadcastable(s::Side) = Ref(s)
+    Base.broadcastable(k::Kind) = Ref(k)
+    Base.broadcastable(w::DiscreteWavelet{T}) where T = Ref(w)
+end
 
 
 include("util/waveletindex.jl")
